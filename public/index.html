@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8"/>
+  <title>Bedriftsassistent</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; margin: 20px; background: #fafafa; }
+    #wrap { max-width: 720px; margin: 0 auto; }
+    #messages { display: flex; flex-direction: column; min-height: 300px; padding: 10px; background: #fff; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,.08); }
+    .msg { padding: 10px 14px; border-radius: 10px; margin: 6px 0; max-width: 80%; }
+    .user { background: #e6f3ff; margin-left: auto; }
+    .bot  { background: #f3f3f3; }
+    form { display: flex; gap: 8px; margin-top: 12px; }
+    input { flex: 1; padding: 10px; border-radius: 10px; border: 1px solid #ddd; }
+    button { padding: 10px 16px; border: none; border-radius: 10px; background: #0077cc; color: #fff; cursor: pointer; }
+    button:hover { background: #005fa3; }
+  </style>
+</head>
+<body>
+  <div id="wrap">
+    <h2>🤖 Bedriftsassistent</h2>
+    <div id="messages">
+      <div class="msg bot">Hei! Still meg et spørsmål om åpningstider, bestillinger eller produkter.</div>
+    </div>
+    <form id="frm">
+      <input id="inp" placeholder="Skriv her…" autocomplete="off"/>
+      <button>Send</button>
+    </form>
+  </div>
+
+<script>
+const API = 'http://localhost:8787/chat';  // backend endpoint
+const client = 'nordic-nibbles';           // default demo client
+
+const $m = document.getElementById('messages');
+const $frm = document.getElementById('frm');
+const $inp = document.getElementById('inp');
+
+function add(text, cls) {
+  const d = document.createElement('div');
+  d.className = 'msg ' + cls;
+  d.textContent = text;
+  $m.appendChild(d);
+  $m.scrollTop = $m.scrollHeight;
+}
+
+$frm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const text = $inp.value.trim();
+  if (!text) return;
+
+  // Show user’s message
+  add(text, 'user');
+  $inp.value = '';
+
+  // Show typing indicator
+  add('…skriver', 'bot');
+
+  try {
+    const r = await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: text, client })
+    });
+    const j = await r.json();
+
+    // Remove last “typing” bubble
+    const bots = document.querySelectorAll('.bot');
+    if (bots.length) bots[bots.length - 1].remove();
+
+    // Add AI reply
+    add(j.reply || 'Ingen respons fra serveren.', 'bot');
+  } catch (err) {
+    const bots = document.querySelectorAll('.bot');
+    if (bots.length) bots[bots.length - 1].remove();
+    add('⚠️ Nettverksfeil – prøv igjen senere.', 'bot');
+    console.error('Fetch failed:', err);
+  }
+});
+</script>
+</body>
+</html>

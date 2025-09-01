@@ -1,0 +1,22 @@
+[
+  {
+    "q": "What are your opening hours?",
+    "a": "We are open Mon–Fri 08:00–18:00, Sat 09:00–14:00. Closed Sunday."
+  },
+  {
+    "q": "Do you make custom cakes?",
+    "a": "Yes. We require 48 hours notice and a 30% deposit. Prices start at 450 NOK."
+  },
+  {
+    "q": "Do you deliver?",
+    "a": "We deliver within 10 km of Sarpsborg center. 59 NOK under 500 NOK orders; free over 500 NOK."
+  },
+  {
+    "q": "Do you have gluten-free options?",
+    "a": "Yes, we offer gluten-free bread and cupcakes daily. For custom GF cakes, please order 48 hours ahead."
+  },
+  {
+    "q": "How do I place an order?",
+    "a": "Order online, by phone at 69 11 22 33, or visit us at St. Marie gate 42, 1706 Sarpsborg."
+  }
+]
