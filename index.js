@@ -20,7 +20,7 @@ app.get("/", (req, res) => {
 const USE_OPENAI = true;  // set to false to test "Echo" replies
 
 // Prefer env var in production; fallback only for local testing
-const OPENAI_KEY = process.env.OPENAI_API_KEY || "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";
+const OPENAI_KEY = process.env.OPENAI_API_KEY;
 
 // ====== Health Route ======
 app.get("/ping", (req, res) => {
