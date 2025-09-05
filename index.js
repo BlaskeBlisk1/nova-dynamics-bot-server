@@ -4,9 +4,20 @@ const cors = require("cors");
 const fs = require("fs");
 const path = require("path");
 
+
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+function normalizeKB(raw) {
+  // Accept [{q,a}] or [{title,text}]
+  return (raw || []).map(item => {
+    if (item.q && item.a) return item;
+    if (item.title && item.text) return { q: item.title, a: item.text };
+    return null;
+  }).filter(Boolean);
+}
+
 
 // Allow cross-origin requests (Netlify + Render demo)
 app.use(cors({
