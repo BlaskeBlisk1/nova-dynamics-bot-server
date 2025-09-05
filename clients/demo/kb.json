@@ -1,22 +1,62 @@
 [
   {
-    "q": "What are your opening hours?",
-    "a": "We are open Mon–Fri 08:00–18:00, Sat 09:00–14:00. Closed Sunday."
+    "q": "Hva er åpningstidene?",
+    "a": "Vi holder åpent mandag–fredag 08:00–18:00 og lørdag 09:00–14:00. Søndag stengt."
   },
   {
-    "q": "Do you make custom cakes?",
-    "a": "Yes. We require 48 hours notice and a 30% deposit. Prices start at 450 NOK."
+    "q": "Hvor ligger dere?",
+    "a": "Du finner oss i St. Marie gate 42, 1706 Sarpsborg. Det er gratis parkering bak bygget."
   },
   {
-    "q": "Do you deliver?",
-    "a": "We deliver within 10 km of Sarpsborg center. 59 NOK under 500 NOK orders; free over 500 NOK."
+    "q": "Hvordan bestiller jeg kake?",
+    "a": "Du kan bestille i butikken, via telefon eller e-post. Vi trenger 48 timers varsel og 30% depositum for spesialkaker."
   },
   {
-    "q": "Do you have gluten-free options?",
-    "a": "Yes, we offer gluten-free bread and cupcakes daily. For custom GF cakes, please order 48 hours ahead."
+    "q": "Tar dere imot store bestillinger?",
+    "a": "Ja, vi kan levere til selskaper, bursdager og bedrifter. Kontakt oss minst 5 dager i forveien for store ordre."
   },
   {
-    "q": "How do I place an order?",
-    "a": "Order online, by phone at 69 11 22 33, or visit us at St. Marie gate 42, 1706 Sarpsborg."
+    "q": "Har dere glutenfrie alternativer?",
+    "a": "Ja, vi har 2–3 glutenfrie kaker tilgjengelig hver dag, samt mulighet for spesialbestilling."
+  },
+  {
+    "q": "Tilbyr dere laktosefrie produkter?",
+    "a": "Ja, vi lager laktosefrie muffins og kaker på forespørsel."
+  },
+  {
+    "q": "Hva koster levering?",
+    "a": "Vi leverer i Sarpsborg-området for 99 NOK. Utenfor byen avtaler vi pris basert på avstand."
+  },
+  {
+    "q": "Tilbyr dere studentrabatt?",
+    "a": "Ja, vi gir 10% rabatt til studenter med gyldig studentbevis."
+  },
+  {
+    "q": "Kan jeg reservere bord?",
+    "a": "Ja, du kan reservere bord ved å ringe oss eller sende e-post. Vi anbefaler reservasjon ved større grupper."
+  },
+  {
+    "q": "Har dere gavekort?",
+    "a": "Ja, vi selger gavekort i valgfritt beløp. Disse kan kjøpes i butikken."
+  },
+  {
+    "q": "Hva er telefonnummeret deres?",
+    "a": "Du kan nå oss på telefon 69 12 34 56 i åpningstiden."
+  },
+  {
+    "q": "Hva er e-postadressen deres?",
+    "a": "Vår e-post er kontakt@demobakeri.no."
+  },
+  {
+    "q": "Tilbyr dere bryllupskaker?",
+    "a": "Ja, vi spesialiserer oss på bryllupskaker. Bestilling bør gjøres minst 2 måneder i forkant."
+  },
+  {
+    "q": "Selger dere kaffe?",
+    "a": "Ja, vi tilbyr kaffe, te og kakao sammen med bakverkene våre."
+  },
+  {
+    "q": "Er dere aktive på sosiale medier?",
+    "a": "Ja, du finner oss på Facebook og Instagram under navnet @DemoBakeri."
   }
 ]
