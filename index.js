@@ -8,6 +8,20 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Allow cross-origin requests (Netlify + Render demo)
+app.use(cors({
+  origin: [
+    'https://nova-dynamics-bot-server.onrender.com',   // your Render site
+    'https://chic-lollipop-d9274c.netlify.app'            // replace with your real Netlify site if used
+  ],
+  methods: ['GET','POST','OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// Explicitly handle preflight for /chat
+app.options('/chat', cors());
+
+
 // ====== Static Website (fixes "Cannot GET /") ======
 const publicDir = path.join(__dirname, "public");
 app.use(express.static(publicDir));
