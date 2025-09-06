@@ -29,6 +29,29 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
+const fs = require("fs");
+const path = require("path");
+
+// --- DEBUG: inspect which KB the server sees ---
+app.get("/debug-kb", (req, res) => {
+  const client = (req.query.client || "demo").toLowerCase();
+  const kbPath = path.join(__dirname, "clients", client, "kb.json");
+
+  let raw = [];
+  let error = null;
+  try {
+    const txt = fs.readFileSync(kbPath, "utf8");
+    raw = JSON.parse(txt);
+  } catch (e) {
+    error = String(e && e.message);
+  }
+
+  const count = Array.isArray(raw) ? raw.length : 0;
+  const sample = Array.isArray(raw) ? raw.slice(0, 2) : [];
+  res.json({ client, kbPath, exists: fs.existsSync(kbPath), count, sample, error });
+});
+
+
 // Explicitly handle preflight for /chat
 app.options('/chat', cors());
 
