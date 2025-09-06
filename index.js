@@ -29,8 +29,6 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-const fs = require("fs");
-const path = require("path");
 
 // --- DEBUG: inspect which KB the server sees ---
 app.get("/debug-kb", (req, res) => {
