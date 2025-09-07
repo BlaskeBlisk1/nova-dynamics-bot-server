@@ -4,89 +4,38 @@ const cors = require("cors");
 const fs = require("fs");
 const path = require("path");
 
-
 const app = express();
-app.use(cors());
 app.use(express.json());
 
-function normalizeKB(raw) {
-  // Accept [{q,a}] or [{title,text}]
-  return (raw || []).map(item => {
-    if (item.q && item.a) return item;
-    if (item.title && item.text) return { q: item.title, a: item.text };
-    return null;
-  }).filter(Boolean);
-}
-
-
-// Allow cross-origin requests (Netlify + Render demo)
+// ====== CORS (Render + your Netlify site) ======
 app.use(cors({
   origin: [
-    'https://nova-dynamics-bot-server.onrender.com',   // your Render site
-    'https://chic-lollipop-d9274c.netlify.app'            // replace with your real Netlify site if used
+    "https://nova-dynamics-bot-server.onrender.com",
+    "https://chic-lollipop-d9274c.netlify.app"  // <-- your Netlify URL; update if you change sites
   ],
-  methods: ['GET','POST','OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
-
-// --- DEBUG: inspect which KB the server sees ---
-app.get("/debug-kb", (req, res) => {
-  const client = (req.query.client || "demo").toLowerCase();
-  const kbPath = path.join(__dirname, "clients", client, "kb.json");
-
-  let raw = [];
-  let error = null;
-  try {
-    const txt = fs.readFileSync(kbPath, "utf8");
-    raw = JSON.parse(txt);
-  } catch (e) {
-    error = String(e && e.message);
-  }
-
-  const count = Array.isArray(raw) ? raw.length : 0;
-  const sample = Array.isArray(raw) ? raw.slice(0, 2) : [];
-  res.json({ client, kbPath, exists: fs.existsSync(kbPath), count, sample, error });
-});
-
-
-// Explicitly handle preflight for /chat
-app.options('/chat', cors());
-
-
-// ====== Static Website (fixes "Cannot GET /") ======
-const publicDir = path.join(__dirname, "public");
-app.use(express.static(publicDir));
-app.get("/", (req, res) => {
-  res.sendFile(path.join(publicDir, "index.html"));
-});
-
-// ====== Config ======
-// Toggle to test front↔back without hitting OpenAI
-const USE_OPENAI = true;  // set to false to test "Echo" replies
-
-// Prefer env var in production; fallback only for local testing
-const OPENAI_KEY = process.env.OPENAI_API_KEY;
-
-// ====== Health Route ======
-app.get("/ping", (req, res) => {
-  res.json({
-    ok: true,
-    publicDir,
-    indexExists: fs.existsSync(path.join(publicDir, "index.html"))
-  });
-});
-
-// ====== Tiny Helpers ======
+// ====== Helpers ======
 function readJSON(filePath, fallback = []) {
   try { return JSON.parse(fs.readFileSync(filePath, "utf8")); }
   catch { return fallback; }
 }
 
-// Very simple keyword scoring to pick relevant FAQs
+// Accept [{q,a}] OR [{title,text}] and coerce to strings
+function normalizeKB(raw) {
+  return (raw || []).map(item => {
+    if (item && item.q && item.a) return { q: String(item.q), a: String(item.a) };
+    if (item && item.title && item.text) return { q: String(item.title), a: String(item.text) };
+    return null;
+  }).filter(Boolean);
+}
+
+// Simple keyword ranker
 function rankFAQ(question, kb) {
   const qWords = new Set(
-    question.toLowerCase().split(/[^a-z0-9æøåäöü\-]+/).filter(Boolean)
+    String(question).toLowerCase().split(/[^a-z0-9æøåäöü\-]+/).filter(Boolean)
   );
   return kb
     .map(item => {
@@ -98,30 +47,77 @@ function rankFAQ(question, kb) {
     .sort((a,b) => b._score - a._score);
 }
 
+// ====== Static Website (optional; okay to keep) ======
+const publicDir = path.join(__dirname, "public");
+app.use(express.static(publicDir));
+app.get("/", (req, res) => {
+  res.sendFile(path.join(publicDir, "index.html"));
+});
+
+// ====== Config ======
+const USE_OPENAI = true;                              // set to false for echo testing
+const OPENAI_KEY = process.env.OPENAI_API_KEY;        // set in Render > Settings > Environment
+const MODEL = "gpt-4o-mini";
+
+// ====== Health ======
+app.get("/ping", (req, res) => {
+  res.json({
+    ok: true,
+    indexExists: fs.existsSync(path.join(publicDir, "index.html")),
+    time: new Date().toISOString()
+  });
+});
+
+// ====== DEBUG: See what KB the server loads ======
+app.get("/debug-kb", (req, res) => {
+  const client = (req.query.client || "demo").toLowerCase();
+  const kbPath = path.join(__dirname, "clients", client, "kb.json");
+
+  let raw = []; let error = null;
+  try { raw = JSON.parse(fs.readFileSync(kbPath, "utf8")); }
+  catch (e) { error = String(e.message); }
+
+  const kb = normalizeKB(raw);
+  res.json({
+    client, kbPath,
+    exists: fs.existsSync(kbPath),
+    rawCount: Array.isArray(raw) ? raw.length : -1,
+    kbCount: kb.length,
+    sample: kb.slice(0, 2),
+    error
+  });
+});
+
+// Handle preflight for /chat
+app.options("/chat", cors());
+
 // ====== Chat Route ======
 app.post("/chat", async (req, res) => {
   try {
-    const message = (req.body && req.body.message) || "";
-    const client  = (req.body && req.body.client)  || "nordic-nibbles"; // default demo client
+    const message = String(req.body?.message || "");
+    const client  = String(req.body?.client || "demo").toLowerCase(); // <-- ensure this matches your folder
 
-    console.log("⇒ /chat:", { client, message });
-
-    // Load client KB if present
+    // Load & normalize KB
     const kbPath = path.join(__dirname, "clients", client, "kb.json");
-    const kb = readJSON(kbPath, []);
-    const ranked = rankFAQ(message, kb).slice(0, 4);
+    const kb = normalizeKB(readJSON(kbPath, []));
+    console.log("⇒ /chat", { client, msgLen: message.length, kbPath, kbCount: kb.length });
+
+    const ranked = rankFAQ(message, kb).slice(0, 5);
     const context = ranked.map((it, i) => `[${i+1}] Q: ${it.q}\nA: ${it.a}`).join("\n\n") || "(empty)";
 
+    // Echo mode to verify wiring
     if (!USE_OPENAI) {
-      return res.json({ reply: `Echo: ${message}`, unsure: false });
+      return res.json({ reply: `Echo: ${message}`, unsure: kb.length === 0 });
     }
 
-    // --- OpenAI call (Node 18+ has global fetch) ---
+    if (!OPENAI_KEY) {
+      return res.status(500).json({ reply: "API-nøkkel mangler på serveren.", unsure: true });
+    }
+
     const systemMsg = `
 Du er en vennlig og presis kundeservice-assistent for ${client.replace(/-/g,' ')}.
-Svar på norsk når brukeren skriver norsk, ellers på samme språk som brukeren.
-Bruk kun fakta fra "Knowledge Base" nedenfor. Hvis svaret ikke er tydelig der,
-si: "Jeg er ikke helt sikker – kan jeg få navn og e-post, så følger teamet vårt opp?"
+Svar på norsk når brukeren skriver norsk. Bruk KUN fakta fra "Knowledge Base".
+Hvis svaret ikke finnes der, si høflig at du ikke er helt sikker og tilby å ta navn og e-post for oppfølging.
 Telefon: 69 11 22 33. Adresse: St. Marie gate 42, 1706 Sarpsborg.
 `.trim();
 
@@ -129,46 +125,41 @@ Telefon: 69 11 22 33. Adresse: St. Marie gate 42, 1706 Sarpsborg.
       method: "POST",
       headers: {
         "Authorization": `Bearer ${OPENAI_KEY}`,
-        "Content-Type": "application/json",
+        "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        model: MODEL,
         temperature: 0.2,
         messages: [
           { role: "system", content: systemMsg },
           { role: "system", content: `Knowledge Base:\n${context}` },
           { role: "user", content: message }
         ]
-      }),
+      })
     });
 
     if (!r.ok) {
-      const errText = await r.text();
-      console.error("OpenAI API error:", r.status, errText);
-      return res.status(500).json({
-        reply: "Beklager – midlertidig problem med AI-svaret. Prøv igjen om litt.",
-        unsure: true
-      });
+      const txt = await r.text();
+      console.error("OpenAI API error:", r.status, txt);
+      return res.status(502).json({ reply: "Beklager – midlertidig problem med AI-svaret.", unsure: true });
     }
 
     const data = await r.json();
-    const reply = data.choices?.[0]?.message?.content?.trim()
-                 || "Beklager – jeg fikk ikke generert et svar.";
-    const unsure = ranked.length === 0 || ranked[0]._score === 0;
+    const reply = data?.choices?.[0]?.message?.content?.trim()
+               || "Beklager – jeg fikk ikke generert et svar.";
+    const unsure = ranked.length === 0 || ranked[0]?._score === 0;
 
     res.json({ reply, unsure, suggestions: kb.slice(0,3).map(x => x.q) });
 
   } catch (e) {
     console.error("Server error:", e);
-    res.status(500).json({
-      reply: "Beklager – serverfeil. Prøv igjen senere.",
-      unsure: true
-    });
+    res.status(500).json({ reply: "Beklager – serverfeil.", unsure: true });
   }
 });
 
 // ====== Start Server ======
 const PORT = process.env.PORT || 8787;
 app.listen(PORT, () => {
-  console.log(`✅ Live on http://localhost:${PORT}`);
+  console.log(`✅ Server live on port ${PORT}`);
 });
+
