@@ -10,7 +10,6 @@ app.use(express.json());
 // ====== CORS (Render + your Netlify site) ======
 app.use(cors({
   origin: [
-    "https://nova-dynamics-bot-server.onrender.com",
     "https://prismatic-taffy-e96ac7.netlify.app",
     "https://nova-dynamics.no",
     "https://www.nova-dynamics.no"
