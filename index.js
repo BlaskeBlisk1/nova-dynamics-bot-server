@@ -11,7 +11,9 @@ app.use(express.json());
 app.use(cors({
   origin: [
     "https://nova-dynamics-bot-server.onrender.com",
-    "https://chic-lollipop-d9274c.netlify.app"  // <-- your Netlify URL; update if you change sites
+    "https://prismatic-taffy-e96ac7.netlify.app",
+    "https://nova-dynamics.no",
+    "https://www.nova-dynamics.no"
   ],
   methods: ["GET", "POST", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
