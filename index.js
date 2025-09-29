@@ -7,8 +7,6 @@ const path = require("path");
 const app = express();
 app.use(express.json());
 
-const cors = require("cors");
-
 const ALLOWED = [
   "https://prismatic-taffy-e96ac7.netlify.app", // Netlify site
   "https://nova-dynamics.no",                   // custom domain
