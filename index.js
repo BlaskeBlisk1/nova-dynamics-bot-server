@@ -7,16 +7,30 @@ const path = require("path");
 const app = express();
 app.use(express.json());
 
-// ====== CORS (Render + your Netlify site) ======
+const cors = require("cors");
+
+const ALLOWED = [
+  "https://prismatic-taffy-e96ac7.netlify.app", // Netlify site
+  "https://nova-dynamics.no",                   // custom domain
+  "https://www.nova-dynamics.no"                // www version
+];
+
+// helpful for caches/proxies
+app.use((req, res, next) => { res.setHeader("Vary", "Origin"); next(); });
+
 app.use(cors({
-  origin: [
-    "https://prismatic-taffy-e96ac7.netlify.app",
-    "https://nova-dynamics.no",
-    "https://www.nova-dynamics.no"
-  ],
+  origin(origin, cb) {
+    if (!origin) return cb(null, true);                 // allow server-to-server / curl
+    if (ALLOWED.includes(origin)) return cb(null, true);
+    return cb(new Error("Not allowed by CORS"));
+  },
   methods: ["GET", "POST", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
+
+// make sure preflight gets CORS headers
+app.options("*", cors());
+
 
 // ====== Helpers ======
 function readJSON(filePath, fallback = []) {
