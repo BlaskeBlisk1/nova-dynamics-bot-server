@@ -1,62 +1,154 @@
 [
   {
-    "q": "Hva er åpningstidene?",
-    "a": "Vi holder åpent mandag–fredag 08:00–18:00 og lørdag 09:00–14:00. Søndag stengt."
+    "q": "Hva er åpningstidene deres?",
+    "a": "Vi er åpne mandag–fredag 08:00–18:00 og lørdag 09:00–14:00. Søndag stengt."
   },
   {
-    "q": "Hvor ligger dere?",
-    "a": "Du finner oss i St. Marie gate 42, 1706 Sarpsborg. Det er gratis parkering bak bygget."
+    "q": "When are you open?",
+    "a": "We’re open Monday–Friday 08:00–18:00 and Saturday 09:00–14:00. Closed on Sunday."
   },
   {
-    "q": "Hvordan bestiller jeg kake?",
-    "a": "Du kan bestille i butikken, via telefon eller e-post. Vi trenger 48 timers varsel og 30% depositum for spesialkaker."
+    "q": "Hvor ligger butikken?",
+    "a": "Du finner oss i St. Marie gate 42, 1706 Sarpsborg. Inngang fra gateplan. Parkering i nærheten."
   },
   {
-    "q": "Tar dere imot store bestillinger?",
-    "a": "Ja, vi kan levere til selskaper, bursdager og bedrifter. Kontakt oss minst 5 dager i forveien for store ordre."
+    "q": "What is your address?",
+    "a": "St. Marie gate 42, 1706 Sarpsborg. Street-level entrance. Parking nearby."
   },
   {
-    "q": "Har dere glutenfrie alternativer?",
-    "a": "Ja, vi har 2–3 glutenfrie kaker tilgjengelig hver dag, samt mulighet for spesialbestilling."
+    "q": "Telefonnummer",
+    "a": "Du kan nå oss på telefon 69 11 22 33 i åpningstiden."
   },
   {
-    "q": "Tilbyr dere laktosefrie produkter?",
-    "a": "Ja, vi lager laktosefrie muffins og kaker på forespørsel."
+    "q": "Phone number",
+    "a": "You can reach us at +47 69 11 22 33 during opening hours."
   },
   {
-    "q": "Hva koster levering?",
-    "a": "Vi leverer i Sarpsborg-området for 99 NOK. Utenfor byen avtaler vi pris basert på avstand."
+    "q": "Tar dere bestilling på spesialkaker?",
+    "a": "Ja. Spesialkaker krever 48 timers varsel og 30% depositum ved bestilling. Send motiv/ønsker på e-post."
   },
   {
-    "q": "Tilbyr dere studentrabatt?",
-    "a": "Ja, vi gir 10% rabatt til studenter med gyldig studentbevis."
+    "q": "Do you make custom cakes?",
+    "a": "Yes—custom cakes require 48 hours’ notice and a 30% deposit. Please email your design/notes."
   },
   {
-    "q": "Kan jeg reservere bord?",
-    "a": "Ja, du kan reservere bord ved å ringe oss eller sende e-post. Vi anbefaler reservasjon ved større grupper."
+    "q": "Hvordan bestiller jeg?",
+    "a": "Du kan bestille i butikk, via telefon eller via e-post. For større bestillinger anbefaler vi e-post slik at vi får med alle detaljer."
+  },
+  {
+    "q": "How do I place an order?",
+    "a": "Order in-store, by phone, or by email. For larger orders we recommend email so we capture all details."
+  },
+  {
+    "q": "Har dere allergeninformasjon?",
+    "a": "Ja. Vi har oversikt over allergener for alle produkter. Gi oss beskjed om du trenger glutenfritt, laktosefritt eller nøttefritt."
+  },
+  {
+    "q": "Allergens information",
+    "a": "Yes—full allergen information is available for all items. We can do gluten-free, lactose-free and nut-free options."
+  },
+  {
+    "q": "Tilbyr dere levering?",
+    "a": "Ja, innenfor Sarpsborg-området. Leveringsgebyr fra 79 kr avhengig av avstand og ordre. Henting i butikk er gratis."
+  },
+  {
+    "q": "Do you deliver?",
+    "a": "Yes, within the Sarpsborg area. Delivery fee from NOK 79 depending on distance and order size. Store pickup is free."
+  },
+  {
+    "q": "Kan jeg endre eller avbestille?",
+    "a": "Endring/avbestilling senest 24 timer før henting/levering. Depositum på spesialkaker refunderes ikke ved avbestilling senere enn 48 timer."
+  },
+  {
+    "q": "Can I modify or cancel an order?",
+    "a": "Changes/cancellations must be made at least 24 hours before pickup/delivery. Custom-cake deposits are non-refundable within 48 hours."
+  },
+  {
+    "q": "Hva koster en standard bløtkake?",
+    "a": "Standard 20 cm bløtkake (8–10 personer) fra 449 kr. Tillegg for pynt/tilpasninger."
+  },
+  {
+    "q": "Prices for cakes",
+    "a": "Standard 20 cm sponge/cream cake (8–10 servings) from NOK 449. Extra decorations/customization cost more."
+  },
+  {
+    "q": "Tar dere Vipps/kort/kontant?",
+    "a": "Ja, vi tar Vipps, bankkort og kontant. Faktura for bedriftskunder etter avtale."
+  },
+  {
+    "q": "Payment methods",
+    "a": "We accept Vipps, cards and cash. Invoices available for business clients upon agreement."
   },
   {
     "q": "Har dere gavekort?",
-    "a": "Ja, vi selger gavekort i valgfritt beløp. Disse kan kjøpes i butikken."
+    "a": "Ja, gavekort kan kjøpes i butikk i valgfritt beløp. Gyldig i 12 måneder."
   },
   {
-    "q": "Hva er telefonnummeret deres?",
-    "a": "Du kan nå oss på telefon 69 12 34 56 i åpningstiden."
+    "q": "Do you sell gift cards?",
+    "a": "Yes—gift cards are available in-store in any amount. Valid for 12 months."
   },
   {
-    "q": "Hva er e-postadressen deres?",
-    "a": "Vår e-post er kontakt@demobakeri.no."
+    "q": "Catering og større bestillinger",
+    "a": "Vi leverer til møter og selskap. Send antall personer, budsjett og allergener, så foreslår vi meny og pris."
   },
   {
-    "q": "Tilbyr dere bryllupskaker?",
-    "a": "Ja, vi spesialiserer oss på bryllupskaker. Bestilling bør gjøres minst 2 måneder i forkant."
+    "q": "Do you do catering?",
+    "a": "Yes—we cater for meetings and events. Email headcount, budget and allergens, and we’ll propose a menu and quote."
   },
   {
-    "q": "Selger dere kaffe?",
-    "a": "Ja, vi tilbyr kaffe, te og kakao sammen med bakverkene våre."
+    "q": "Holdbarhet og oppbevaring",
+    "a": "De fleste kaker bør oppbevares kjølig og nytes innen 1–2 dager. Makroner og småbakst holder 2–4 dager i lufttett boks."
   },
   {
-    "q": "Er dere aktive på sosiale medier?",
-    "a": "Ja, du finner oss på Facebook og Instagram under navnet @DemoBakeri."
+    "q": "Shelf life and storage",
+    "a": "Most cakes should be kept refrigerated and consumed within 1–2 days. Macarons/pastries keep 2–4 days in an airtight container."
+  },
+  {
+    "q": "Har dere vegansk eller glutenfri kake?",
+    "a": "Ja—vi tilbyr utvalgte veganske og glutenfrie alternativer på bestilling. Gi beskjed om behov når du bestiller."
+  },
+  {
+    "q": "Vegan or gluten-free options",
+    "a": "Yes—selected vegan and gluten-free options available by order. Let us know your needs when booking."
+  },
+  {
+    "q": "Hvor lang tid i forveien bør jeg bestille?",
+    "a": "Små bestillinger: 24 timer. Spesialkaker: 48 timer. For høysesong (mai–juni og desember) anbefaler vi noen dager ekstra."
+  },
+  {
+    "q": "How far in advance should I order?",
+    "a": "Small orders: 24 hours. Custom cakes: 48 hours. In peak seasons (May–June and December) please allow a few extra days."
+  },
+  {
+    "q": "E-postadresse",
+    "a": "Ta kontakt på e-post: demo@nordicnibbles.no for bestillinger og spørsmål."
+  },
+  {
+    "q": "Email address",
+    "a": "Contact us at demo@nordicnibbles.no for orders and questions."
+  },
+  {
+    "q": "Kan jeg hente samme dag?",
+    "a": "Vi har et utvalg ferske kaker og bakst hver dag. Ring oss for å holde av før du kommer."
+  },
+  {
+    "q": "Same-day pickup",
+    "a": "We stock fresh cakes and pastries daily. Call us to reserve before you arrive."
+  },
+  {
+    "q": "Har dere student- eller lojalitetsrabatt?",
+    "a": "Ja—spør i kassen. Lojalitetsstempler: hver 10. kaffe gratis."
+  },
+  {
+    "q": "Discounts or loyalty",
+    "a": "Yes—ask in store. Loyalty stamps: every 10th coffee free."
+  },
+  {
+    "q": "Hvordan fungerer bestilling i helgene?",
+    "a": "Lørdagsbestillinger hentes senest 13:45. Søndag stengt—levering ikke tilgjengelig på søndager."
+  },
+  {
+    "q": "Weekend orders",
+    "a": "Saturday pickups by 13:45. Closed Sunday—no Sunday deliveries."
   }
 ]
