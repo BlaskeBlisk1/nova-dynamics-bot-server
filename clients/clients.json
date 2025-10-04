@@ -1,0 +1,6 @@
+{
+  "demo": {
+    "name": "Nordic Nibbles (demo)",
+    "origins": ["https://nova-dynamics.no", "https://www.nova-dynamics.no", "http://localhost:8888"]
+  }
+}
