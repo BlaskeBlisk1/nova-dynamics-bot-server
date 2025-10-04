@@ -1,6 +1,11 @@
 {
   "demo": {
     "name": "Nordic Nibbles (demo)",
-    "origins": ["https://nova-dynamics.no", "https://www.nova-dynamics.no", "http://localhost:8888"]
+    "origins": [
+      "https://prismatic-taffy-e96ac7.netlify.app",
+      "https://nova-dynamics.no",
+      "https://www.nova-dynamics.no",
+      "http://localhost:8888"
+    ]
   }
 }
