@@ -2,7 +2,8 @@
 // - clients/clients.json registry (per-client allowed origins)
 // - CORS hotfix: fallback allowlist + dynamic per-client CORS
 // - Loads clients/<slug>/kb.json with 60s cache
-// - Simple KB matcher first; falls back to OpenAI if no good hit
+// - Better KB retrieval: TF-IDF cosine + bigrams + threshold
+// - KB-first answers; LLM fallback with top-3 context only
 // - Usage logging: logs/chat.jsonl
 // - Health (/ping), KB debug (/debug-kb), CORS debug (/debug-cors)
 // ============================================================================
@@ -120,23 +121,93 @@ function getKB(client) {
   return kb;
 }
 
-// -------------------- Simple matcher (boost Q words) --------------------
-const STOP = new Set(["og","er","en","et","to","and","the","i","vi","som","for","med","på","til","du","jeg","we","you","of","a","an","det","de","så","at"]);
-function tok(s) {
-  return String(s||"").toLowerCase().normalize("NFKD")
+// -------------------- Better retrieval: TF-IDF + bigrams + threshold ---------
+const STOP = new Set([
+  // Norwegian
+  "og","i","på","for","med","til","fra","en","ei","et","er","som","av","vi","du","jeg","dere","de","det","den","å","har","hva","når","hvor",
+  // English
+  "and","or","the","a","an","of","to","in","on","for","with","is","are","we","you","it","this","that","do","does","when","what","where"
+]);
+
+function norm(str) {
+  return String(str || "")
+    .toLowerCase()
+    .normalize("NFKD")
     .replace(/[^\w\sæøåäöü\-]/g, " ")
-    .split(/\s+/).filter(w => w && !STOP.has(w));
+    .replace(/\s+/g, " ")
+    .trim();
 }
-function scoreEntry(entry, qTokens) {
-  const tq = tok(entry.q), ta = tok(entry.a);
-  let s = 0; for (const t of qTokens) { if (tq.includes(t)) s += 2; if (ta.includes(t)) s += 1; }
+
+function tokens(str) {
+  const t = norm(str).split(" ").filter(w => w && !STOP.has(w));
+  // bigrams capture phrases like "åpent lørdag", "opening hours"
+  const bigrams = [];
+  for (let i = 0; i < t.length - 1; i++) bigrams.push(t[i] + " " + t[i+1]);
+  return t.concat(bigrams);
+}
+
+function tf(arr) {
+  const m = new Map();
+  for (const w of arr) m.set(w, (m.get(w) || 0) + 1);
+  return m;
+}
+
+function idf(docs) {
+  const df = new Map();
+  docs.forEach(d => {
+    const seen = new Set(d);
+    for (const w of seen) df.set(w, (df.get(w) || 0) + 1);
+  });
+  const N = docs.length;
+  const out = new Map();
+  for (const [w, c] of df) out.set(w, Math.log(1 + N / (c || 1)));
+  return out;
+}
+
+function dot(a, b) {
+  let s = 0;
+  for (const [k, v] of a) if (b.has(k)) s += v * b.get(k);
   return s;
 }
-function rankFAQ(question, kb) {
-  const qTok = tok(question);
-  return kb.map(e => ({ ...e, _score: scoreEntry(e, qTok) }))
-           .sort((a,b) => b._score - a._score);
+
+function vecLen(v) {
+  let s = 0;
+  for (const [, v2] of v) s += v2 * v2;
+  return Math.sqrt(s);
 }
+
+/** Rank [{q,a}] by cosine similarity (question weighted 2x over answer). */
+function rankFAQ_TFIDF(question, kb) {
+  const qToks = tokens(question);
+  const docTokens = kb.map(e => {
+    const tQ = tokens(e.q);
+    const tA = tokens(e.a);
+    return tQ.concat(tQ, tA); // Q counted twice
+  });
+
+  const IDF = idf(docTokens);
+
+  const docVecs = docTokens.map(arr => {
+    const TF = tf(arr);
+    const v = new Map();
+    for (const [w, f] of TF) v.set(w, f * (IDF.get(w) || 0));
+    return v;
+  });
+
+  const qTF = tf(qToks);
+  const qVec = new Map();
+  for (const [w, f] of qTF) qVec.set(w, f * (IDF.get(w) || 0));
+  const qLen = vecLen(qVec) || 1e-9;
+
+  return kb.map((e, i) => {
+    const v = docVecs[i];
+    const score = dot(qVec, v) / (qLen * (vecLen(v) || 1e-9));
+    return { ...e, _score: score };
+  }).sort((a,b) => b._score - a._score);
+}
+
+// Confidence floor: below this, we consider the match unreliable
+const MIN_SIM = 0.18;
 
 // -------------------- Logging --------------------
 function logUsage(row) {
@@ -199,29 +270,35 @@ app.post("/chat", async (req, res) => {
   }
 
   const kb = getKB(client);
-  const ranked = rankFAQ(message, kb);
+  const ranked = rankFAQ_TFIDF(message, kb);
   const top = ranked[0];
-  const hasHit = top && top._score > 0;
+  const confident = top && top._score >= MIN_SIM;
 
-  if (hasHit) {
+  // Confident KB hit → answer directly (cheap + consistent)
+  if (confident) {
     const reply = top.a;
-    logUsage({ ts:new Date().toISOString(), client, origin, kind:"kb", in:message.length, out:reply.length });
-    return res.json({ reply, unsure: false, suggestions: ranked.slice(1,4).map(x=>x.q) });
+    logUsage({ ts:new Date().toISOString(), client, origin, kind:"kb", in:message.length, out:reply.length, score:top._score });
+    return res.json({ reply, unsure: false, suggestions: ranked.slice(1,3).map(x=>x.q) });
   }
 
+  // LLM fallback
   if (!OPENAI_KEY) {
     return res.status(500).json({ reply: "API-nøkkel mangler på serveren.", unsure: true });
   }
 
-  const systemMsg = `
-You are a concise, friendly customer-service assistant for ${client.replace(/-/g," ")}.
-Answer in the user's language (Norwegian or English). Prefer facts from the Knowledge Base below.
-If the answer is not present, say you're not entirely sure and offer to collect name and email for follow-up.
-`.trim();
+  // Only send top-3 to the model; include scores so it can judge reliability
+  const topK = ranked.slice(0, 3);
+  const context = topK.map((it, i) =>
+    `[${i+1}] score=${(it._score || 0).toFixed(3)}\nQ: ${it.q}\nA: ${it.a}`
+  ).join("\n\n");
 
-  const context = `Knowledge Base:\n${
-    kb.map((it,i)=>`[${i+1}] Q: ${it.q}\nA: ${it.a}`).join("\n\n")
-  }`.slice(0, 8000);
+  const systemMsg = `
+You are a concise, friendly customer-service assistant.
+- Detect the user's language (Norwegian or English) and respond in that language.
+- You are given up to 3 FAQ entries with similarity scores.
+- ONLY answer if one entry clearly matches the user's question. If none match, say you’re not entirely sure and offer to collect name and email for follow-up.
+- Do NOT invent facts or merge unrelated entries.
+`.trim();
 
   let resp = await fetchJSON("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -230,7 +307,7 @@ If the answer is not present, say you're not entirely sure and offer to collect 
       model: MODEL, temperature: 0.2,
       messages: [
         { role: "system", content: systemMsg },
-        { role: "system", content: context || "(empty KB)" },
+        { role: "system", content: context || "(no candidates)" },
         { role: "user", content: message }
       ]
     })
@@ -245,7 +322,7 @@ If the answer is not present, say you're not entirely sure and offer to collect 
         model: MODEL, temperature: 0.2,
         messages: [
           { role: "system", content: systemMsg },
-          { role: "system", content: context || "(empty KB)" },
+          { role: "system", content: context || "(no candidates)" },
           { role: "user", content: message }
         ]
       })
@@ -268,3 +345,4 @@ If the answer is not present, say you're not entirely sure and offer to collect 
 app.listen(PORT, () => {
   console.log(`✅ Server live on port ${PORT}`);
 });
+

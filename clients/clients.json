@@ -7,5 +7,14 @@
       "https://www.nova-dynamics.no",
       "http://localhost:8888"
     ]
+  },
+  "acme": {
+    "name": "acme",
+    "origins": [
+      "https://www.acme.com",
+      "https://nova-dynamics.no",
+      "https://www.nova-dynamics.no",
+      "https://prismatic-taffy-e96ac7.netlify.app"
+    ]
   }
 }
