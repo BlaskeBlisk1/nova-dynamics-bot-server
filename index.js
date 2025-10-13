@@ -1,12 +1,4 @@
 // ================== Nova Dynamics Bot Server (multi-tenant) ==================
-// - clients/clients.json registry (per-client allowed origins)
-// - CORS hotfix: fallback allowlist + dynamic per-client CORS
-// - Loads clients/<slug>/kb.json with 60s cache
-// - Better KB retrieval: TF-IDF cosine + bigrams + Q-weighting + synonyms/day normalization
-// - Confidence threshold; KB-first answers; strict LLM fallback (top-3 only)
-// - Usage logging: logs/chat.jsonl; Debug: /ping, /debug-kb, /debug-cors
-// ============================================================================
-
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
@@ -17,7 +9,7 @@ const fetchFn = global.fetch || ((...args) =>
 
 const app = express();
 app.use(express.json({ limit: "64kb" }));
-app.use((req, res, next) => { res.setHeader("Vary", "Origin"); next(); });
+app.use((_, res, next) => { res.setHeader("Vary", "Origin"); next(); });
 
 // -------------------- Static site (optional) --------------------
 const publicDir = path.join(__dirname, "public");
@@ -50,7 +42,7 @@ function safeSlug(s) {
   return String(s || "").toLowerCase().replace(/[^a-z0-9\-]/g, "");
 }
 
-// ---- HOTFIX fallback allowlist (keeps you unblocked during setup) ----
+// ---- HOTFIX fallback allowlist ----
 const FALLBACK_ALLOWED = new Set([
   "https://prismatic-taffy-e96ac7.netlify.app",
   "https://nova-dynamics.no",
@@ -77,19 +69,16 @@ function allowCORS(res, origin) {
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
 }
 
-// ---- Dynamic CORS middleware (handles preflight & requests) ----
+// ---- Dynamic CORS middleware ----
 app.use((req, res, next) => {
   const origin = req.headers.origin || "";
   const rawClient = (req.body && req.body.client) || (req.query && req.query.client) || "";
   const client = safeSlug(rawClient);
 
-  // Preflight: OPTIONS has no body; allow if origin is known anywhere
   if (req.method === "OPTIONS") {
     if (isKnownOrigin(origin)) allowCORS(res, origin);
     return res.sendStatus(204);
   }
-
-  // Normal requests: allow only if origin is allowed for this client (or fallback)
   if (origin && isAllowedOrigin(client, origin)) allowCORS(res, origin);
   return next();
 });
@@ -128,7 +117,6 @@ const STOP = new Set([
   "and","or","the","a","an","of","to","in","on","for","with","is","are","we","you","it","this","that","do","does","when","what","where"
 ]);
 
-// Day name normalization (NO/EN)
 const ROOT_DAY = new Map([
   ["mandag","mon"],["man","mon"],["monday","mon"],
   ["tirsdag","tue"],["tir","tue"],["tuesday","tue"],
@@ -139,7 +127,6 @@ const ROOT_DAY = new Map([
   ["søndag","sun"],["søn","sun"],["son","sun"],["sunday","sun"]
 ]);
 
-// Simple synonym map for opening hours & open/closed wording
 const SYNONYMS = new Map([
   ["åpent","åpningstider"], ["åpne","åpningstider"], ["åpning","åpningstider"],
   ["open","hours"], ["opening","hours"], ["hour","hours"], ["hours","hours"],
@@ -169,7 +156,6 @@ function tokens(str) {
     const w = normalizeTerm(raw);
     if (w && !STOP.has(w)) uni.push(w);
   }
-  // bigrams after normalization
   const bi = [];
   for (let i = 0; i < uni.length - 1; i++) bi.push(uni[i] + " " + uni[i+1]);
   return uni.concat(bi);
@@ -198,14 +184,12 @@ function dot(a, b) {
   for (const [k, v] of a) if (b.has(k)) s += v * b.get(k);
   return s;
 }
-
 function vecLen(v) {
   let s = 0;
   for (const [, v2] of v) s += v2 * v2;
   return Math.sqrt(s);
 }
 
-/** Rank [{q,a}] by cosine similarity (question weighted 2x over answer). */
 function rankFAQ_TFIDF(question, kb) {
   const qToks = tokens(question);
   const docTokens = kb.map(e => {
@@ -235,7 +219,6 @@ function rankFAQ_TFIDF(question, kb) {
   }).sort((a,b) => b._score - a._score);
 }
 
-// Confidence floor (slightly relaxed with synonyms)
 const MIN_SIM = 0.16;
 
 // -------------------- Logging --------------------
@@ -288,7 +271,7 @@ async function fetchJSON(url, opts, timeoutMs = 15000) {
 // -------------------- Chat --------------------
 app.post("/chat", async (req, res) => {
   const origin  = req.headers.origin || "";
-  const client  = safeSlug(req.body?.client || "demo"); // <-- fixed here
+  const client  = safeSlug(req.body?.client || "demo");
   const message = String(req.body?.message || "").slice(0, 2000);
 
   if (!REGISTRY[client]) {
@@ -314,9 +297,9 @@ app.post("/chat", async (req, res) => {
   }
 
   const topK = ranked.slice(0, 3);
-  const context = topK.length
+  const context = (topK.length
     ? topK.map((it, i) => `[${i+1}] score=${(it._score||0).toFixed(3)}\nQ: ${it.q}\nA: ${it.a}`).join("\n\n")
-    : "(no candidates)";
+    : "(no candidates)");
 
   const systemMsg = `
 You are a concise, friendly customer-service assistant.
@@ -326,9 +309,13 @@ You are a concise, friendly customer-service assistant.
 - Do NOT invent facts or merge unrelated entries.
 `.trim();
 
+  // First attempt
   let resp = await fetchJSON("https://api.openai.com/v1/chat/completions", {
     method: "POST",
-    headers: { "Authorization": `Bearer ${OPENAI_KEY}`, "Content-Type": "application/json" },
+    headers: {
+      "Authorization": `Bearer ${OPENAI_KEY}`,
+      "Content-Type": "application/json"
+    },
     body: JSON.stringify({
       model: MODEL, temperature: 0.2,
       messages: [
@@ -339,10 +326,14 @@ You are a concise, friendly customer-service assistant.
     })
   }, 15000);
 
+  // One quick retry on 5xx/network
   if (!resp.ok || resp.status >= 500) {
     resp = await fetchJSON("https://api.openai.com/v1/chat/completions", {
       method: "POST",
-      headers: { "Authorization": `Bearer ${OPENAI_KEY}", "Content-Type": "application/json" },
+      headers: {
+        "Authorization": `Bearer ${OPENAI_KEY}`,   // <-- fixed here
+        "Content-Type": "application/json"
+      },
       body: JSON.stringify({
         model: MODEL, temperature: 0.2,
         messages: [
