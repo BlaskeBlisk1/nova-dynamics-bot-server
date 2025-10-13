@@ -2,10 +2,9 @@
 // - clients/clients.json registry (per-client allowed origins)
 // - CORS hotfix: fallback allowlist + dynamic per-client CORS
 // - Loads clients/<slug>/kb.json with 60s cache
-// - Better KB retrieval: TF-IDF cosine + bigrams + threshold
-// - KB-first answers; LLM fallback with top-3 context only
-// - Usage logging: logs/chat.jsonl
-// - Health (/ping), KB debug (/debug-kb), CORS debug (/debug-cors)
+// - Better KB retrieval: TF-IDF cosine + bigrams + Q-weighting + synonyms/day normalization
+// - Confidence threshold; KB-first answers; strict LLM fallback (top-3 only)
+// - Usage logging: logs/chat.jsonl; Debug: /ping, /debug-kb, /debug-cors
 // ============================================================================
 
 const express = require("express");
@@ -121,12 +120,30 @@ function getKB(client) {
   return kb;
 }
 
-// -------------------- Better retrieval: TF-IDF + bigrams + threshold ---------
+// -------------------- Retrieval: TF-IDF + bigrams + synonyms/day roots -------
 const STOP = new Set([
   // Norwegian
   "og","i","på","for","med","til","fra","en","ei","et","er","som","av","vi","du","jeg","dere","de","det","den","å","har","hva","når","hvor",
   // English
   "and","or","the","a","an","of","to","in","on","for","with","is","are","we","you","it","this","that","do","does","when","what","where"
+]);
+
+// Day name normalization (NO/EN)
+const ROOT_DAY = new Map([
+  ["mandag","mon"],["man","mon"],["monday","mon"],
+  ["tirsdag","tue"],["tir","tue"],["tuesday","tue"],
+  ["onsdag","wed"],["ons","wed"],["wednesday","wed"],
+  ["torsdag","thu"],["tor","thu"],["thursday","thu"],
+  ["fredag","fri"],["fre","fri"],["friday","fri"],
+  ["lørdag","sat"],["lør","sat"],["lor","sat"],["saturday","sat"],
+  ["søndag","sun"],["søn","sun"],["son","sun"],["sunday","sun"]
+]);
+
+// Simple synonym map for opening hours & open/closed wording
+const SYNONYMS = new Map([
+  ["åpent","åpningstider"], ["åpne","åpningstider"], ["åpning","åpningstider"],
+  ["open","hours"], ["opening","hours"], ["hour","hours"], ["hours","hours"],
+  ["stengt","åpningstider"], ["closed","hours"]
 ]);
 
 function norm(str) {
@@ -138,12 +155,24 @@ function norm(str) {
     .trim();
 }
 
+function normalizeTerm(w){
+  if (ROOT_DAY.has(w)) return ROOT_DAY.get(w);
+  if (SYNONYMS.has(w)) return SYNONYMS.get(w);
+  return w;
+}
+
 function tokens(str) {
-  const t = norm(str).split(" ").filter(w => w && !STOP.has(w));
-  // bigrams capture phrases like "åpent lørdag", "opening hours"
-  const bigrams = [];
-  for (let i = 0; i < t.length - 1; i++) bigrams.push(t[i] + " " + t[i+1]);
-  return t.concat(bigrams);
+  const base = norm(str).split(" ").filter(Boolean);
+  const uni = [];
+  for (const raw of base) {
+    if (STOP.has(raw)) continue;
+    const w = normalizeTerm(raw);
+    if (w && !STOP.has(w)) uni.push(w);
+  }
+  // bigrams after normalization
+  const bi = [];
+  for (let i = 0; i < uni.length - 1; i++) bi.push(uni[i] + " " + uni[i+1]);
+  return uni.concat(bi);
 }
 
 function tf(arr) {
@@ -182,7 +211,7 @@ function rankFAQ_TFIDF(question, kb) {
   const docTokens = kb.map(e => {
     const tQ = tokens(e.q);
     const tA = tokens(e.a);
-    return tQ.concat(tQ, tA); // Q counted twice
+    return tQ.concat(tQ, tA); // weight Q twice
   });
 
   const IDF = idf(docTokens);
@@ -206,8 +235,8 @@ function rankFAQ_TFIDF(question, kb) {
   }).sort((a,b) => b._score - a._score);
 }
 
-// Confidence floor: below this, we consider the match unreliable
-const MIN_SIM = 0.18;
+// Confidence floor (slightly relaxed with synonyms)
+const MIN_SIM = 0.16;
 
 // -------------------- Logging --------------------
 function logUsage(row) {
@@ -259,7 +288,8 @@ async function fetchJSON(url, opts, timeoutMs = 15000) {
 // -------------------- Chat --------------------
 app.post("/chat", async (req, res) => {
   const origin  = req.headers.origin || "";
-  const client  = safeSlug(req.body?.client || "demo");
+  the_client  = safeSlug(req.body?.client || "demo"); // <-- keep your slug logic
+  const client = the_client; // alias for clarity
   const message = String(req.body?.message || "").slice(0, 2000);
 
   if (!REGISTRY[client]) {
@@ -274,23 +304,20 @@ app.post("/chat", async (req, res) => {
   const top = ranked[0];
   const confident = top && top._score >= MIN_SIM;
 
-  // Confident KB hit → answer directly (cheap + consistent)
   if (confident) {
     const reply = top.a;
     logUsage({ ts:new Date().toISOString(), client, origin, kind:"kb", in:message.length, out:reply.length, score:top._score });
     return res.json({ reply, unsure: false, suggestions: ranked.slice(1,3).map(x=>x.q) });
   }
 
-  // LLM fallback
   if (!OPENAI_KEY) {
     return res.status(500).json({ reply: "API-nøkkel mangler på serveren.", unsure: true });
   }
 
-  // Only send top-3 to the model; include scores so it can judge reliability
   const topK = ranked.slice(0, 3);
-  const context = topK.map((it, i) =>
-    `[${i+1}] score=${(it._score || 0).toFixed(3)}\nQ: ${it.q}\nA: ${it.a}`
-  ).join("\n\n");
+  const context = topK.length
+    ? topK.map((it, i) => `[${i+1}] score=${(it._score||0).toFixed(3)}\nQ: ${it.q}\nA: ${it.a}`).join("\n\n")
+    : "(no candidates)";
 
   const systemMsg = `
 You are a concise, friendly customer-service assistant.
@@ -307,13 +334,12 @@ You are a concise, friendly customer-service assistant.
       model: MODEL, temperature: 0.2,
       messages: [
         { role: "system", content: systemMsg },
-        { role: "system", content: context || "(no candidates)" },
+        { role: "system", content: `Knowledge Base Candidates:\n${context}` },
         { role: "user", content: message }
       ]
     })
   }, 15000);
 
-  // quick retry on 5xx/network
   if (!resp.ok || resp.status >= 500) {
     resp = await fetchJSON("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -322,7 +348,7 @@ You are a concise, friendly customer-service assistant.
         model: MODEL, temperature: 0.2,
         messages: [
           { role: "system", content: systemMsg },
-          { role: "system", content: context || "(no candidates)" },
+          { role: "system", content: `Knowledge Base Candidates:\n${context}` },
           { role: "user", content: message }
         ]
       })
@@ -345,4 +371,3 @@ You are a concise, friendly customer-service assistant.
 app.listen(PORT, () => {
   console.log(`✅ Server live on port ${PORT}`);
 });
-
