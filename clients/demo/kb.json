@@ -151,4 +151,20 @@
     "q": "Weekend orders",
     "a": "Saturday pickups by 13:45. Closed Sunday—no Sunday deliveries."
   }
-]
+  
+{
+  "q": "Når har dere åpent på lørdag?",
+  "a": "Vi har åpent lørdager 09:00–14:00. Ukedager 08:00–18:00. Søndag stengt."
+},
+{
+  "q": "Har dere åpent på lørdag?",
+  "a": "Ja—lørdager 09:00–14:00. Ukedager 08:00–18:00. Søndag stengt."
+},
+{
+  "q": "Saturday opening hours",
+  "a": "Open Saturdays 09:00–14:00. Weekdays 08:00–18:00. Closed on Sunday."
+},
+{
+  "q": "Are you open on Saturday?",
+  "a": "Yes—Saturdays 09:00–14:00. Weekdays 08:00–18:00. Closed on Sunday."
+}
