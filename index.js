@@ -288,8 +288,7 @@ async function fetchJSON(url, opts, timeoutMs = 15000) {
 // -------------------- Chat --------------------
 app.post("/chat", async (req, res) => {
   const origin  = req.headers.origin || "";
-  the_client  = safeSlug(req.body?.client || "demo"); // <-- keep your slug logic
-  const client = the_client; // alias for clarity
+  const client  = safeSlug(req.body?.client || "demo"); // <-- fixed here
   const message = String(req.body?.message || "").slice(0, 2000);
 
   if (!REGISTRY[client]) {
@@ -343,7 +342,7 @@ You are a concise, friendly customer-service assistant.
   if (!resp.ok || resp.status >= 500) {
     resp = await fetchJSON("https://api.openai.com/v1/chat/completions", {
       method: "POST",
-      headers: { "Authorization": `Bearer ${OPENAI_KEY}`, "Content-Type": "application/json" },
+      headers: { "Authorization": `Bearer ${OPENAI_KEY}", "Content-Type": "application/json" },
       body: JSON.stringify({
         model: MODEL, temperature: 0.2,
         messages: [
