@@ -148,6 +148,10 @@ const SYNONYMS = new Map([
   ["closed","hours"],
 
   ["adressen","adresse"],
+  ["addressen","adresse"],
+  ["addresse","adresse"],
+  ["addres","adresse"],
+  ["addr","adresse"],
   ["butikken","butikk"],
 
   ["vipps","vipps"],
@@ -337,7 +341,7 @@ function detectIntent(message) {
     return "opening_hours";
   }
 
-  if (/(adresse|adressen|hvor ligger|hvor finner|hvor er dere|lokasjon|location|address|where are|where is|find you)/.test(m)) {
+  if (/(adresse|adressen|addressen|addresse|addres|addr|hvor\s+ligger|hvor\s+finner|hvor\s+er|hvor\s+holder|kor\s+er|lokasjon|location|address|where\s+are|where\s+is|find\s+you)/.test(m)) {
     return "address";
   }
 
@@ -384,7 +388,7 @@ function intentQuery(intent) {
       "åpningstider åpningstid åpent åpen open opening hours lørdag saturday søndag sunday mandag fredag",
 
     address:
-      "adresse adressen address location hvor ligger dere hvor finner dere hvor er dere butikk butikken sarpsborg st marie gate",
+      "adresse adressen addressen addresse addres addr address location hvor ligger dere hvor finner dere hvor er dere butikk butikken sarpsborg st marie gate",
 
     phone:
       "telefon nummer phone call ringe kontakt",
@@ -430,9 +434,43 @@ app.post("/chat", async (req, res) => {
 
   const kb = getKB(client);
 
-  // First, detect obvious intent and rank using a stronger intent query.
-  // This fixes phrases like "hva er adressen deres", "hvor er dere", and "kan jeg betale med vipps".
   const intent = detectIntent(message);
+
+  // Hard safety override for address questions.
+  // If the user clearly asks where the business is, return the address entry directly.
+  if (intent === "address") {
+    const addressEntry = kb.find(x => {
+      const q = String(x.q || "").toLowerCase();
+      return (
+        q.includes("adresse") ||
+        q.includes("address") ||
+        q.includes("location") ||
+        q.includes("st marie") ||
+        q.includes("sarpsborg")
+      );
+    });
+
+    if (addressEntry) {
+      logUsage({
+        ts: new Date().toISOString(),
+        client,
+        origin,
+        kind: "intent_address",
+        intent,
+        in: message.length,
+        out: addressEntry.a.length
+      });
+
+      return res.json({
+        reply: addressEntry.a,
+        unsure: false,
+        suggestions: []
+      });
+    }
+  }
+
+  // Use a stronger intent query when available.
+  // This fixes phrases like "kan jeg betale med vipps", "hva lager dere", and opening-hour variants.
   const queryForRanking = intentQuery(intent) || message;
 
   const ranked = rankFAQ_TFIDF(queryForRanking, kb);
