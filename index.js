@@ -310,6 +310,20 @@ app.get("/debug-cors", (req, res) => {
   });
 });
 
+// This helps you check if the server understands the intent correctly
+app.get("/debug-intent", (req, res) => {
+  const message = String(req.query.message || "");
+  const intent = detectIntent(message);
+  const emergency = isEmergencyAddressQuestion(message);
+
+  res.json({
+    message,
+    intent,
+    emergencyAddressOverride: emergency,
+    query: intentQuery(intent)
+  });
+});
+
 // -------------------- OpenAI helper (timeout + retry) --------------------
 async function fetchJSON(url, opts, timeoutMs = 15000) {
   const c = new AbortController();
@@ -380,6 +394,16 @@ function detectIntent(message) {
   return null;
 }
 
+// Emergency detector for address questions.
+// This runs BEFORE everything else in /chat.
+function isEmergencyAddressQuestion(message) {
+  const m = String(message || "")
+    .toLowerCase()
+    .normalize("NFKD");
+
+  return /(adresse|adressen|address|addressen|addresse|addres|addr|hvor\s+er|hvor\s+ligger|hvor\s+finner|hvor\s+holder|kor\s+er|lokasjon|location|where\s+are|where\s+is|find\s+you)/.test(m);
+}
+
 // For each intent, use a strong search query instead of hardcoding answers.
 // This keeps the system reusable for future clients because answers still come from kb.json.
 function intentQuery(intent) {
@@ -434,40 +458,44 @@ app.post("/chat", async (req, res) => {
 
   const kb = getKB(client);
 
-  const intent = detectIntent(message);
-
-  // Hard safety override for address questions.
-  // If the user clearly asks where the business is, return the address entry directly.
-  if (intent === "address") {
+  // EMERGENCY ADDRESS OVERRIDE:
+  // This catches address/location questions before the fuzzy search can confuse them with opening hours.
+  if (isEmergencyAddressQuestion(message)) {
     const addressEntry = kb.find(x => {
       const q = String(x.q || "").toLowerCase();
+      const a = String(x.a || "").toLowerCase();
+
       return (
         q.includes("adresse") ||
         q.includes("address") ||
         q.includes("location") ||
-        q.includes("st marie") ||
-        q.includes("sarpsborg")
+        q.includes("lokasjon") ||
+        a.includes("st. marie") ||
+        a.includes("st marie") ||
+        a.includes("1706 sarpsborg")
       );
     });
 
-    if (addressEntry) {
-      logUsage({
-        ts: new Date().toISOString(),
-        client,
-        origin,
-        kind: "intent_address",
-        intent,
-        in: message.length,
-        out: addressEntry.a.length
-      });
+    const reply = addressEntry?.a ||
+      "Du finner oss i St. Marie gate 42, 1706 Sarpsborg. Inngang fra gateplan, med parkering i nærheten.";
 
-      return res.json({
-        reply: addressEntry.a,
-        unsure: false,
-        suggestions: []
-      });
-    }
+    logUsage({
+      ts: new Date().toISOString(),
+      client,
+      origin,
+      kind: "emergency_address",
+      in: message.length,
+      out: reply.length
+    });
+
+    return res.json({
+      reply,
+      unsure: false,
+      suggestions: []
+    });
   }
+
+  const intent = detectIntent(message);
 
   // Use a stronger intent query when available.
   // This fixes phrases like "kan jeg betale med vipps", "hva lager dere", and opening-hour variants.
