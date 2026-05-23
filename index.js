@@ -56,6 +56,7 @@ function isAllowedOrigin(client, origin) {
   if (!cfg) return false;
   return (cfg.origins || []).includes(origin || "");
 }
+
 function isKnownOrigin(origin) {
   if (FALLBACK_ALLOWED.has(origin)) return true;
   for (const c in REGISTRY) {
@@ -63,6 +64,7 @@ function isKnownOrigin(origin) {
   }
   return false;
 }
+
 function allowCORS(res, origin) {
   res.setHeader("Access-Control-Allow-Origin", origin);
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
@@ -79,6 +81,7 @@ app.use((req, res, next) => {
     if (isKnownOrigin(origin)) allowCORS(res, origin);
     return res.sendStatus(204);
   }
+
   if (origin && isAllowedOrigin(client, origin)) allowCORS(res, origin);
   return next();
 });
@@ -103,6 +106,7 @@ function getKB(client) {
   const now = Date.now();
   const hit = kbCache.get(client);
   if (hit && (now - hit.ts) < 60_000) return hit.kb;
+
   const kbPath = path.join(CLIENTS_DIR, client, "kb.json");
   const kb = normalizeKB(readJSON(kbPath, []));
   kbCache.set(client, { ts: now, kb });
@@ -112,9 +116,13 @@ function getKB(client) {
 // -------------------- Retrieval: TF-IDF + bigrams + synonyms/day roots -------
 const STOP = new Set([
   // Norwegian
-  "og","i","på","for","med","til","fra","en","ei","et","er","som","av","vi","du","jeg","dere","de","det","den","å","har","hva","når","hvor",
+  "og","i","på","for","med","til","fra","en","ei","et","er","som","av",
+  "vi","du","jeg","meg","dere","deres","de","det","den","å","har","hva",
+  "når","hvor","kan","kunne","min","mitt","mine","din","ditt","dine","oss","om",
+
   // English
-  "and","or","the","a","an","of","to","in","on","for","with","is","are","we","you","it","this","that","do","does","when","what","where"
+  "and","or","the","a","an","of","to","in","on","for","with","is","are",
+  "we","you","it","this","that","do","does","when","what","where"
 ]);
 
 const ROOT_DAY = new Map([
@@ -128,9 +136,24 @@ const ROOT_DAY = new Map([
 ]);
 
 const SYNONYMS = new Map([
-  ["åpent","åpningstider"], ["åpne","åpningstider"], ["åpning","åpningstider"],
-  ["open","hours"], ["opening","hours"], ["hour","hours"], ["hours","hours"],
-  ["stengt","åpningstider"], ["closed","hours"]
+  ["åpent","åpningstider"],
+  ["åpne","åpningstider"],
+  ["åpning","åpningstider"],
+  ["stengt","åpningstider"],
+
+  ["open","hours"],
+  ["opening","hours"],
+  ["hour","hours"],
+  ["hours","hours"],
+  ["closed","hours"],
+
+  ["adressen","adresse"],
+  ["butikken","butikk"],
+
+  ["vipps","vipps"],
+  ["vips","vipps"],
+  ["vippøs","vipps"],
+  ["betaler","betale"]
 ]);
 
 function norm(str) {
@@ -142,7 +165,7 @@ function norm(str) {
     .trim();
 }
 
-function normalizeTerm(w){
+function normalizeTerm(w) {
   if (ROOT_DAY.has(w)) return ROOT_DAY.get(w);
   if (SYNONYMS.has(w)) return SYNONYMS.get(w);
   return w;
@@ -151,13 +174,18 @@ function normalizeTerm(w){
 function tokens(str) {
   const base = norm(str).split(" ").filter(Boolean);
   const uni = [];
+
   for (const raw of base) {
     if (STOP.has(raw)) continue;
     const w = normalizeTerm(raw);
     if (w && !STOP.has(w)) uni.push(w);
   }
+
   const bi = [];
-  for (let i = 0; i < uni.length - 1; i++) bi.push(uni[i] + " " + uni[i+1]);
+  for (let i = 0; i < uni.length - 1; i++) {
+    bi.push(uni[i] + " " + uni[i + 1]);
+  }
+
   return uni.concat(bi);
 }
 
@@ -169,21 +197,27 @@ function tf(arr) {
 
 function idf(docs) {
   const df = new Map();
+
   docs.forEach(d => {
     const seen = new Set(d);
     for (const w of seen) df.set(w, (df.get(w) || 0) + 1);
   });
+
   const N = docs.length;
   const out = new Map();
+
   for (const [w, c] of df) out.set(w, Math.log(1 + N / (c || 1)));
   return out;
 }
 
 function dot(a, b) {
   let s = 0;
-  for (const [k, v] of a) if (b.has(k)) s += v * b.get(k);
+  for (const [k, v] of a) {
+    if (b.has(k)) s += v * b.get(k);
+  }
   return s;
 }
+
 function vecLen(v) {
   let s = 0;
   for (const [, v2] of v) s += v2 * v2;
@@ -192,6 +226,7 @@ function vecLen(v) {
 
 function rankFAQ_TFIDF(question, kb) {
   const qToks = tokens(question);
+
   const docTokens = kb.map(e => {
     const tQ = tokens(e.q);
     const tA = tokens(e.a);
@@ -209,36 +244,51 @@ function rankFAQ_TFIDF(question, kb) {
 
   const qTF = tf(qToks);
   const qVec = new Map();
-  for (const [w, f] of qTF) qVec.set(w, f * (IDF.get(w) || 0));
+
+  for (const [w, f] of qTF) {
+    qVec.set(w, f * (IDF.get(w) || 0));
+  }
+
   const qLen = vecLen(qVec) || 1e-9;
 
   return kb.map((e, i) => {
     const v = docVecs[i];
     const score = dot(qVec, v) / (qLen * (vecLen(v) || 1e-9));
     return { ...e, _score: score };
-  }).sort((a,b) => b._score - a._score);
+  }).sort((a, b) => b._score - a._score);
 }
 
 const MIN_SIM = 0.16;
 
 // -------------------- Logging --------------------
 function logUsage(row) {
-  fs.appendFile(path.join(LOGS_DIR, "chat.jsonl"), JSON.stringify(row) + "\n", () => {});
+  fs.appendFile(
+    path.join(LOGS_DIR, "chat.jsonl"),
+    JSON.stringify(row) + "\n",
+    () => {}
+  );
 }
 
 // -------------------- Health / Debug --------------------
 app.get("/ping", (req, res) => {
   res.json({ ok: true, time: new Date().toISOString() });
 });
+
 app.get("/debug-kb", (req, res) => {
   const client = safeSlug(req.query.client || "demo");
   const kbPath = path.join(CLIENTS_DIR, client, "kb.json");
-  let raw = []; let error = null;
+
+  let raw = [];
+  let error = null;
+
   try { raw = JSON.parse(fs.readFileSync(kbPath, "utf8")); }
   catch (e) { error = String(e.message); }
+
   const kb = normalizeKB(raw);
+
   res.json({
-    client, kbPath,
+    client,
+    kbPath,
     exists: fs.existsSync(kbPath),
     rawCount: Array.isArray(raw) ? raw.length : -1,
     kbCount: kb.length,
@@ -246,6 +296,7 @@ app.get("/debug-kb", (req, res) => {
     error
   });
 });
+
 app.get("/debug-cors", (req, res) => {
   res.json({
     seenOrigin: req.headers.origin || null,
@@ -259,13 +310,108 @@ app.get("/debug-cors", (req, res) => {
 async function fetchJSON(url, opts, timeoutMs = 15000) {
   const c = new AbortController();
   const t = setTimeout(() => c.abort(), timeoutMs);
+
   try {
     const r = await fetchFn(url, { ...opts, signal: c.signal });
     const text = await r.text();
+
     let data = {};
-    try { data = JSON.parse(text); } catch { data = { raw: text }; }
+    try { data = JSON.parse(text); }
+    catch { data = { raw: text }; }
+
     return { ok: r.ok, status: r.status, data };
-  } finally { clearTimeout(t); }
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+// -------------------- Intent detection layer --------------------
+// This catches obvious customer questions before the fuzzy TF-IDF matcher.
+// It prevents small phrasing changes from sending users to the wrong answer.
+function detectIntent(message) {
+  const m = String(message || "")
+    .toLowerCase()
+    .normalize("NFKD");
+
+  if (/(åpent|aapent|åpningstid|apningstid|opening|hours|open|stengt|closed|lørdag|lordag|søndag|sondag|mandag|fredag|helg|weekend|saturday|sunday)/.test(m)) {
+    return "opening_hours";
+  }
+
+  if (/(adresse|adressen|hvor ligger|hvor finner|hvor er dere|lokasjon|location|address|where are|where is|find you)/.test(m)) {
+    return "address";
+  }
+
+  if (/(telefon|tlf|nummer|ringe|phone|call)/.test(m)) {
+    return "phone";
+  }
+
+  if (/(epost|e-post|email|mail)/.test(m)) {
+    return "email";
+  }
+
+  if (/(vipps|vips|vippøs|kort|bankkort|kontant|cash|card|betaling|betale|betaler|payment|invoice|faktura)/.test(m)) {
+    return "payment";
+  }
+
+  if (/(lager dere|selger dere|produkter|produktene|hva lager|hva selger|hva har dere|what do you make|what do you sell|products|menu|meny)/.test(m)) {
+    return "products";
+  }
+
+  if (/(bestille|bestilling|order|custom cake|spesialkake|kake|cake)/.test(m)) {
+    return "ordering";
+  }
+
+  if (/(allergen|allergi|gluten|glutenfri|laktose|nøtt|nott|nut|allergy)/.test(m)) {
+    return "allergens";
+  }
+
+  if (/(levering|levere|delivery|deliver|henting|pickup)/.test(m)) {
+    return "delivery";
+  }
+
+  if (/(pris|priser|koster|kostnad|price|cost)/.test(m)) {
+    return "price";
+  }
+
+  return null;
+}
+
+// For each intent, use a strong search query instead of hardcoding answers.
+// This keeps the system reusable for future clients because answers still come from kb.json.
+function intentQuery(intent) {
+  const queries = {
+    opening_hours:
+      "åpningstider åpningstid åpent åpen open opening hours lørdag saturday søndag sunday mandag fredag",
+
+    address:
+      "adresse adressen address location hvor ligger dere hvor finner dere hvor er dere butikk butikken sarpsborg st marie gate",
+
+    phone:
+      "telefon nummer phone call ringe kontakt",
+
+    email:
+      "e-post email mail kontakt bestilling spørsmål",
+
+    payment:
+      "betaling betale betaler payment vipps vips vippøs kort bankkort card kontant cash faktura invoice",
+
+    products:
+      "produkter hva lager dere hva selger dere meny menu kaker småbakst makroner kaffe spesialkaker",
+
+    ordering:
+      "bestilling bestille order place order hvordan spesialkake custom cake kake depositum 48 timer",
+
+    allergens:
+      "allergener allergi allergens glutenfri gluten free laktosefri lactose nøtter nuts nut free",
+
+    delivery:
+      "levering deliver delivery sarpsborg hente pickup henting",
+
+    price:
+      "pris priser price cost koster kake bløtkake cake standard 20 cm"
+  };
+
+  return queries[intent] || null;
 }
 
 // -------------------- Chat --------------------
@@ -277,29 +423,59 @@ app.post("/chat", async (req, res) => {
   if (!REGISTRY[client]) {
     return res.status(400).json({ reply: "Unknown client.", unsure: true });
   }
+
   if (origin && !isAllowedOrigin(client, origin)) {
     return res.status(403).json({ reply: "Origin not allowed for this client.", unsure: true });
   }
 
   const kb = getKB(client);
-  const ranked = rankFAQ_TFIDF(message, kb);
+
+  // First, detect obvious intent and rank using a stronger intent query.
+  // This fixes phrases like "hva er adressen deres", "hvor er dere", and "kan jeg betale med vipps".
+  const intent = detectIntent(message);
+  const queryForRanking = intentQuery(intent) || message;
+
+  const ranked = rankFAQ_TFIDF(queryForRanking, kb);
   const top = ranked[0];
-  const confident = top && top._score >= MIN_SIM;
+
+  // If we detected an intent, allow a slightly lower threshold because the query is already cleaned.
+  const threshold = intent ? 0.08 : MIN_SIM;
+  const confident = top && top._score >= threshold;
 
   if (confident) {
     const reply = top.a;
-    logUsage({ ts:new Date().toISOString(), client, origin, kind:"kb", in:message.length, out:reply.length, score:top._score });
-    return res.json({ reply, unsure: false, suggestions: ranked.slice(1,3).map(x=>x.q) });
+
+    logUsage({
+      ts: new Date().toISOString(),
+      client,
+      origin,
+      kind: "kb",
+      intent: intent || null,
+      in: message.length,
+      out: reply.length,
+      score: top._score
+    });
+
+    return res.json({
+      reply,
+      unsure: false,
+      suggestions: ranked.slice(1, 3).map(x => x.q)
+    });
   }
 
   if (!OPENAI_KEY) {
-    return res.status(500).json({ reply: "API-nøkkel mangler på serveren.", unsure: true });
+    return res.status(500).json({
+      reply: "API-nøkkel mangler på serveren.",
+      unsure: true
+    });
   }
 
   const topK = ranked.slice(0, 3);
-  const context = (topK.length
-    ? topK.map((it, i) => `[${i+1}] score=${(it._score||0).toFixed(3)}\nQ: ${it.q}\nA: ${it.a}`).join("\n\n")
-    : "(no candidates)");
+  const context = topK.length
+    ? topK.map((it, i) =>
+        `[${i + 1}] score=${(it._score || 0).toFixed(3)}\nQ: ${it.q}\nA: ${it.a}`
+      ).join("\n\n")
+    : "(no candidates)";
 
   const systemMsg = `
 You are a concise, friendly customer-service assistant.
@@ -317,7 +493,8 @@ You are a concise, friendly customer-service assistant.
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      model: MODEL, temperature: 0.2,
+      model: MODEL,
+      temperature: 0.2,
       messages: [
         { role: "system", content: systemMsg },
         { role: "system", content: `Knowledge Base Candidates:\n${context}` },
@@ -331,11 +508,12 @@ You are a concise, friendly customer-service assistant.
     resp = await fetchJSON("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${OPENAI_KEY}`,   // <-- fixed here
+        "Authorization": `Bearer ${OPENAI_KEY}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: MODEL, temperature: 0.2,
+        model: MODEL,
+        temperature: 0.2,
         messages: [
           { role: "system", content: systemMsg },
           { role: "system", content: `Knowledge Base Candidates:\n${context}` },
@@ -347,14 +525,31 @@ You are a concise, friendly customer-service assistant.
 
   if (!resp.ok) {
     console.error("OpenAI error:", resp.status, resp.data);
-    return res.status(502).json({ reply: "Beklager – midlertidig problem med AI-svaret.", unsure: true });
+    return res.status(502).json({
+      reply: "Beklager – midlertidig problem med AI-svaret.",
+      unsure: true
+    });
   }
 
   const data = resp.data;
-  const reply = data?.choices?.[0]?.message?.content?.trim()
-             || "Beklager – jeg fikk ikke generert et svar.";
-  logUsage({ ts:new Date().toISOString(), client, origin, kind:"llm", in:message.length, out:reply.length });
-  res.json({ reply, unsure: true, suggestions: kb.slice(0,3).map(x=>x.q) });
+  const reply =
+    data?.choices?.[0]?.message?.content?.trim()
+    || "Beklager – jeg fikk ikke generert et svar.";
+
+  logUsage({
+    ts: new Date().toISOString(),
+    client,
+    origin,
+    kind: "llm",
+    in: message.length,
+    out: reply.length
+  });
+
+  res.json({
+    reply,
+    unsure: true,
+    suggestions: kb.slice(0, 3).map(x => x.q)
+  });
 });
 
 // -------------------- Start --------------------
