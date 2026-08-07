@@ -456,6 +456,29 @@ app.post("/chat", async (req, res) => {
     return res.status(403).json({ reply: "Origin not allowed for this client.", unsure: true });
   }
 
+// Direct BE Driver price fixes
+const normalizedMessage = String(message || "")
+  .toLowerCase()
+  .replaceAll("æ", "ae")
+  .replaceAll("ø", "o")
+  .replaceAll("å", "a");
+
+if (
+  String(client || "").toLowerCase() === "bedriver" &&
+  (
+    normalizedMessage.includes("morkekjoring") ||
+    normalizedMessage.includes("morke") ||
+    normalizedMessage.includes("morkedemo") ||
+    normalizedMessage.includes("morkedemonstrasjon")
+  )
+) {
+  return res.json({
+    reply: "Mørkekjøring hos BE Driver Trafikkskole er oppført til 1 950 kr.",
+    unsure: false,
+    suggestions: []
+  });
+}
+
   const kb = getKB(client);
   // Direct BE Driver price fixes
 const normalizedMessage = message
