@@ -16,5 +16,14 @@
       "https://www.nova-dynamics.no",
       "https://prismatic-taffy-e96ac7.netlify.app"
     ]
+  },
+  "bedriver": {
+    "name": "bedriver",
+    "origins": [
+      "https://bedriver.no",
+      "https://nova-dynamics.no",
+      "https://www.nova-dynamics.no",
+      "https://prismatic-taffy-e96ac7.netlify.app"
+    ]
   }
 }

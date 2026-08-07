@@ -457,6 +457,22 @@ app.post("/chat", async (req, res) => {
   }
 
   const kb = getKB(client);
+  // Direct BE Driver price fixes
+const normalizedMessage = message
+  .toLowerCase()
+  .normalize("NFD")
+  .replace(/[\u0300-\u036f]/g, "");
+
+if (
+  client === "bedriver" &&
+  /(morkekjoring|morke\s*kjoring|morkedemo|morkedemonstrasjon|morke)/i.test(normalizedMessage)
+) {
+  return res.json({
+    reply: "Mørkekjøring hos BE Driver Trafikkskole er oppført til 1 950 kr.",
+    unsure: false,
+    suggestions: []
+  });
+}
 
   // EMERGENCY ADDRESS OVERRIDE:
   // This catches address/location questions before the fuzzy search can confuse them with opening hours.
