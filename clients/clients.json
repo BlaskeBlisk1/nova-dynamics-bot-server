@@ -25,5 +25,14 @@
       "https://www.nova-dynamics.no",
       "https://prismatic-taffy-e96ac7.netlify.app"
     ]
+  },
+  "fyllingsdalen": {
+    "name": "fyllingsdalen",
+    "origins": [
+      "https://fyllingsdalentrafikkskole.no",
+      "https://nova-dynamics.no",
+      "https://www.nova-dynamics.no",
+      "https://prismatic-taffy-e96ac7.netlify.app"
+    ]
   }
 }
