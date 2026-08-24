@@ -6,33 +6,79 @@
       "https://nova-dynamics.no",
       "https://www.nova-dynamics.no",
       "http://localhost:8888"
-    ]
+    ],
+    "demo": {
+      "description": "Spør om åpningstider, bestilling, levering og allergener.",
+      "greeting": "Hei! Jeg er den digitale assistenten for Nordic Nibbles. Hva kan jeg hjelpe deg med?",
+      "website": "https://nova-dynamics.no",
+      "accent": "#7c5cff",
+      "suggestedQuestions": [
+        "Når har dere åpent?",
+        "Hvor holder dere til?",
+        "Hva koster en standardkake?",
+        "Tilbyr dere levering?"
+      ]
+    }
   },
   "acme": {
-    "name": "acme",
+    "name": "Acme",
     "origins": [
       "https://www.acme.com",
       "https://nova-dynamics.no",
       "https://www.nova-dynamics.no",
       "https://prismatic-taffy-e96ac7.netlify.app"
-    ]
+    ],
+    "demo": {
+      "description": "Eksempel på en personlig digital bedriftsassistent.",
+      "greeting": "Hei! Jeg er den digitale assistenten for Acme. Hva kan jeg hjelpe deg med?",
+      "website": "https://www.acme.com",
+      "accent": "#4f7cff",
+      "suggestedQuestions": [
+        "Når har dere åpent?",
+        "Hvordan kontakter jeg dere?"
+      ]
+    }
   },
   "bedriver": {
-    "name": "bedriver",
+    "name": "BE Driver Trafikkskole",
     "origins": [
       "https://bedriver.no",
       "https://nova-dynamics.no",
       "https://www.nova-dynamics.no",
       "https://prismatic-taffy-e96ac7.netlify.app"
-    ]
+    ],
+    "demo": {
+      "description": "Spør om førerkortklasser, kurs, priser og påmelding.",
+      "greeting": "Hei! Jeg er den digitale assistenten for BE Driver Trafikkskole. Hva kan jeg hjelpe deg med?",
+      "website": "https://bedriver.no",
+      "accent": "#2f7df4",
+      "suggestedQuestions": [
+        "Hva koster en kjøretime?",
+        "Hva koster mørkekjøring?",
+        "Hvilke førerkortklasser tilbyr dere?",
+        "Hvor holder dere til?"
+      ]
+    }
   },
   "fyllingsdalen": {
-    "name": "fyllingsdalen",
+    "name": "Fyllingsdalen Trafikkskole",
     "origins": [
       "https://fyllingsdalentrafikkskole.no",
       "https://nova-dynamics.no",
       "https://www.nova-dynamics.no",
       "https://prismatic-taffy-e96ac7.netlify.app"
-    ]
+    ],
+    "demo": {
+      "description": "Spør om opplæring, priser, åpningstider og påmelding.",
+      "greeting": "Hei! Jeg er den digitale assistenten for Fyllingsdalen Trafikkskole. Hva kan jeg hjelpe deg med?",
+      "website": "https://fyllingsdalentrafikkskole.no",
+      "accent": "#e95b2f",
+      "suggestedQuestions": [
+        "Hva koster en kjøretime?",
+        "Hva er åpningstidene?",
+        "Hvilke førerkortklasser tilbyr dere?",
+        "Hvor holder dere til?"
+      ]
+    }
   }
 }

@@ -4,10 +4,11 @@ const path = require("path");
 
 const slugRaw = process.argv[2] || "";
 const origin  = process.argv[3] || ""; // e.g. https://www.acme.com
+const displayName = process.argv.slice(4).join(" ").trim();
 
 const slug = slugRaw.toLowerCase().replace(/[^a-z0-9\-]/g,"");
 if(!slug || !origin){
-  console.log("Usage: node new-client.js <slug> <https://client-domain>");
+  console.log('Usage: node new-client.js <slug> <https://client-domain> ["Business Name"]');
   process.exit(1);
 }
 
@@ -36,9 +37,28 @@ const regPath = path.join(clientsDir, "clients.json");
 let reg = {};
 try { reg = JSON.parse(fs.readFileSync(regPath, "utf8")); } catch {}
 const origins = Array.from(new Set([origin, ...defaultOrigins]));
-reg[slug] = { name: slug, origins };
+const existing = reg[slug] || {};
+const name = displayName || existing.name || slug;
+reg[slug] = {
+  ...existing,
+  name,
+  origins,
+  demo: existing.demo || {
+    description: "Spør assistenten om tjenester, priser og praktisk informasjon.",
+    greeting: `Hei! Jeg er den digitale assistenten for ${name}. Hva kan jeg hjelpe deg med?`,
+    website: origin,
+    accent: "#4f7cff",
+    suggestedQuestions: [
+      "Hvilke tjenester tilbyr dere?",
+      "Hva koster det?",
+      "Hvor holder dere til?",
+      "Hvordan tar jeg kontakt?"
+    ]
+  }
+};
 fs.writeFileSync(regPath, JSON.stringify(reg, null, 2));
 
 console.log(`✅ Created client '${slug}'`);
 console.log(` - KB: clients/${slug}/kb.json`);
+console.log(` - Demo: /demos/${slug}`);
 console.log(` - Origins:`, origins);

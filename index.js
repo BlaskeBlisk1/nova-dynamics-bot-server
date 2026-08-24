@@ -47,7 +47,7 @@ function loadRegistry() {
 }
 
 loadRegistry();
-fs.watchFile(REGISTRY_FILE, { interval: 1500 }, loadRegistry);
+fs.watchFile(REGISTRY_FILE, { interval: 1500, persistent: false }, loadRegistry);
 
 function safeSlug(s) {
   return String(s || "").toLowerCase().replace(/[^a-z0-9\-]/g, "");
@@ -56,6 +56,23 @@ function safeSlug(s) {
 function clientHasKB(client) {
   const kbPath = path.join(CLIENTS_DIR, client, "kb.json");
   return fs.existsSync(kbPath);
+}
+
+function publicDemoConfig(client) {
+  const cfg = REGISTRY[client] || {};
+  const demo = cfg.demo || {};
+
+  return {
+    client,
+    name: cfg.name || client,
+    description: demo.description || "Spør assistenten om tjenester, priser og praktisk informasjon.",
+    greeting: demo.greeting || `Hei! Jeg er den digitale assistenten for ${cfg.name || client}. Hva kan jeg hjelpe deg med?`,
+    website: demo.website || "",
+    accent: demo.accent || "#4f7cff",
+    suggestedQuestions: Array.isArray(demo.suggestedQuestions)
+      ? demo.suggestedQuestions.slice(0, 6)
+      : []
+  };
 }
 
 // ---- HOTFIX fallback allowlist ----
@@ -109,6 +126,28 @@ app.use((req, res, next) => {
   if (origin && isAllowedOrigin(client, origin)) allowCORS(res, origin);
 
   return next();
+});
+
+// -------------------- Render-hosted demos --------------------
+app.get(["/demos/:client", "/demos/:client/"], (req, res) => {
+  const client = safeSlug(req.params.client);
+
+  if (!client || (!REGISTRY[client] && !clientHasKB(client))) {
+    return res.status(404).send("Demo not found.");
+  }
+
+  return res.sendFile(path.join(publicDir, "demo", "index.html"));
+});
+
+app.get("/api/demo-config/:client", (req, res) => {
+  const client = safeSlug(req.params.client);
+
+  if (!client || (!REGISTRY[client] && !clientHasKB(client))) {
+    return res.status(404).json({ error: "Demo not found." });
+  }
+
+  res.setHeader("Cache-Control", "no-store");
+  return res.json(publicDemoConfig(client));
 });
 
 // -------------------- KB cache & helpers --------------------
@@ -1021,6 +1060,14 @@ You are a concise, friendly customer-service assistant.
 });
 
 // -------------------- Start --------------------
-app.listen(PORT, () => {
-  console.log(`✅ Server live on port ${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`✅ Server live on port ${PORT}`);
+  });
+}
+
+module.exports = {
+  app,
+  publicDemoConfig,
+  safeSlug
+};
