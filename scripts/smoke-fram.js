@@ -44,7 +44,10 @@ const server = app.listen(0, async () => {
     for (const [message, expected] of checks) {
       const response = await fetch(`${baseUrl}/chat`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Origin": "https://nova-dynamics-bot-server.onrender.com"
+        },
         body: JSON.stringify({ client: "fram", message })
       });
       const body = await response.json();
