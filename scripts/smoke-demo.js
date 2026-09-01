@@ -13,6 +13,10 @@ for (const file of demoFiles) {
   assert.equal(fs.existsSync(path.join(process.cwd(), file)), true, `${file} is missing.`);
 }
 
+const demoHtml = fs.readFileSync(path.join(process.cwd(), "public/demo/index.html"), "utf8");
+assert.match(demoHtml, /role="log"/);
+assert.match(demoHtml, /Ikke skriv sensitive personopplysninger/);
+
 const routePaths = app._router.stack
   .filter((layer) => layer.route)
   .flatMap((layer) => Array.isArray(layer.route.path) ? layer.route.path : [layer.route.path]);

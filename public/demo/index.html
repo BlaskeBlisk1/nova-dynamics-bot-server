@@ -11,6 +11,7 @@
 <body>
   <div class="ambient ambient-one"></div>
   <div class="ambient ambient-two"></div>
+  <div class="route-lines" aria-hidden="true"></div>
 
   <main class="page-shell">
     <header class="topbar">
@@ -22,17 +23,24 @@
     </header>
 
     <section class="intro">
-      <p class="eyebrow">NETTSIDEASSISTENT</p>
+      <div class="identity-row">
+        <p id="eyebrow" class="eyebrow">NETTSIDEASSISTENT</p>
+        <span id="location-label" class="location-label" hidden></span>
+      </div>
       <h1 id="business-name">Laster demo…</h1>
       <p id="business-description" class="description">Denne assistenten svarer med informasjon tilpasset virksomheten.</p>
+      <div id="highlights" class="highlights" aria-label="Utvalgte fordeler"></div>
     </section>
 
     <section class="demo-grid">
       <aside class="context-card">
         <div>
-          <p class="context-label">SLIK TESTER DU</p>
-          <h2>Still et vanlig kundespørsmål</h2>
-          <p>Prøv et forslag eller skriv spørsmålet slik en ekte kunde ville formulert det.</p>
+          <div id="client-logo-wrap" class="client-logo-wrap" hidden>
+            <img id="client-logo" alt="" loading="eager">
+          </div>
+          <p class="context-label">PERSONLIG DEMO</p>
+          <h2 id="context-title">Still et vanlig kundespørsmål</h2>
+          <p id="context-description">Prøv et forslag eller skriv spørsmålet slik en ekte kunde ville formulert det.</p>
         </div>
 
         <div id="suggestions" class="suggestions" aria-label="Forslag til spørsmål"></div>
@@ -40,23 +48,23 @@
         <div class="source-note">
           <span class="source-icon">✓</span>
           <div>
-            <strong>Bygget fra virksomhetens informasjon</strong>
-            <span>Dette er en uforpliktende demonstrasjon.</span>
+            <strong id="source-title">Bygget fra virksomhetens informasjon</strong>
+            <span id="source-description">Dette er en uforpliktende demonstrasjon.</span>
           </div>
         </div>
       </aside>
 
       <section class="chat-card" aria-label="Chatdemo">
         <div class="chat-header">
-          <div class="assistant-avatar">N</div>
+          <div id="assistant-avatar" class="assistant-avatar">N</div>
           <div>
-            <strong>Digital assistent</strong>
-            <span><i></i> Tilgjengelig nå</span>
+            <strong id="assistant-label">Digital assistent</strong>
+            <span><i></i> <span id="status-label" class="status-label">Tilgjengelig nå</span></span>
           </div>
           <a id="website-link" class="website-link" href="#" target="_blank" rel="noreferrer" hidden>Besøk nettsiden ↗</a>
         </div>
 
-        <div id="messages" class="messages" aria-live="polite"></div>
+        <div id="messages" class="messages" role="log" aria-live="polite" aria-relevant="additions"></div>
 
         <form id="chat-form" class="chat-form">
           <label class="sr-only" for="message-input">Skriv et spørsmål</label>
@@ -66,6 +74,7 @@
             <span aria-hidden="true">↗</span>
           </button>
         </form>
+        <p class="privacy-note">Ikke skriv sensitive personopplysninger i demoen.</p>
       </section>
     </section>
 
