@@ -69,15 +69,30 @@
       "https://prismatic-taffy-e96ac7.netlify.app"
     ],
     "demo": {
-      "description": "Spør om opplæring, priser, åpningstider og påmelding.",
-      "greeting": "Hei! Jeg er den digitale assistenten for Fyllingsdalen Trafikkskole. Hva kan jeg hjelpe deg med?",
+      "description": "Få raske svar om opplæring, priser, kurs og veien til førerkortet i hele Stor-Bergen.",
+      "greeting": "Hei! Jeg er den digitale assistenten for Fyllingsdalen Trafikkskole. Spør meg gjerne om priser, kurs, førerkortklasser, henting eller hvordan du kommer i gang.",
       "website": "https://fyllingsdalentrafikkskole.no",
-      "accent": "#e95b2f",
+      "accent": "#48a9ff",
+      "accentSecondary": "#45e0c1",
+      "theme": "fjord",
+      "eyebrow": "DIN TRAFIKKSKOLE I BERGEN",
+      "contextTitle": "Test den som en ekte elev",
+      "contextDescription": "Spør med dine egne ord. Demoen er trent på Fyllingsdalens tilbud, priser og praktiske elevspørsmål.",
+      "assistantLabel": "Elevassistent",
+      "logo": "https://fyllingsdalentrafikkskole.no/wp-content/uploads/2019/11/fyllingsdalen-trafikkskole-logo-1-290x54.png",
+      "locationLabel": "SPECTRUMBYGGET • STOR-BERGEN",
+      "highlights": [
+        "Henting i Stor-Bergen",
+        "B • A1–A • BE/B96",
+        "Opplæring på tegnspråk"
+      ],
       "suggestedQuestions": [
-        "Hva koster en kjøretime?",
-        "Hva er åpningstidene?",
-        "Hvilke førerkortklasser tilbyr dere?",
-        "Hvor holder dere til?"
+        "Hva koster en kjøretime for klasse B?",
+        "Hva er forskjellen på BE og B96?",
+        "Kan dere hente meg i Bergen sentrum?",
+        "Tilbyr dere opplæring på tegnspråk?",
+        "Hva koster en A2-kjøretime?",
+        "Når er kontoret åpent?"
       ]
     }
   },
