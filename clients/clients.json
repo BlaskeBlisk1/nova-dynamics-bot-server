@@ -80,5 +80,29 @@
         "Hvor holder dere til?"
       ]
     }
+  },
+  "fram": {
+    "name": "Fram Trafikkskole",
+    "origins": [
+      "https://framtrafikkskole.no",
+      "https://www.framtrafikkskole.no",
+      "https://nova-dynamics.no",
+      "https://www.nova-dynamics.no",
+      "https://prismatic-taffy-e96ac7.netlify.app"
+    ],
+    "demo": {
+      "description": "Spør om klasse B, BE/B96, MC, trafikalt grunnkurs, priser og påmelding.",
+      "greeting": "Hei! Jeg er den digitale assistenten for Fram Trafikkskole. Hva kan jeg hjelpe deg med?",
+      "website": "https://framtrafikkskole.no",
+      "accent": "#e53935",
+      "suggestedQuestions": [
+        "Hva koster en kjøretime for klasse B?",
+        "Hva koster trafikalt grunnkurs med førstehjelp?",
+        "Hva er forskjellen på tilbudene for BE og B96?",
+        "Når er kontoret åpent?",
+        "Hvordan melder jeg meg på?",
+        "Hvilke MC-klasser tilbyr dere?"
+      ]
+    }
   }
 }
