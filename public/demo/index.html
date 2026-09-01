@@ -48,23 +48,23 @@
         <div class="source-note">
           <span class="source-icon">✓</span>
           <div>
-            <strong>Bygget fra virksomhetens informasjon</strong>
-            <span>Dette er en uforpliktende demonstrasjon.</span>
+            <strong id="source-title">Bygget fra virksomhetens informasjon</strong>
+            <span id="source-description">Dette er en uforpliktende demonstrasjon.</span>
           </div>
         </div>
       </aside>
 
       <section class="chat-card" aria-label="Chatdemo">
         <div class="chat-header">
-          <div class="assistant-avatar">N</div>
+          <div id="assistant-avatar" class="assistant-avatar">N</div>
           <div>
             <strong id="assistant-label">Digital assistent</strong>
-            <span><i></i> Tilgjengelig nå</span>
+            <span><i></i> <span id="status-label" class="status-label">Tilgjengelig nå</span></span>
           </div>
           <a id="website-link" class="website-link" href="#" target="_blank" rel="noreferrer" hidden>Besøk nettsiden ↗</a>
         </div>
 
-        <div id="messages" class="messages" aria-live="polite"></div>
+        <div id="messages" class="messages" role="log" aria-live="polite" aria-relevant="additions"></div>
 
         <form id="chat-form" class="chat-form">
           <label class="sr-only" for="message-input">Skriv et spørsmål</label>
@@ -74,6 +74,7 @@
             <span aria-hidden="true">↗</span>
           </button>
         </form>
+        <p class="privacy-note">Ikke skriv sensitive personopplysninger i demoen.</p>
       </section>
     </section>
 

@@ -9,8 +9,12 @@ const highlights = document.getElementById("highlights");
 const contextTitle = document.getElementById("context-title");
 const contextDescription = document.getElementById("context-description");
 const assistantLabel = document.getElementById("assistant-label");
+const assistantAvatar = document.getElementById("assistant-avatar");
+const statusLabel = document.getElementById("status-label");
 const clientLogoWrap = document.getElementById("client-logo-wrap");
 const clientLogo = document.getElementById("client-logo");
+const sourceTitle = document.getElementById("source-title");
+const sourceDescription = document.getElementById("source-description");
 const suggestions = document.getElementById("suggestions");
 const websiteLink = document.getElementById("website-link");
 const messages = document.getElementById("messages");
@@ -23,7 +27,10 @@ let config;
 function addMessage(text, type) {
   const message = document.createElement("div");
   message.className = `message ${type}`;
-  message.textContent = text;
+  const sender = document.createElement("span");
+  sender.className = "sr-only";
+  sender.textContent = `${type === "user" ? "Du" : (config?.assistantLabel || "Digital assistent")}: `;
+  message.append(sender, document.createTextNode(text));
   messages.appendChild(message);
   messages.scrollTop = messages.scrollHeight;
   return message;
@@ -84,6 +91,10 @@ function renderConfig(payload) {
   contextTitle.textContent = config.contextTitle || "Still et vanlig kundespørsmål";
   contextDescription.textContent = config.contextDescription || "Prøv et forslag eller skriv spørsmålet slik en ekte kunde ville formulert det.";
   assistantLabel.textContent = config.assistantLabel || "Digital assistent";
+  assistantAvatar.textContent = config.assistantInitial || "N";
+  statusLabel.textContent = config.statusLabel || "Tilgjengelig nå";
+  sourceTitle.textContent = config.sourceTitle || "Bygget fra virksomhetens informasjon";
+  sourceDescription.textContent = config.sourceDescription || "Dette er en uforpliktende demonstrasjon.";
 
   if (config.locationLabel) {
     locationLabel.textContent = config.locationLabel;
@@ -100,6 +111,9 @@ function renderConfig(payload) {
     clientLogo.src = config.logo;
     clientLogo.alt = `${config.name} logo`;
     clientLogoWrap.hidden = false;
+    clientLogo.addEventListener("error", () => {
+      clientLogoWrap.hidden = true;
+    }, { once: true });
   }
 
   addMessage(config.greeting, "bot");
@@ -109,7 +123,17 @@ function renderConfig(payload) {
     button.type = "button";
     button.className = "suggestion";
     button.textContent = question;
-    button.addEventListener("click", () => ask(question));
+    button.addEventListener("click", () => {
+      ask(question);
+
+      if (window.matchMedia("(max-width: 900px)").matches) {
+        const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        document.querySelector(".chat-card")?.scrollIntoView({
+          behavior: reducedMotion ? "auto" : "smooth",
+          block: "start"
+        });
+      }
+    });
     suggestions.appendChild(button);
   }
 

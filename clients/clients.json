@@ -77,10 +77,14 @@
       "theme": "fjord",
       "eyebrow": "DIN TRAFIKKSKOLE I BERGEN",
       "contextTitle": "Test den som en ekte elev",
-      "contextDescription": "Spør med dine egne ord. Demoen er trent på Fyllingsdalens tilbud, priser og praktiske elevspørsmål.",
+      "contextDescription": "Spør med dine egne ord. Demoen bruker skolens publiserte tilbud, priser og praktiske elevinformasjon.",
       "assistantLabel": "Elevassistent",
+      "assistantInitial": "F",
+      "statusLabel": "Klar til å svare",
       "logo": "https://fyllingsdalentrafikkskole.no/wp-content/uploads/2019/11/fyllingsdalen-trafikkskole-logo-1-290x54.png",
       "locationLabel": "SPECTRUMBYGGET • STOR-BERGEN",
+      "sourceTitle": "Bygget på verifiserte kilder",
+      "sourceDescription": "Skolens hovednettside og TABS brukes for tilbud og priser; Statens vegvesen brukes for generelle førerkortregler.",
       "highlights": [
         "Henting i Stor-Bergen",
         "B • A1–A • BE/B96",
@@ -90,9 +94,7 @@
         "Hva koster en kjøretime for klasse B?",
         "Hva er forskjellen på BE og B96?",
         "Kan dere hente meg i Bergen sentrum?",
-        "Tilbyr dere opplæring på tegnspråk?",
-        "Hva koster en A2-kjøretime?",
-        "Når er kontoret åpent?"
+        "Tilbyr dere opplæring på tegnspråk?"
       ]
     }
   },

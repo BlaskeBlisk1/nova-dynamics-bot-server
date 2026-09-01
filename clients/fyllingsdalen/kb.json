@@ -1,66 +1,102 @@
 [
-  {
-    "q": "førerkort klasser klasse b automat manuell bil motorsykkel mc a a1 a2 be b96 tilhenger trafikalt grunnkurs tilbud opplæring",
-    "a": "Fyllingsdalen Trafikkskole tilbyr opplæring for blant annet klasse B, klasse B automat, motorsykkelklassene A, A1 og A2, BE/B96 tilhenger og trafikalt grunnkurs."
-  },
-  {
-    "q": "adresse hvor ligger besøksadresse location spectrum bygget spectrumbygget fyllingsdalen bergen folke bernadottes vei",
-    "a": "Fyllingsdalen Trafikkskole holder til i Folke Bernadottes vei 44, 5147 Fyllingsdalen, i Spectrum-bygget."
-  },
-  {
-    "q": "telefon nummer ringe mobil kontakt 92012800",
-    "a": "Du kan kontakte Fyllingsdalen Trafikkskole på telefon 920 12 800."
-  },
-  {
-    "q": "epost email mail kontakt sende melding dintrafikkskole gmail",
-    "a": "Du kan kontakte Fyllingsdalen Trafikkskole på e-post: dintrafikkskole@gmail.com."
-  },
-  {
-    "q": "åpningstider apningstider åpent apent kontortid tirsdag onsdag torsdag",
-    "a": "Fyllingsdalen Trafikkskole har oppført åpningstider: tirsdag 11:00–12:30, onsdag 11:00–12:30 og torsdag 16:00–17:30."
-  },
-  {
-    "q": "kjøretime kjøretimer kjoretime kjoretimer kjøretimer klasse b vanlig time 45 min timepris",
-    "a": "En vanlig kjøretime på 45 minutter for klasse B er oppført til 900 kr hos Fyllingsdalen Trafikkskole."
-  },
-  {
-    "q": "trafikalt grunnkurs tg grunnkurs kursstart startkurs obligatorisk grunnkurs",
-    "a": "Trafikalt grunnkurs hos Fyllingsdalen Trafikkskole er oppført til 1 400 kr."
-  },
-  {
-    "q": "trafikant i mørket morket mørkekjøring morkekjoring mørkedemo mørkedemonstrasjon mørkekurs",
-    "a": "Trafikant i mørket hos Fyllingsdalen Trafikkskole er oppført til 2 200 kr."
-  },
-  {
-    "q": "kjøretime etter kl 16 ettermiddag kveld sen time kveldstime",
-    "a": "Kjøretime etter kl. 16 er oppført til 1 050 kr hos Fyllingsdalen Trafikkskole."
-  },
-  {
-    "q": "lørdag lordag helg weekend kjøretime lørdagskjøring lordagskjoring",
-    "a": "Kjøretime på lørdag er oppført til 1 700 kr hos Fyllingsdalen Trafikkskole."
-  },
-  {
-    "q": "startpakke pakke pakketilbud start pakke obligatorisk opplæring klasse b totalpris 35175 37775",
-    "a": "Fyllingsdalen Trafikkskole har startpakker for klasse B. På prissiden er 16 kjøretimer med obligatorisk opplæring oppført til 35 175 kr, og 20 kjøretimer med obligatorisk opplæring oppført til 37 775 kr. For helt nøyaktig total med eventuelle gebyrer bør eleven kontakte trafikkskolen direkte."
-  },
-  {
-    "q": "sikkerhetskurs bane glattkjøring glattkjoring øvingsbane klasse b",
-    "a": "Sikkerhetskurs på bane for klasse B er oppført til 5 600 kr hos Fyllingsdalen Trafikkskole."
-  },
-  {
-    "q": "sikkerhetskurs vei langkjøring langkjoring landevei klasse b",
-    "a": "Sikkerhetskurs på vei for klasse B er oppført til 10 110 kr hos Fyllingsdalen Trafikkskole."
-  },
-  {
-    "q": "førerprøve forerprove oppkjøring oppkjoring praktisk prøve klasse b",
-    "a": "Førerprøve for klasse B er oppført til 2 850 kr hos Fyllingsdalen Trafikkskole."
-  },
-  {
-    "q": "påmelding pamelding melde seg på bestille time booking kurs bli elev starte opplæring",
-    "a": "Du kan melde deg på eller ta kontakt via nettsiden til Fyllingsdalen Trafikkskole, eller kontakte dem direkte på telefon 920 12 800 eller e-post dintrafikkskole@gmail.com."
-  },
-  {
-    "q": "område kjøreområde kjoreomrade bergen fyllingsdalen loddefjord fana nesttun sentrum askøy sotra åsane",
-    "a": "Fyllingsdalen Trafikkskole holder til i Fyllingsdalen og oppgir at de driver opplæring i Stor-Bergen, blant annet Fyllingsdalen, Loddefjord, Fana, Nesttun, Bergen sentrum, Askøy, Sotra og Åsane."
-  }
+  {"q":"hvem er Fyllingsdalen Trafikkskole om skolen kjøreskole Bergen","a":"Fyllingsdalen Trafikkskole holder til i Spectrumbygget i Fyllingsdalen og tilbyr trafikkopplæring i hele Stor-Bergen. Skolen fremhever høy kvalitet, erfarne instruktører og lav strykprosent."},
+  {"q":"adresse hvor ligger dere besøksadresse Spectrumbygget finne frem","a":"Fyllingsdalen Trafikkskole holder til i Folke Bernadottes vei 44, 5147 Fyllingsdalen, i Spectrumbygget. TABS viser adressen som Folke Bernadottes vei 44-4."},
+  {"q":"telefon telefonnummer ringe kontakt tlf","a":"Telefonnummeret til Fyllingsdalen Trafikkskole er 920 12 800."},
+  {"q":"e-post epost email mail kontaktadresse","a":"E-postadressen til Fyllingsdalen Trafikkskole er dintrafikkskole@gmail.com."},
+  {"q":"åpningstider kontortid når er kontoret åpent","a":"Skolens liveoversikt i TABS oppgir kontortid tirsdag kl. 15–16, onsdag kl. 11–13 og torsdag kl. 16–18. Sjekk gjerne oversikten eller ring 920 12 800 før oppmøte, siden hovednettsiden viser andre tider."},
+  {"q":"åpningstider hovednettsiden nettsiden kontortid","a":"Hovednettsiden oppgir kontortid tirsdag og onsdag kl. 11–12.30 og torsdag kl. 16–17.30. TABS viser andre tider, så ring gjerne 920 12 800 før oppmøte."},
+  {"q":"nettside hjemmeside webside","a":"Fyllingsdalen Trafikkskoles nettside er https://fyllingsdalentrafikkskole.no/."},
+  {"q":"hvilke førerkortklasser tilbyr dere alle klasser tilbud","a":"Skolen tilbyr trafikalt grunnkurs, klasse B med manuelt gir og automat, motorsykkelklassene A1, A2 og A samt tilhengerklassene B96 og BE."},
+  {"q":"manuell automat klasse B begge girtyper bil","a":"Ja. Fyllingsdalen Trafikkskole tilbyr klasse B med både manuelt gir og automat."},
+  {"q":"forskjell automat manuell automatlappen kode 78 kjøre manuell etter automat","a":"Skolen tilbyr klasse B med både automat og manuelt gir. Statens vegvesen opplyser at førerkort tatt med automat får kode 78 og bare gjelder automat. For å fjerne begrensningen må du bestå en ny førerprøve med manuelt gir."},
+  {"q":"klasse B 16 år alder øvelseskjøring førerprøve","a":"For klasse B kan du øvelseskjøre fra du er 16 år når kravene til trafikalt grunnkurs er oppfylt. Nedre aldersgrense for førerprøven er 18 år. Kilde: Statens vegvesen."},
+  {"q":"hvilke områder dekker dere hente bringe hvor kan dere hente Stor-Bergen","a":"Skolen opplyser at den henter elever i hele Stor-Bergen, blant annet i Loddefjord, Fana, Nesttun, Bergen sentrum, Askøy, Sotra og Åsane. Avtal hentested direkte med skolen."},
+  {"q":"kan dere hente meg Bergen sentrum henting kjøretime","a":"Ja, Bergen sentrum er blant områdene skolen oppgir at den henter elever i. Avtal nøyaktig hentested og tidspunkt med trafikklæreren."},
+  {"q":"kan dere hente meg Loddefjord Fana Nesttun Askøy Sotra Åsane","a":"Skolen oppgir henting i Loddefjord, Fana, Nesttun, Askøy, Sotra og Åsane, i tillegg til Bergen sentrum og Fyllingsdalen. Avtal detaljene med skolen."},
+  {"q":"tegnspråk opplæring døv hørselshemmet instruktør","a":"Ja. Fyllingsdalen Trafikkskole opplyser at de kan tilby trafikkopplæring på tegnspråk. Kontakt skolen for å avtale dette."},
+  {"q":"tunghørt tunghørte nedsatt hørsel hørselshemmede tilrettelagt opplæring","a":"Fyllingsdalen Trafikkskole opplyser at de kan tilby trafikkopplæring på tegnspråk. Kontakt skolen for å avtale hvilken tilrettelegging du trenger."},
+  {"q":"lav strykprosent kvalitet bestått førerprøve","a":"Skolen fremhever høy kvalitet på opplæringen og opplyser at dette gjenspeiles i lav strykprosent på førerprøven."},
+  {"q":"hvordan bli elev påmelding bestille kjøretime booking starte","a":"Du kan bruke lenkene for påmelding eller elevside på skolens nettside, eller kontakte skolen på 920 12 800 eller dintrafikkskole@gmail.com."},
+  {"q":"kursoversikt neste kurs kursdato ledige plasser","a":"Kursdatoer og ledige plasser endres. Bruk den oppdaterte kursoversikten via skolens nettside for å se neste kurs og melde deg på."},
+  {"q":"elevside TABS logge inn innlogging elev","a":"Du finner lenken til elevsiden i hovedmenyen på Fyllingsdalen Trafikkskoles nettside."},
+  {"q":"hvem jobber der ansatte trafikklærere team instruktører","a":"Den aktuelle ansattoversikten i TABS presenterer Clarice Mukula, Eirik Kråkevik, Even Kråkeskar, Geir Frode Lunden, Gunn Kråkevik, Hein Nils Hansen, John-Magne Øyulvstad, Sindre Ruud Pettersen og Ørjan Berge."},
+  {"q":"Eirik Kråkevik daglig leder trafikklærer","a":"Eirik Kråkevik er daglig leder og trafikklærer hos Fyllingsdalen Trafikkskole. Bruk skolens felles kontaktinformasjon for henvendelser."},
+  {"q":"Geir Frode Lunden trafikklærer tegnspråk","a":"Geir Frode Lunden er trafikklærer hos Fyllingsdalen Trafikkskole og kan også utføre trafikkopplæring på tegnspråk. Bruk skolens felles kontaktinformasjon for henvendelser."},
+  {"q":"Gunn Kråkevik trafikklærer","a":"Gunn Kråkevik er trafikklærer hos Fyllingsdalen Trafikkskole. Bruk skolens felles kontaktinformasjon for henvendelser."},
+  {"q":"Hein Nils Hansen trafikklærer","a":"Hein Nils Hansen er trafikklærer hos Fyllingsdalen Trafikkskole. Bruk skolens felles kontaktinformasjon for henvendelser."},
+  {"q":"John-Magne Øyulvstad faglig leder trafikklærer","a":"John-Magne Øyulvstad er faglig leder og trafikklærer hos Fyllingsdalen Trafikkskole. Bruk skolens felles kontaktinformasjon for henvendelser."},
+  {"q":"Even Kråkeskar trafikklærer","a":"Even Kråkeskar er trafikklærer hos Fyllingsdalen Trafikkskole. Bruk skolens felles kontaktinformasjon for henvendelser."},
+  {"q":"Ørjan Berge trafikklærer","a":"Ørjan Berge er trafikklærer hos Fyllingsdalen Trafikkskole. Bruk skolens felles kontaktinformasjon for henvendelser."},
+  {"q":"Clarice Mukula trafikklærer","a":"Clarice Mukula er trafikklærer hos Fyllingsdalen Trafikkskole. Bruk skolens felles kontaktinformasjon for henvendelser."},
+  {"q":"Sindre Ruud Pettersen trafikklærer","a":"Sindre Ruud Pettersen er trafikklærer i skolens aktuelle TABS-oversikt. Bruk skolens felles kontaktinformasjon for henvendelser."},
+  {"q":"trafikalt grunnkurs TGK hva er det hvem må ta under 25","a":"Trafikalt grunnkurs er første steg mot førerkortet og er obligatorisk for personer under 25 år. Kurset gir grunnleggende forståelse for trafikk, ansvar og sikkerhet."},
+  {"q":"pris trafikalt grunnkurs TGK grunnkurs","a":"Trafikalt grunnkurs er oppført til 1 400 kr."},
+  {"q":"pris mørkekjøring trafikant i mørket mørkekurs mørkedemo Jondal","a":"I skolens liveoversikt i TABS er Mørkedemo Jondal oppført til 1 500 kr. Hovednettsidens prisside viser også Trafikant i mørket til 2 200 kr, så kontroller riktig kurs i kursoversikten før påmelding."},
+  {"q":"neste mørkekurs mørkekurset mørkekjøringskurs dato ledig bestille booke","a":"Se den oppdaterte kursoversikten via skolens nettside for neste mørkekjøring eller mørkedemo og ledige plasser."},
+  {"q":"pris kjøretime klasse B 45 minutter manuell vanlig","a":"En ordinær kjøretime på 45 minutter for klasse B med manuelt gir er oppført til 900 kr."},
+  {"q":"pris kjøretime klasse B automat 45 minutter","a":"En ordinær kjøretime på 45 minutter for klasse B automat er oppført til 900 kr."},
+  {"q":"pris kjøretime etter klokken 16 klasse B kveld ettermiddag","a":"Hovednettsiden oppgir 1 050 kr for klasse B etter kl. 16. TABS viser både 1 050 kr og en separat linje på 1 500 kr, så kontroller beløpet for den konkrete bookingen."},
+  {"q":"pris kjøretime lørdag klasse B helg","a":"Kjøretime for klasse B på lørdag er oppført til 1 700 kr."},
+  {"q":"pris trinnvurdering trinn 2 klasse B manuell automat","a":"TABS oppgir 850 kr for en 45-minutters trinnvurdering i klasse B, mens hovednettsiden oppgir 950 kr. Kontroller beløpet for den konkrete bookingen."},
+  {"q":"pris trinnvurdering trinn 3 klasse B manuell automat","a":"Trinnvurdering på trinn 3 for klasse B er oppført til 1 265 kr for 60 minutter, både for manuelt gir og automat."},
+  {"q":"pris sikkerhetskurs bane klasse B manuell glattkjøring øvingsbane","a":"TABS oppgir 7 150 kr for sikkerhetskurs på øvingsbane. Hovednettsiden oppgir 5 600 kr for manuelt gir og 5 400 kr for automat, så kontroller beløpet for den konkrete bookingen."},
+  {"q":"pris sikkerhetskurs bane klasse B automat glattkjøring øvingsbane","a":"TABS oppgir 7 150 kr for sikkerhetskurs på øvingsbane. Hovednettsiden oppgir 5 600 kr for manuelt gir og 5 400 kr for automat, så kontroller beløpet for den konkrete bookingen."},
+  {"q":"pris sikkerhetskurs vei klasse B langkjøring manuell automat hvor lenge varighet 360 minutter","a":"Sikkerhetskurs på vei for klasse B er oppført med en varighet på 360 minutter og en pris på 10 110 kr, både for manuelt gir og automat."},
+  {"q":"pris førerprøve oppkjøring klasse B manuell automat","a":"Skolens bil og lærer ved førerprøven for klasse B er oppført til 2 850 kr. Statens vegvesens prøvegebyr kommer separat."},
+  {"q":"pris kun obligatorisk opplæring klasse B","a":"Kun obligatorisk opplæring for klasse B er oppført til 17 925 kr."},
+  {"q":"pakke 16 timer kjøretimer klasse B pris","a":"Hovednettsiden og TABS viser en 16-timerspakke til 35 175 kr, mens TABS også fremhever 37 000 kr for 16 kjøretimer, all obligatorisk opplæring og gebyr. Kontroller innholdet i valgt pakke før bestilling; skolen presiserer at en startpakke ikke garanterer at alle trenger like få timer."},
+  {"q":"pris startpakke klasse B 20 kjøretimer alt obligatorisk","a":"Skolens liveoversikt i TABS fremhever 41 000 kr for 20 kjøretimer, all obligatorisk opplæring og gebyr. Hovednettsiden viser også en grunnpakke til 37 775 kr, så kontroller hvilket innhold som gjelder før bestilling."},
+  {"q":"pakkepris garanti nok timer klasse B ekstra timer","a":"Skolen beskriver klasse B-pakkene som startpakker og presiserer at de ikke garanterer at antallet timer er tilstrekkelig for å komme helt i mål. Behovet vurderes individuelt."},
+  {"q":"hvilke pakker pakkeoversikt klasse B bil MC alle pakker","a":"For klasse B viser hovednettsiden grunnpakker til 35 175 kr med 16 kjøretimer og 37 775 kr med 20 kjøretimer. TABS viser også 35 175 kr for 16 timer og fremhever 37 000 kr for 16 timer og 41 000 kr for 20 timer, inkludert obligatorisk opplæring og gebyr. Egne MC-pakker finnes også; oppgi klasse for detaljer."},
+  {"q":"totalpris førerkort lappen alt inkludert billigste pakke","a":"En pakke er en startpakke, ikke en garanti for totalprisen, fordi behovet for kjøretimer vurderes individuelt. Kontroller alltid innhold og beløp før bestilling."},
+  {"q":"pris NAF gebyr klasse B bane","a":"NAF-gebyr for klasse B er oppført til 1 550 kr på skolens prisside."},
+  {"q":"pris bomring Bergen gebyr opplæring","a":"TABS oppgir 750 kr i bomringgebyr, mens hovednettsiden oppgir 850 kr. Kontroller beløpet som gjelder for den konkrete opplæringen."},
+  {"q":"motorsykkel hvilke MC-klasser A A1 A2","a":"Fyllingsdalen Trafikkskole tilbyr motorsykkelopplæring i klassene A1, A2 og A."},
+  {"q":"pris kjøretime motorsykkel klasse A tung MC","a":"En kjøretime for motorsykkel klasse A er oppført til 1 050 kr."},
+  {"q":"pris grunnkurs motorsykkel klasse A MC","a":"Grunnkurs for motorsykkel klasse A er oppført til 1 200 kr."},
+  {"q":"pris trinnvurdering trinn 2 motorsykkel klasse A","a":"Trinnvurdering på trinn 2 for klasse A er oppført til 1 050 kr for 45 minutter."},
+  {"q":"pris trinnvurdering trinn 3 motorsykkel klasse A","a":"Trinnvurdering på trinn 3 for klasse A er oppført til 1 400 kr for 60 minutter."},
+  {"q":"pris sikkerhetskurs presis kjøreteknikk klasse A motorsykkel","a":"Sikkerhetskurs i presis kjøreteknikk for klasse A er oppført til 5 800 kr. Banegebyr kommer i tillegg etter skolens prisliste."},
+  {"q":"pris sikkerhetskurs på veg vei klasse A motorsykkel","a":"Sikkerhetskurs på veg for klasse A er oppført til 6 800 kr."},
+  {"q":"pris førerprøve oppkjøring klasse A motorsykkel","a":"Skolens motorsykkel og lærer ved førerprøven for klasse A er oppført til 2 900 kr. Statens vegvesens prøvegebyr kommer separat."},
+  {"q":"pris kjøretime etter kl 16 klasse A motorsykkel kveld","a":"Kjøretime etter kl. 16 for motorsykkel klasse A er oppført til 1 150 kr."},
+  {"q":"pris pakke klasse A 10 kjøretimer alt obligatorisk","a":"Pakken med ti kjøretimer og all obligatorisk opplæring for klasse A er oppført til 28 450 kr. Nettsiden opplyser at MC-grunnkurset ikke inngår i pakken."},
+  {"q":"pris kjøretime motorsykkel klasse A1 lett MC","a":"En kjøretime for lett motorsykkel klasse A1 er oppført til 1 050 kr."},
+  {"q":"pris grunnkurs motorsykkel klasse A1 lett MC","a":"Grunnkurs for motorsykkel klasse A1 er oppført til 1 200 kr."},
+  {"q":"pris trinnvurdering trinn 2 motorsykkel klasse A1","a":"Trinnvurdering på trinn 2 for klasse A1 er oppført til 1 050 kr for 45 minutter."},
+  {"q":"pris trinnvurdering trinn 3 motorsykkel klasse A1","a":"Trinnvurdering på trinn 3 for klasse A1 er oppført til 1 400 kr for 60 minutter."},
+  {"q":"pris sikkerhetskurs i trafikk klasse A1 lett motorsykkel","a":"Sikkerhetskurs i trafikk for klasse A1 er oppført til 4 000 kr."},
+  {"q":"sikkerhetskurs veg A1 pris","a":"Sikkerhetskurs på veg for klasse A1 er oppført til 6 000 kr."},
+  {"q":"pris førerprøve oppkjøring klasse A1 lett motorsykkel","a":"Skolens motorsykkel og lærer ved førerprøven for klasse A1 er oppført til 2 900 kr. Statens vegvesens prøvegebyr kommer separat."},
+  {"q":"pris kjøretime etter kl 16 klasse A1 motorsykkel kveld","a":"Kjøretime etter kl. 16 for klasse A1 er oppført til 1 150 kr."},
+  {"q":"pris pakke A1 10 kjøretimer alt obligatorisk","a":"Pakken med ti kjøretimer og all obligatorisk opplæring for klasse A1 er oppført til 25 850 kr. MC-grunnkurset er ikke inkludert."},
+  {"q":"pris pakke A1 15 kjøretimer alt obligatorisk","a":"Pakken med 15 kjøretimer og all obligatorisk opplæring for klasse A1 er oppført til 31 150 kr. MC-grunnkurset er ikke inkludert."},
+  {"q":"pris pakke A1 20 kjøretimer alt obligatorisk","a":"Pakken med 20 kjøretimer og all obligatorisk opplæring for klasse A1 er oppført til 36 359 kr. MC-grunnkurset er ikke inkludert."},
+  {"q":"pris kjøretime motorsykkel klasse A2 mellomtung MC","a":"En kjøretime for mellomtung motorsykkel klasse A2 er oppført til 1 050 kr."},
+  {"q":"pris grunnkurs motorsykkel klasse A2 mellomtung MC","a":"Grunnkurs for motorsykkel klasse A2 er oppført til 1 200 kr."},
+  {"q":"pris trinnvurdering trinn 2 motorsykkel klasse A2","a":"Trinnvurdering på trinn 2 for klasse A2 er oppført til 1 050 kr for 45 minutter."},
+  {"q":"pris trinnvurdering trinn 3 motorsykkel klasse A2","a":"Trinnvurdering på trinn 3 for klasse A2 er oppført til 1 400 kr for 60 minutter."},
+  {"q":"pris sikkerhetskurs presis kjøreteknikk bane klasse A2","a":"Sikkerhetskurs i presis kjøreteknikk for klasse A2 er oppført til 5 800 kr. Banegebyr kommer i tillegg etter skolens prisliste."},
+  {"q":"sikkerhetskurs veg A2 pris","a":"TABS oppgir 5 610 kr for sikkerhetskurs på veg i klasse A2, mens hovednettsiden oppgir 6 200 kr. Kontroller beløpet for den konkrete bookingen."},
+  {"q":"pris førerprøve oppkjøring klasse A2 mellomtung motorsykkel","a":"Skolens motorsykkel og lærer ved førerprøven for klasse A2 er oppført til 2 900 kr. Statens vegvesens prøvegebyr kommer separat."},
+  {"q":"pris kjøretime etter kl 16 klasse A2 motorsykkel kveld","a":"Kjøretime etter kl. 16 for klasse A2 er oppført til 1 150 kr."},
+  {"q":"pris pakke A2 10 kjøretimer alt obligatorisk","a":"Pakken med ti kjøretimer og all obligatorisk opplæring for klasse A2 er oppført til 27 850 kr. MC-grunnkurset er ikke inkludert."},
+  {"q":"pris utvidelse A2 til A motorsykkel overgang","a":"Utvidelse fra A2 til A er oppført til 6 000 kr."},
+  {"q":"forskjellen BE B96","a":"B96 gjelder når summen av bilens og tilhengerens tillatte totalvekt er mellom 3 500 og 4 250 kg. BE gir mulighet for tilhenger med tillatt totalvekt opptil 3 500 kg, innenfor reglene som ellers gjelder for bil og tilhenger."},
+  {"q":"krav for BE hva kreves alder klasse B opplæring timer","a":"For å ta klasse BE må du være minst 18 år og ha førerkort i klasse B. Opplæringen omfatter minst sju timer, og BE avsluttes med førerprøve. Kilde: Statens vegvesen."},
+  {"q":"krav for B96 klasse B opplæring timer uten oppkjøring","a":"For klasse B96 må du ha klasse B og gjennomføre minst sju timer obligatorisk opplæring. Du trenger ikke ta en ny førerprøve. Kilde: Statens vegvesen."},
+  {"q":"pris kjøretime BE B96 tilhenger","a":"En kjøretime for tilhengerklassene BE/B96 er oppført til 955 kr."},
+  {"q":"pris trinnvurdering trinn 2 BE B96 tilhenger","a":"Trinnvurdering på trinn 2 for BE/B96 er oppført til 955 kr for 45 minutter."},
+  {"q":"pris trinnvurdering trinn 3 BE B96 tilhenger","a":"Trinnvurdering på trinn 3 for BE/B96 er oppført til 1 275 kr for 60 minutter."},
+  {"q":"pris landeveiskjøring BE B96 tilhenger","a":"Landeveiskjøring for BE/B96 er oppført til 3 200 kr."},
+  {"q":"pris lastsikringskurs BE B96 tilhenger","a":"Lastsikringskurs for BE/B96 er oppført til 1 700 kr."},
+  {"q":"pris bil og henger til oppkjøring BE førerprøve","a":"Skolens bil og henger til førerprøven for BE er oppført til 2 900 kr. Statens vegvesens prøvegebyr kommer separat."},
+  {"q":"pris vegvesen gebyr oppkjøring inkludert separat klasse B BE A A1 A2","a":"Statens vegvesens prøvegebyr er separat og er ikke inkludert i skolens oppførte pris for kjøretøy og lærer ved førerprøven. Kontroller det gjeldende offentlige gebyret hos Statens vegvesen før betaling."},
+  {"q":"hva er førerprøve oppkjøring praktisk prøve","a":"Førerprøven er den praktiske avsluttende prøven hos Statens vegvesen. All obligatorisk opplæring må være fullført og registrert før du kan kjøre opp. Skolens oppførte pris for kjøretøy og lærer kommer i tillegg til Statens vegvesens prøvegebyr."},
+  {"q":"hva er trinnvurdering trinn 2 trinn 3 uten klasse","a":"En trinnvurdering brukes ved slutten av et opplæringstrinn for å vurdere om eleven har grunnlag for å gå videre. Prisene avhenger av førerkortklasse og trinn."},
+  {"q":"er prisene oppdatert prisstigning endring gjeldende priser","a":"Svarene prioriterer skolens liveoversikt i TABS og bruker hovednettsiden der TABS ikke viser detaljen. Skolen tar forbehold om prisendringer, så kontroller alltid beløpet i booking- eller kursoversikten før bestilling."},
+  {"q":"betaling betalingsmåter faktura vipps kort delbetaling","a":"Nettsiden oppgir priser, men ikke fullstendige betalingsvilkår. Kontakt skolen på 920 12 800 eller dintrafikkskole@gmail.com for riktig informasjon om betaling."},
+  {"q":"når bør jeg starte opplæringen før ønsket førerprøve oppkjøring fravær skole","a":"Skolen anbefaler oppstart omtrent fem måneder før ønsket førerprøve for å redusere problemer med fravær fra skolen."},
+  {"q":"avbestille endre kjøretime avbestillingsfrist","a":"Skolens oppførte frist for å avbestille en vanlig kjøretime er 24 timer før timen, og senest én virkedag i forveien. Hvis ikke må timen betales."},
+  {"q":"kontakt hvis jeg ikke finner svar trenger hjelp","a":"Hvis du ikke finner svaret, kan du kontakte Fyllingsdalen Trafikkskole på 920 12 800 eller dintrafikkskole@gmail.com."}
 ]

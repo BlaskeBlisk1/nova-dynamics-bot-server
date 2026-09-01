@@ -295,6 +295,7 @@ h1 {
 .chat-header span { display: block; }
 .chat-header strong { font-size: 13px; }
 .chat-header div > span { margin-top: 4px; color: var(--muted); font-size: 11px; }
+.chat-header .status-label { display: inline; margin: 0; }
 .chat-header i { display: inline-block; width: 6px; height: 6px; margin-right: 5px; border-radius: 50%; background: var(--success); }
 
 .website-link {
@@ -388,6 +389,22 @@ h1 {
 
 .chat-form button:disabled { cursor: wait; opacity: 0.62; }
 
+.privacy-note {
+  margin: -5px 16px 12px;
+  color: #77879a;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.brand:focus-visible,
+.website-link:focus-visible,
+.suggestion:focus-visible,
+.chat-form input:focus-visible,
+.chat-form button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent-secondary) 68%, white);
+  outline-offset: 3px;
+}
+
 footer {
   padding-top: 18px;
   color: #747d90;
@@ -410,6 +427,15 @@ footer {
 
 @keyframes appear { from { opacity: 0; transform: translateY(4px); } }
 @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); opacity: 0.45; } 30% { transform: translateY(-3px); opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
 
 /* Fyllingsdalen's client-specific Nova treatment: cool Bergen/fjord tones,
    subtle route lines and a lighter, more editorial information panel. */
@@ -524,6 +550,8 @@ body[data-theme="fjord"] .suggestion:hover {
 }
 
 body[data-theme="fjord"] .chat-card {
+  height: 540px;
+  align-self: start;
   border-color: rgba(137, 205, 255, 0.17);
   background: rgba(5, 17, 31, 0.88);
   box-shadow: 0 28px 90px rgba(0, 8, 20, 0.42);
@@ -541,7 +569,7 @@ body[data-theme="fjord"] .message.bot {
 
 body[data-theme="fjord"] .message.user,
 body[data-theme="fjord"] .chat-form button {
-  background: linear-gradient(135deg, #367cf7, #319cd8 64%, #2bc8ac);
+  background: linear-gradient(135deg, #245fc4, #1f6c9d 64%, #0d7d70);
 }
 
 body[data-theme="fjord"] .chat-form input {
@@ -549,13 +577,13 @@ body[data-theme="fjord"] .chat-form input {
   background: rgba(255, 255, 255, 0.04);
 }
 
-@media (max-width: 860px) {
+@media (max-width: 900px) {
   .page-shell { width: min(100% - 24px, 680px); padding-top: 18px; }
   .intro { padding: 42px 4px 26px; }
   .demo-grid { grid-template-columns: 1fr; }
   body[data-theme="fjord"] .demo-grid { grid-template-columns: 1fr; }
   .context-card { min-height: auto; padding: 26px; }
-  .chat-card { min-height: 560px; }
+  .chat-card { height: auto; min-height: 560px; }
 }
 
 @media (max-width: 560px) {
@@ -568,11 +596,19 @@ body[data-theme="fjord"] .chat-form input {
   .highlights { margin-top: 18px; }
   .context-card { padding: 22px; }
   .chat-header { padding: 15px; }
-  .website-link { display: none; }
+  .chat-header { flex-wrap: wrap; }
+  .website-link { min-height: 36px; padding: 10px 0 8px 10px; }
   .messages { padding: 17px; }
   .message { max-width: 90%; }
   .chat-form { padding: 12px; }
   .chat-form button { min-width: 52px; }
   .chat-form button span:first-child { display: none; }
   footer { align-items: flex-start; gap: 8px; flex-direction: column; }
+}
+
+@media (forced-colors: active) {
+  body[data-theme="fjord"] h1 {
+    color: CanvasText;
+    background: none;
+  }
 }

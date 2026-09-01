@@ -8,6 +8,7 @@ const fetchFn = global.fetch || ((...args) =>
   import("node-fetch").then(({ default: f }) => f(...args)));
 
 const app = express();
+app.set("trust proxy", 1);
 app.use(express.json({ limit: "64kb" }));
 app.use((_, res, next) => {
   res.setHeader("Vary", "Origin");
@@ -75,8 +76,12 @@ function publicDemoConfig(client) {
     contextTitle: demo.contextTitle || "Still et vanlig kundespørsmål",
     contextDescription: demo.contextDescription || "Prøv et forslag eller skriv spørsmålet slik en ekte kunde ville formulert det.",
     assistantLabel: demo.assistantLabel || "Digital assistent",
+    assistantInitial: String(demo.assistantInitial || "N").slice(0, 2),
+    statusLabel: demo.statusLabel || "Tilgjengelig nå",
     logo: demo.logo || "",
     locationLabel: demo.locationLabel || "",
+    sourceTitle: demo.sourceTitle || "Bygget fra virksomhetens informasjon",
+    sourceDescription: demo.sourceDescription || "Dette er en uforpliktende demonstrasjon.",
     highlights: Array.isArray(demo.highlights) ? demo.highlights.slice(0, 3) : [],
     suggestedQuestions: Array.isArray(demo.suggestedQuestions)
       ? demo.suggestedQuestions.slice(0, 6)
@@ -225,14 +230,18 @@ const ROOT_DAY = new Map([
   ["onsdag", "wed"], ["ons", "wed"], ["wednesday", "wed"],
   ["torsdag", "thu"], ["tor", "thu"], ["thursday", "thu"],
   ["fredag", "fri"], ["fre", "fri"], ["friday", "fri"],
-  ["lørdag", "sat"], ["lør", "sat"], ["lor", "sat"], ["saturday", "sat"],
-  ["søndag", "sun"], ["søn", "sun"], ["son", "sun"], ["sunday", "sun"]
+  ["lørdag", "sat"], ["lordag", "sat"], ["lør", "sat"], ["lor", "sat"], ["saturday", "sat"],
+  ["søndag", "sun"], ["sondag", "sun"], ["søn", "sun"], ["son", "sun"], ["sunday", "sun"]
 ]);
 
 const SYNONYMS = new Map([
   ["åpent", "åpningstider"],
   ["åpne", "åpningstider"],
   ["åpning", "åpningstider"],
+  ["apent", "åpningstider"],
+  ["apne", "åpningstider"],
+  ["apning", "åpningstider"],
+  ["apningstid", "åpningstider"],
   ["stengt", "åpningstider"],
 
   ["open", "hours"],
@@ -264,15 +273,42 @@ const SYNONYMS = new Map([
   ["mørkedemo", "mørkekjøring"],
   ["morkedemo", "mørkekjøring"],
 
+  ["døv", "tegnspråk"],
+  ["døve", "tegnspråk"],
+  ["dov", "tegnspråk"],
+  ["dove", "tegnspråk"],
+  ["hørselshemmet", "tegnspråk"],
+  ["hørselshemmede", "tegnspråk"],
+  ["horselshemmet", "tegnspråk"],
+  ["horselshemmede", "tegnspråk"],
+  ["tilrettelagt", "tegnspråk"],
+
+  ["avbestille", "avbestilling"],
+  ["avbestiller", "avbestilling"],
+  ["avbestillingsfrist", "avbestilling"],
+  ["avbestillingsfristen", "avbestilling"],
+  ["kursoversikten", "kursoversikt"],
+  ["elevsiden", "elevside"],
+  ["oppkjøringen", "førerprøve"],
+  ["oppkjoringen", "førerprøve"],
+
   ["grunnkurs", "trafikalt grunnkurs"],
   ["tg", "trafikalt grunnkurs"]
 ]);
 
-function norm(str) {
+function normalizeForMatching(str) {
   return String(str || "")
     .toLowerCase()
+    .replaceAll("æ", "ae")
+    .replaceAll("ø", "o")
+    .replaceAll("å", "a")
     .normalize("NFKD")
-    .replace(/[^\w\sæøåäöü\-]/g, " ")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function norm(str) {
+  return normalizeForMatching(str)
+    .replace(/[^\w\s\-]/g, " ")
     .replace(/-/g, " ")
     .replace(/\s+/g, " ")
     .trim();
@@ -285,7 +321,8 @@ function normalizeTerm(w) {
 }
 
 function tokens(str) {
-  const base = norm(str).split(" ").filter(Boolean);
+  const normalized = norm(str);
+  const base = normalized.split(" ").filter(Boolean);
   const uni = [];
 
   for (const raw of base) {
@@ -302,7 +339,14 @@ function tokens(str) {
     bi.push(uni[i] + " " + uni[i + 1]);
   }
 
-  return uni.concat(bi);
+  // English stop-word filtering normally removes the token "a". Preserve a
+  // dedicated phrase token for motorcycle class A so it cannot rank as class
+  // B or A1 simply because the class letter disappeared.
+  const classTokens = /(?:^|\s)(?:klasse|class|mc)\s+a(?:\s|$)/.test(normalized)
+    ? ["license_class_a"]
+    : [];
+
+  return uni.concat(bi, classTokens);
 }
 
 function tf(arr) {
@@ -401,6 +445,64 @@ function rankFAQ_TFIDF(question, kb) {
     .sort((a, b) => b._score - a._score);
 }
 
+function requestedLicenseClass(input) {
+  const raw = String(input || "").toLowerCase();
+  const m = norm(input);
+
+  if (/\b(lett\s+mc|lett\s+motorsykkel)\b/.test(raw)) return "a1";
+  if (/(^|\s)a1(\s|$)/.test(m)) return "a1";
+  if (/\b(mellomtung\s+mc|mellomtung\s+motorsykkel)\b/.test(raw)) return "a2";
+  if (/(^|\s)a2(\s|$)/.test(m)) return "a2";
+  if (/(^|\s)b96(\s|$)/.test(m)) return "b96";
+  if (/(^|\s)be(\s|$)/.test(m)) return "be";
+  if (
+    /\b(tung\s+mc|tung\s+motorsykkel|klasse\s+a|a-klasse)\b/.test(raw) ||
+    /\b(pris|koster|time|kjøretime|kjoretime|timer|kjøretimer|kjoretimer|pakke|sikkerhetskurs|førerprøve|forerprove|førerkort|forerkort|aldersgrense|ta)\s+(for\s+)?a\b/.test(raw) ||
+    /\ba\s+(pris|time|kjøretime|kjoretime|pakke|sikkerhetskurs|førerprøve|forerprove|førerkort|forerkort|aldersgrense)\b/.test(raw) ||
+    (/\b(pris|koster|time|kjøretime|kjoretime|timer|kjøretimer|kjoretimer|pakke|sikkerhetskurs|førerprøve|forerprove|førerkort|forerkort|alder|aldersgrense)\b/.test(raw) && /\ba\s*[?.!]*$/.test(raw)) ||
+    /\bfor\s+a\b/.test(raw) ||
+    /(^|\s)(klasse|class|mc)\s+a(\s|$)/.test(m) ||
+    /(^|\s)a\s+(klasse\s+)?(time|kjoretime|forerkort|grunnkurs|trinn|sikkerhetskurs|pakke)(\s|$)/.test(m) ||
+    /(^|\s)(time|kjoretime|forerkort|grunnkurs|trinn|sikkerhetskurs|pakke)\s+(for\s+)?a(\s|$)/.test(m) ||
+    /(^|\s)trinn\s+[23]\s+(for\s+)?a(\s|$)/.test(m)
+  ) return "a";
+  if (
+    /(^|\s)(klasse|class)\s+b(\s|$)/.test(m) ||
+    /(^|\s)(bil|personbil|automat|manuell|biltime|automatkjoring)(\s|$)/.test(m) ||
+    /(^|\s)b\s+(time|kjoretime|forerkort|pakke|trinn|sikkerhetskurs)(\s|$)/.test(m) ||
+    /(^|\s)(time|kjoretime|forerkort|pakke|trinn|sikkerhetskurs)\s+(for\s+)?b(\s|$)/.test(m) ||
+    /(^|\s)trinn\s+[23]\s+(for\s+)?b(\s|$)/.test(m)
+  ) return "b";
+
+  return null;
+}
+
+function entryMatchesLicenseClass(entry, requestedClass) {
+  const m = norm(`${entry.q || ""} ${entry.a || ""}`);
+
+  if (requestedClass === "a1") return /(^|\s)a1(\s|$)/.test(m);
+  if (requestedClass === "a2") return /(^|\s)a2(\s|$)/.test(m);
+  if (requestedClass === "b96") return /(^|\s)b96(\s|$)/.test(m);
+  if (requestedClass === "be") return /(^|\s)be(\s|$)/.test(m);
+  if (requestedClass === "a") return /(^|\s)(klasse|class)\s+a(\s|$)/.test(m);
+  if (requestedClass === "b") return /(^|\s)(klasse|class)\s+b(\s|$)/.test(m);
+
+  return true;
+}
+
+function rankFAQForQuestion(question, kb) {
+  const ranked = rankFAQ_TFIDF(question, kb);
+  const licenseClass = requestedLicenseClass(question);
+
+  if (!licenseClass) return ranked;
+
+  const matching = ranked.filter(entry => entryMatchesLicenseClass(entry, licenseClass));
+  if (!matching.length) return ranked;
+
+  const rest = ranked.filter(entry => !entryMatchesLicenseClass(entry, licenseClass));
+  return matching.concat(rest);
+}
+
 const MIN_SIM = 0.16;
 
 // -------------------- Logging --------------------
@@ -477,7 +579,7 @@ app.get("/debug-rank", (req, res) => {
     ? (intentQuery(intent) || message)
     : message;
 
-  const ranked = rankFAQ_TFIDF(queryForRanking, kb).slice(0, 5);
+  const ranked = rankFAQForQuestion(queryForRanking, kb).slice(0, 5);
 
   res.json({
     client,
@@ -518,27 +620,25 @@ async function fetchJSON(url, opts, timeoutMs = 15000) {
 
 // -------------------- Intent detection layer --------------------
 function detectIntent(message) {
-  const m = String(message || "")
-    .toLowerCase()
-    .normalize("NFKD");
+  const m = normalizeForMatching(message);
 
-  if (/(åpent|aapent|åpningstid|apningstid|opening|hours|open|stengt|closed|lørdag|lordag|søndag|sondag|mandag|fredag|helg|weekend|saturday|sunday)/.test(m)) {
+  if (/\b(apent|apne|apen|aapent|apningstid|apningstider|opening|hours|open|stengt|closed|kontortid)\b/.test(m)) {
     return "opening_hours";
   }
 
-  if (/(\b(adresse|adressen|addressen|addresse|addres|addr|lokasjon|location|address)\b|hvor\s+ligger|hvor\s+finner|hvor\s+er|hvor\s+holder|kor\s+er|where\s+are|where\s+is|find\s+you)/.test(m)) {
+  if (isEmergencyAddressQuestion(message)) {
     return "address";
   }
 
-  if (/(telefon|tlf|nummer|ringe|phone|call)/.test(m)) {
+  if (/\b(telefon|tlf|telefonnummer|nummer|ringe|phone|call)\b/.test(m)) {
     return "phone";
   }
 
-  if (/(epost|e-post|email|mail)/.test(m)) {
+  if (/\b(epost|e-post|email|mail)\b/.test(m)) {
     return "email";
   }
 
-  if (/(vipps|vips|vippøs|kort|bankkort|kontant|cash|card|betaling|betale|betaler|payment|invoice|faktura)/.test(m)) {
+  if (/\b(vipps|vips|vippos|kort|bankkort|kontant|cash|card|betaling|betale|betaler|payment|invoice|faktura)\b/.test(m)) {
     return "payment";
   }
 
@@ -546,7 +646,7 @@ function detectIntent(message) {
     return "products";
   }
 
-  if (/(bestille|bestilling|order|custom cake|spesialkake|kake|cake|påmelding|pamelding|melde seg på|booking|booke|bli elev)/.test(m)) {
+  if (/(\bbestille\b|\bbestilling\b|\border\b|custom cake|spesialkake|\bkake\b|\bcake\b|\bpamelding\b|melde seg pa|\bbooking\b|\bbooke\b|bli elev)/.test(m)) {
     return "ordering";
   }
 
@@ -566,11 +666,9 @@ function detectIntent(message) {
 }
 
 function isEmergencyAddressQuestion(message) {
-  const m = String(message || "")
-    .toLowerCase()
-    .normalize("NFKD");
+  const m = normalizeForMatching(message);
 
-  return /(\b(adresse|adressen|address|addressen|addresse|addres|addr|lokasjon|location)\b|hvor\s+er|hvor\s+ligger|hvor\s+finner|hvor\s+holder|kor\s+er|where\s+are|where\s+is|find\s+you)/.test(m);
+  return /(\b(adresse|adressen|address|addressen|addresse|addres|addr|lokasjon|location)\b|hvor\s+ligger\s+(dere|skolen|trafikkskolen)|hvor\s+finner\s+(jeg\s+)?(dere|skolen|trafikkskolen)|hvor\s+er\s+(dere|skolen|trafikkskolen)|hvor\s+holder\s+(dere|skolen|trafikkskolen)\s+til|kor\s+er\s+(dokker|dere|skolen)|where\s+(are|is)\s+(you|the school)|where\s+can\s+i\s+find\s+you)/.test(m);
 }
 
 function intentQuery(intent) {
@@ -609,11 +707,7 @@ function intentQuery(intent) {
 // -------------------- Direct demo answer helpers --------------------
 function makeNorwegianSearchText(input) {
   const raw = String(input || "").toLowerCase();
-
-  const ascii = raw
-    .replaceAll("æ", "ae")
-    .replaceAll("ø", "o")
-    .replaceAll("å", "a");
+  const ascii = normalizeForMatching(raw);
 
   return {
     raw,
@@ -636,9 +730,825 @@ function directFyllingsdalenAnswer(client, message) {
   if (c !== "fyllingsdalen") return null;
 
   const t = makeNorwegianSearchText(message);
+  const asksPrice = includesAny(t, ["pris", "priser", "koster", "kostnad", "price", "cost", "hvor mye"]);
+  let licenseClass = requestedLicenseClass(message);
+  const asksOpeningHours = includesAny(t, [
+    "åpningstid", "apningstid", "aapningstid", "åpent", "åpne", "apent", "apne",
+    "kontortid", "når er dere åpne", "nar er dere apne"
+  ]);
+  const asksDrivingTest = includesAny(t, [
+    "førerprøve", "forerprove", "oppkjøring", "oppkjoring", "praktisk prøve", "praktisk prove"
+  ]);
+  const asksDrivingTestScheduling = asksDrivingTest && includesAny(t, [
+    "når", "nar", "dato", "ledig", "bestille", "bestiller", "booke", "booking", "time til",
+    "flytte", "endre", "avbestille", "avlyse"
+  ]);
+  const normalizedMessage = norm(message);
+  const rawMessage = String(message || "").toLowerCase();
+  const targetLicensePatterns = [
+    ["a1", /\b(?:ta|få|fa|skaffe|kjøre|kjore|øvelseskjøre|ovelseskjore|utvide(?:\s+meg)?\s+til|oppgradere(?:\s+meg)?\s+til|gå\s+opp(?:\s+meg)?\s+til|ga\s+opp(?:\s+meg)?\s+til)\s+(?:klasse\s+)?(?:a1|lett\s+(?:mc|motorsykkel))\b/],
+    ["a2", /\b(?:ta|få|fa|skaffe|kjøre|kjore|øvelseskjøre|ovelseskjore|utvide(?:\s+meg)?\s+til|oppgradere(?:\s+meg)?\s+til|gå\s+opp(?:\s+meg)?\s+til|ga\s+opp(?:\s+meg)?\s+til)\s+(?:klasse\s+)?(?:a2|mellomtung\s+(?:mc|motorsykkel))\b/],
+    ["a", /\b(?:ta|få|fa|skaffe|kjøre|kjore|øvelseskjøre|ovelseskjore|utvide(?:\s+meg)?\s+til|oppgradere(?:\s+meg)?\s+til|gå\s+opp(?:\s+meg)?\s+til|ga\s+opp(?:\s+meg)?\s+til)\s+(?:klasse\s+)?(?:a|tung\s+(?:mc|motorsykkel))\b/],
+    ["b96", /\b(?:ta|få|fa|skaffe|kjøre|kjore|utvide(?:\s+meg)?\s+til)\s+(?:klasse\s+)?b96\b/],
+    ["be", /\b(?:ta|få|fa|skaffe|kjøre|kjore|utvide(?:\s+meg)?\s+til)\s+(?:klasse\s+)?be\b/],
+    ["b", /\b(?:ta|få|fa|skaffe|kjøre|kjore)\s+(?:klasse\s+)?b\b/]
+  ];
+  const targetLicenseClass = targetLicensePatterns.find(([, pattern]) =>
+    pattern.test(rawMessage) || pattern.test(normalizedMessage)
+  );
+
+  if (targetLicenseClass) {
+    licenseClass = targetLicenseClass[0];
+  }
+  const packageHoursMatch = normalizedMessage.match(/(^|\s)(10|15|16|20)\s+(kjoretimer|timer)(\s|$)/);
+  const packageHourWords = [
+    ["ti kjøretimer", 10], ["ti kjoretimer", 10], ["ti timer", 10],
+    ["femten kjøretimer", 15], ["femten kjoretimer", 15], ["femten timer", 15],
+    ["seksten kjøretimer", 16], ["seksten kjoretimer", 16], ["seksten timer", 16],
+    ["tjue kjøretimer", 20], ["tjue kjoretimer", 20], ["tjue timer", 20]
+  ];
+  const packageHourWord = packageHourWords.find(([phrase]) => includesAny(t, [phrase]));
+  const requestedPackageHours = packageHoursMatch
+    ? Number(packageHoursMatch[2])
+    : (packageHourWord ? packageHourWord[1] : null);
+  const asksPackage = includesAny(t, [
+    "pakke", "pakken", "pakker", "grunnpakke", "startpakke", "start pakke", "pakketilbud"
+  ]) || requestedPackageHours !== null;
+  const asksLesson = includesAny(t, [
+    "kjøretime", "kjøretimer", "kjoretime", "kjoretimer", "timepris", "vanlig time",
+    "biltime", "automatkjøring", "automatkjoring", "time med manuell", "time med automat",
+    "klasse b time", "b-time", "a-time", "time klasse", "time for klasse", "45 min"
+  ]) ||
+    /(^|\s)(time|kjoretime)\s+(for\s+)?(klasse\s+)?(a1|a2|a|b|be|b96)(\s|$)/.test(normalizedMessage) ||
+    /(^|\s)(a1|a2|a|b|be|b96)\s+(time|kjoretime)(\s|$)/.test(normalizedMessage);
+
+  if (
+    !licenseClass &&
+    includesAny(t, ["alder", "aldersgrense", "hvor gammel"]) &&
+    /\bfor\s+a\b/i.test(String(message || ""))
+  ) {
+    licenseClass = "a";
+  }
+
+  const contactEmails = rawMessage.match(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi) || [];
+  const hasPrivateEmail = contactEmails.some(email => email.toLowerCase() !== "dintrafikkskole@gmail.com");
+  const contactNumberCandidates = rawMessage.match(/(?:^|[^\d])((?:\+?\d[\s.-]*){8,11})(?!\d)/g) || [];
+  const hasPrivateNumber = contactNumberCandidates.some(candidate => {
+    const digits = candidate.replace(/\D/g, "");
+
+    if (![8, 10, 11].includes(digits.length)) return false;
+    return digits !== "92012800" && digits !== "4792012800";
+  });
+  const presentsContactValue = hasPrivateEmail || hasPrivateNumber;
+
+  if (
+    presentsContactValue ||
+    includesAny(t, [
+      "lagre kontakt", "lagre navnet", "lagre e-post", "lagre epost", "lagre telefon",
+      "kontakt meg", "kan dere kontakte meg", "ring meg", "ringe meg", "ring meg tilbake",
+      "ringe meg tilbake", "tilbakeringing", "kan dere ringe meg", "navnet mitt",
+      "jeg heter", "min e-post", "min epost", "mitt telefonnummer", "telefonnummeret mitt",
+      "send svaret til", "navn:", "e-post:", "epost:", "fødselsnummer", "fodselsnummer",
+      "personopplysning"
+    ])
+  ) {
+    return "Denne demoen kan ikke lagre, videresende eller følge opp navn, telefonnummer, e-post eller andre personopplysninger. Kontakt skolen direkte på 920 12 800 eller dintrafikkskole@gmail.com, og ikke skriv sensitive opplysninger i chatten.";
+  }
+
+  if (includesAny(t, ["organisasjonsnummer", "organisasjons nummer", "orgnummer", "org nr"])) {
+    return "Organisasjonsnummeret er ikke oppgitt i kildene denne demoen bruker. Kontroller det i Brønnøysundregistrene eller kontakt skolen for riktig nummer.";
+  }
+
+  if (asksOpeningHours) {
+    if (includesAny(t, ["hovednettsiden", "hoved nettsiden", "vanlige nettsiden", "ordinære nettsiden"])) {
+      return "Hovednettsiden oppgir kontortid tirsdag og onsdag kl. 11–12.30 og torsdag kl. 16–17.30. TABS viser andre tider, så ring gjerne 920 12 800 før oppmøte.";
+    }
+
+    if (includesAny(t, ["tabs", "liveoversikt", "live oversikt"])) {
+      return "Skolens liveoversikt i TABS oppgir kontortid tirsdag kl. 15–16, onsdag kl. 11–13 og torsdag kl. 16–18. Ring gjerne 920 12 800 før oppmøte.";
+    }
+
+    return "TABS oppgir kontortid tirsdag kl. 15–16, onsdag kl. 11–13 og torsdag kl. 16–18. Hovednettsiden oppgir tirsdag og onsdag kl. 11–12.30 og torsdag kl. 16–17.30. Siden tidene er ulike, bør du kontrollere den aktuelle oversikten eller ringe 920 12 800 før oppmøte.";
+  }
+
+  if (includesAny(t, ["kursoversikt", "kursoversikten", "kursdato", "ledige plasser"])) {
+    return "Kursdatoer og ledige plasser endres. Du finner den oppdaterte kursoversikten via Fyllingsdalen Trafikkskoles nettside, der du også kan melde deg på.";
+  }
+
+  if (includesAny(t, ["elevside", "elevsiden", "elev side", "tabs-innlogging", "tabs innlogging"])) {
+    return "Du finner lenken til elevsiden i hovedmenyen på Fyllingsdalen Trafikkskoles nettside.";
+  }
+
+  if (
+    includesAny(t, ["kurs"]) &&
+    includesAny(t, ["mandag", "tirsdag", "onsdag", "torsdag", "fredag", "lørdag", "lordag", "søndag", "sondag"]) &&
+    !asksPrice
+  ) {
+    return "Kursdager og ledige plasser endres. Se den oppdaterte kursoversikten via skolens nettside for å kontrollere om kurset går den aktuelle dagen.";
+  }
+
+  if (includesAny(t, ["prisliste", "prislisten", "prisoversikt", "alle priser"])) {
+    return "Du finner prisoversikten på skolens hovednettside og i liveoversikten i TABS. Ved ulike beløp bør du bruke prisen som vises for den konkrete bookingen eller bekrefte den med skolen.";
+  }
+
+  if (includesAny(t, [
+    "hente", "henter", "henting", "bringe", "oppmøtested", "oppmotested", "pickup"
+  ])) {
+    const pickupAreas = [
+      ["fyllingsdalen", "Fyllingsdalen"],
+      ["bergen sentrum", "Bergen sentrum"],
+      ["loddefjord", "Loddefjord"],
+      ["fana", "Fana"],
+      ["nesttun", "Nesttun"],
+      ["askøy", "Askøy"],
+      ["askoy", "Askøy"],
+      ["sotra", "Sotra"],
+      ["åsane", "Åsane"],
+      ["asane", "Åsane"]
+    ];
+    const area = pickupAreas.find(([needle]) => includesAny(t, [needle]));
+
+    if (area) {
+      return `Ja. ${area[1]} er innenfor Stor-Bergen, der skolen opplyser at den henter elever. Avtal nøyaktig sted og tidspunkt direkte med trafikklæreren.`;
+    }
+
+    return "Skolen opplyser at den henter elever i hele Stor-Bergen. Avtal nøyaktig oppmøtested og tidspunkt direkte med trafikklæreren.";
+  }
+
+  if (includesAny(t, ["bomring", "bomringgebyr", "bompengegebyr"])) {
+    return "TABS oppgir 750 kr i bomringgebyr, mens hovednettsiden oppgir 850 kr. Kontroller beløpet som gjelder for den konkrete opplæringen.";
+  }
+
+  if (includesAny(t, [
+    "avbestill", "avlyse", "avlys", "kanseller", "kansellere", "endre en time", "endre kjøretime",
+    "endre tidspunkt", "flytte kjøretime", "flytter jeg kjøretimen"
+  ])) {
+    if (asksDrivingTest) {
+      return "Førerprøven bestilles, endres og avbestilles hos Statens vegvesen. Kontroller fristen og vilkårene i bestillingen din før du avbestiller; skolens 24-timersregel gjelder vanlige kjøretimer, ikke førerprøven.";
+    }
+
+    if (includesAny(t, [
+      "kurs", "mørkekjøring", "morkekjoring", "mørkekurs", "morkekurs",
+      "mørkedemo", "morkedemo", "trafikant i mørket", "trafikant i morket",
+      "trafikalt grunnkurs", "tgk", "førstehjelp", "forstehjelp"
+    ])) {
+      return "Avbestillingsfristen for kurs er ikke bekreftet i kildene demoen bruker. Kontroller vilkårene i den konkrete bookingen eller kontakt skolen på 920 12 800 før du avbestiller.";
+    }
+
+    return "Skolens oppførte frist for å avbestille en vanlig kjøretime er 24 timer før timen, og senest én virkedag i forveien. Hvis ikke må timen betales.";
+  }
+
+  if (includesAny(t, ["moped"])) {
+    return "Moped er ikke oppført blant førerkortklassene på skolens hovednettside. TABS viser et mopedgrunnkurs, så kontakt skolen for å få bekreftet om tilbudet er aktivt før påmelding.";
+  }
+
+  if (includesAny(t, [
+    "tegnspråk", "tegnsprak", "tegnspråktolk", "tegnspraktolk", "døv", "dov",
+    "hørselshemmet", "hørselshemmede", "horselshemmet", "horselshemmede",
+    "tunghørt", "tunghørte", "tunghort", "tunghorte", "nedsatt hørsel", "nedsatt horsel",
+    "høreapparat", "horeapparat", "hører dårlig", "horer darlig", "hørselshemming",
+    "horselshemming", "døvelærer", "dovelaerer", "tilrettelagt"
+  ])) {
+    if (asksPrice || includesAny(t, ["ekstra", "tillegg"])) {
+      return "Skolen opplyser at de kan tilby trafikkopplæring på tegnspråk, men en eventuell tilleggspris er ikke publisert i kildene demoen bruker. Kontakt skolen for å få dette bekreftet.";
+    }
+
+    return "Ja. Fyllingsdalen Trafikkskole opplyser at de kan tilby trafikkopplæring på tegnspråk. Kontakt skolen for å avtale hvilken tilrettelegging du trenger.";
+  }
+
+  const staffRoles = [
+    ["eirik kråkevik", "Eirik Kråkevik er oppført som daglig leder og trafikklærer."],
+    ["eirik krakevik", "Eirik Kråkevik er oppført som daglig leder og trafikklærer."],
+    ["geir frode lunden", "Geir Frode Lunden er oppført som trafikklærer og med opplæring på tegnspråk."],
+    ["john-magne øyulvstad", "John-Magne Øyulvstad er oppført som faglig leder og trafikklærer."],
+    ["john-magne oyulvstad", "John-Magne Øyulvstad er oppført som faglig leder og trafikklærer."],
+    ["gunn kråkevik", "Gunn Kråkevik er oppført som trafikklærer."],
+    ["gunn krakevik", "Gunn Kråkevik er oppført som trafikklærer."],
+    ["hein nils hansen", "Hein Nils Hansen er oppført som trafikklærer."],
+    ["even kråkeskar", "Even Kråkeskar er oppført som trafikklærer."],
+    ["even krakeskar", "Even Kråkeskar er oppført som trafikklærer."],
+    ["ørjan berge", "Ørjan Berge er oppført som trafikklærer."],
+    ["orjan berge", "Ørjan Berge er oppført som trafikklærer."],
+    ["clarice mukula", "Clarice Mukula er oppført som trafikklærer."],
+    ["sindre ruud pettersen", "Sindre Ruud Pettersen står i TABS-oversikten, men hovednettsiden viser en annen ansattliste. Kontakt skolen for å bekrefte nåværende status."],
+    ["sindre", "Sindre Ruud Pettersen står i TABS-oversikten, men hovednettsiden viser en annen ansattliste. Kontakt skolen for å bekrefte nåværende status."]
+  ];
+  const staffMatch = staffRoles.find(([needle]) => includesAny(t, [needle]));
+
+  if (staffMatch) {
+    return `${staffMatch[1]} Skolens publiserte ansattoversikter er ikke helt like, så bruk fellesnummeret 920 12 800 for oppdatert status og kontakt.`;
+  }
+
+  if (includesAny(t, ["daglig leder", "dagligleder"])) {
+    return "Eirik Kråkevik er oppført som daglig leder og trafikklærer. Skolens publiserte ansattoversikter er ikke helt like, så bruk fellesnummeret 920 12 800 for oppdatert status.";
+  }
+
+  if (includesAny(t, ["faglig leder", "fagligleder"])) {
+    return "John-Magne Øyulvstad er oppført som faglig leder og trafikklærer. Skolens publiserte ansattoversikter er ikke helt like, så bruk fellesnummeret 920 12 800 for oppdatert status.";
+  }
+
+  if (includesAny(t, [
+    "hvem jobber", "ansatte", "ansattoversikt", "trafikklærere", "trafikklaerere",
+    "lærere", "laerere", "instruktører", "instruktorer", "teamet"
+  ])) {
+    return "TABS-oversikten viser Clarice Mukula, Eirik Kråkevik, Even Kråkeskar, Geir Frode Lunden, Gunn Kråkevik, Hein Nils Hansen, John-Magne Øyulvstad, Sindre Ruud Pettersen og Ørjan Berge. Hovednettsiden viser en annen ansattliste, så kontakt skolen for å bekrefte hvem som jobber der nå.";
+  }
+
+  if (
+    includesAny(t, ["automat", "automatgir", "automatlappen"]) &&
+    includesAny(t, ["manuell", "manuelt", "manuelt gir", "manuellgir"])
+  ) {
+    if (includesAny(t, ["automat med manuelt", "automatgir med manuelt", "automat med manuell", "manuelt førerkort", "manuelt forerkort"])) {
+      return "Ja. Har du bestått førerprøven med manuelt gir, kan du kjøre både bil med manuelt gir og automat. Kilde: Statens vegvesen.";
+    }
+
+    if (asksPrice || includesAny(t, ["billigere", "dyrest", "dyrere"])) {
+      return "En ordinær kjøretime på 45 minutter er oppført til 900 kr for både manuelt gir og automat. Består du førerprøven med automat, får førerkortet kode 78 og gjelder bare automat. Kilde: skolen og Statens vegvesen.";
+    }
+
+    if (includesAny(t, ["etter automat", "etter automatlappen", "fra automat", "bytte til manuell", "kjøre manuell", "kjore manuell"])) {
+      return "Skolen tilbyr klasse B med både automat og manuelt gir. Statens vegvesen opplyser at førerkort tatt med automat får kode 78 og bare gjelder automat. For å fjerne begrensningen må du bestå en ny førerprøve med manuelt gir.";
+    }
+
+    return "Fyllingsdalen Trafikkskole tilbyr klasse B med både manuelt gir og automat. Består du førerprøven med automat, får førerkortet kode 78 og gjelder bare automat. Består du med manuelt gir, kan du kjøre begge deler. Kilde: Statens vegvesen.";
+  }
+
+  const targetsClassA =
+    /\b(ta|få|fa|skaffe|kjøre|kjore)\s+(klasse\s+)?a\b/.test(rawMessage) ||
+    /\b(utvide|gå|ga)\s+(meg\s+)?til\s+(klasse\s+)?a\b/.test(rawMessage) ||
+    /\b(ta|få|fa|skaffe|kjøre|kjore)\s+tung\s+(mc|motorsykkel)\b/.test(rawMessage) ||
+    /\b(oppgradere|gå opp|ga opp)\s+(meg\s+)?til\s+tung\s+(mc|motorsykkel)\b/.test(rawMessage);
+
+  if (targetsClassA) {
+    const ageFromContext = normalizedMessage.match(/\b(jeg er|er jeg|som er|fylt|fyller)\s+(\d{1,2})\b/);
+    const statedAge = ageFromContext
+      ? Number(ageFromContext[2])
+      : ([...normalizedMessage.matchAll(/\b(\d{1,2})\s+(ar|aring)\b/g)]
+          .map(match => Number(match[1]))
+          .find(age => age >= 15) || null);
+    const lacksA2 = includesAny(t, [
+      "uten a2", "uten å ha a2", "uten a ha a2", "har ikke a2", "ikke har a2",
+      "ikke ha a2", "ikke hatt a2", "aldri hatt a2", "uten mellomtung mc",
+      "uten mellomtung motorsykkel", "aldri hatt mellomtung mc", "aldri hatt mellomtung motorsykkel"
+    ]);
+    const hasOneYearA2 = includesAny(t, [
+      "ett år", "ett ar", "1 år", "1 ar", "ett halvt", "halvannet år", "halvannet ar"
+    ]);
+    const hasTwoYearsA2 = includesAny(t, [
+      "to år", "to ar", "tre år", "tre ar", "fire år", "fire ar", "fem år", "fem ar",
+      "seks år", "seks ar", "sju år", "sju ar", "åtte år", "atte ar", "ni år", "ni ar",
+      "ti år", "ti ar", "2 år", "2 ar", "3 år", "3 ar", "4 år", "4 ar", "5 år", "5 ar",
+      "6 år", "6 ar", "7 år", "7 ar", "8 år", "8 ar", "9 år", "9 ar", "10 år", "10 ar",
+      "minst to", "minst 2"
+    ]);
+
+    if (statedAge !== null && statedAge >= 24) {
+      return "Ja. Fra du er 24 år kan du ta klasse A direkte uten å ha hatt A2 først. Kilde: Statens vegvesen.";
+    }
+
+    if (hasOneYearA2) {
+      return "Nei, ett år med A2 er ikke nok for tidlig utvidelse. Du må ha hatt klasse A2 i minst to år, eller vente til du er 24 år. Kilde: Statens vegvesen.";
+    }
+
+    if (lacksA2) {
+      return "Nei, ikke før du er 24 år. Tidligere utvidelse til klasse A krever at du har hatt klasse A2 i minst to år. Kilde: Statens vegvesen.";
+    }
+
+    if (hasTwoYearsA2 && statedAge !== null && statedAge < 20) {
+      return "Nei, ikke ennå. Klasse A2 kan tidligst tas fra 18 år, så to års sammenhengende innehav gjør 20 år til tidligste mulige alder for denne utvidelsen. Kilde: Statens vegvesen.";
+    }
+
+    if (hasTwoYearsA2) {
+      return "Ja, du kan utvide til klasse A før du fyller 24 år når du har hatt klasse A2 i minst to år. Kilde: Statens vegvesen. Kontakt skolen for å planlegge utvidelsen.";
+    }
+
+    return "Du kan ta klasse A direkte fra 24 år, eller utvide tidligere når du har hatt klasse A2 i minst to år. Kilde: Statens vegvesen.";
+  }
+
+  if (
+    includesAny(t, ["aldersgrense", "hvor gammel", "alder", "over 25", "fylt 25", "eldre enn 25"]) ||
+    /\b\d{1,2}\s*[- ]?(år|ar)(ing)?\b/.test(t.both) ||
+    /\b(jeg er|er jeg|som er|når jeg er|nar jeg er)\s+\d{1,2}\b/.test(t.both)
+  ) {
+    const ageFromContext = normalizedMessage.match(/\b(jeg er|er jeg|som er|fylt|fyller)\s+(\d{1,2})\b/);
+    const statedAge = ageFromContext
+      ? Number(ageFromContext[2])
+      : ([...normalizedMessage.matchAll(/\b(\d{1,2})\s+(ar|aring)\b/g)]
+          .map(match => Number(match[1]))
+          .find(age => age >= 15) || null);
+    const isAtLeast25 = statedAge !== null && statedAge >= 25;
+
+    if (includesAny(t, ["ledsager", "ledsagere"])) {
+      return "En ledsager må ha fylt 25 år og hatt førerkort i samme klasse sammenhengende i minst fem år. En 25-åring kan derfor være ledsager hvis kravet til førerkortet også er oppfylt. Kilde: Statens vegvesen.";
+    }
+
+    if (
+      isAtLeast25 &&
+      includesAny(t, [
+        "mørkekjøring", "morkekjoring", "trafikant i mørket", "trafikant i morket",
+        "førstehjelp", "forstehjelp", "plikter ved trafikkuhell"
+      ])
+    ) {
+      return "Ja. Når du har fylt 25 år er du fritatt fra selve trafikalt grunnkurs, men du må fortsatt gjennomføre Trafikant i mørket og Plikter ved trafikkuhell og førstehjelp. Kilde: Statens vegvesen.";
+    }
+
+    if (includesAny(t, ["trafikalt grunnkurs", "grunnkurs", "tg", "over 25", "fylt 25"])) {
+      if (isAtLeast25 || includesAny(t, ["over 25", "fylt 25", "25 år", "25 ar", "eldre enn 25"])) {
+        return "Har du fylt 25 år, er du fritatt fra selve trafikalt grunnkurs. Du må fortsatt gjennomføre Trafikant i mørket og Plikter ved trafikkuhell og førstehjelp. Kilde: Statens vegvesen.";
+      }
+
+      return "Trafikalt grunnkurs er obligatorisk for personer under 25 år. Har du fylt 25 år, er du fritatt fra selve kurset, men må fortsatt gjennomføre Trafikant i mørket og Plikter ved trafikkuhell og førstehjelp. Kilde: Statens vegvesen.";
+    }
+
+    const asksPracticeDriving = includesAny(t, [
+      "øvelseskjøre", "ovelseskjore", "øvelseskjøring", "ovelseskjoring"
+    ]);
+
+    if (asksPracticeDriving && licenseClass === "a1") {
+      return "For klasse A1 kan du øvelseskjøre fra du er 15 år når kravene til motorsykkelopplæringen er oppfylt. Førerprøven kan tas fra 16 år. Kilde: Statens vegvesen.";
+    }
+
+    if (asksPracticeDriving && licenseClass === "a2") {
+      return "For klasse A2 kan du øvelseskjøre fra du er 16 år når kravene til motorsykkelopplæringen er oppfylt. Førerprøven kan tas fra 18 år. Kilde: Statens vegvesen.";
+    }
+
+    if (asksPracticeDriving && licenseClass === "a") {
+      const lacksA2 = includesAny(t, [
+        "uten a2", "uten å ha a2", "uten a ha a2", "har ikke a2", "ikke har a2",
+        "ikke ha a2", "ikke hatt a2", "aldri hatt a2", "uten mellomtung mc",
+        "uten mellomtung motorsykkel"
+      ]);
+      const hasA2 = !lacksA2 && includesAny(t, [
+        "har a2", "har klasse a2", "har førerkort a2", "har forerkort a2",
+        "har mellomtung mc", "har mellomtung motorsykkel"
+      ]);
+      const asksBefore22 = /\bfør\s+(?:jeg\s+er\s+)?22\b/.test(rawMessage) ||
+        /\bfor\s+(?:jeg\s+er\s+)?22\b/.test(normalizedMessage);
+
+      if ((statedAge !== null && statedAge < 22) || asksBefore22) {
+        if (hasA2) {
+          return "Ja. Har du allerede klasse A2, kan du øvelseskjøre med klasse A før du er 22 år. Kontakt skolen for å kontrollere øvrige krav og planlegge opplæringen. Kilde: Statens vegvesen.";
+        }
+
+        return "Nei, ikke uten klasse A2. Uten A2 kan du øvelseskjøre med klasse A fra du er 22 år. Kilde: Statens vegvesen.";
+      }
+
+      return "For klasse A kan du normalt øvelseskjøre fra du er 22 år. Har du allerede klasse A2, kan du øvelseskjøre med klasse A også før du fyller 22. Klasse A kan tas direkte fra 24 år, eller ved utvidelse etter minst to år med A2. Kilde: Statens vegvesen.";
+    }
+
+    if (licenseClass === "b") {
+      return "For klasse B kan du øvelseskjøre fra du er 16 år når kravene til trafikalt grunnkurs er oppfylt. Nedre aldersgrense for førerprøven er 18 år. Kilde: Statens vegvesen.";
+    }
+
+    if (licenseClass === "a1") {
+      return "Nedre aldersgrense for førerprøven i klasse A1 er 16 år. Kilde: Statens vegvesen.";
+    }
+
+    if (licenseClass === "a2") {
+      return "Nedre aldersgrense for førerprøven i klasse A2 er 18 år. Kilde: Statens vegvesen.";
+    }
+
+    if (licenseClass === "a") {
+      return "Nedre aldersgrense for klasse A er normalt 24 år. Du kan utvide tidligere hvis du har hatt klasse A2 i minst to år. Kilde: Statens vegvesen.";
+    }
+
+    if (licenseClass === "be") {
+      return "For klasse BE må du være minst 18 år og ha førerkort i klasse B. Kilde: Statens vegvesen.";
+    }
+
+    if (licenseClass === "b96") {
+      return "For å få B96 må du ha klasse B, som har nedre aldersgrense 18 år for førerprøven. B96 krever minst sju timer obligatorisk opplæring, men ingen ny førerprøve. Kilde: Statens vegvesen.";
+    }
+
+    return "For klasse B kan du øvelseskjøre fra 16 år når kravene til trafikalt grunnkurs er oppfylt, mens førerprøven kan tas fra 18 år. For MC og tilhenger varierer alderskravet med klasse. Kilde: Statens vegvesen.";
+  }
+
+  if (
+    licenseClass &&
+    includesAny(t, [
+      "hva må jeg ha", "hva ma jeg ha", "hva trenger jeg", "hva kreves", "kreves for",
+      "forkunnskaper", "forutsetninger", "krav før", "kravene", "hvilke krav", "før a"
+    ])
+  ) {
+    if (licenseClass === "be") {
+      return "For å ta klasse BE må du være minst 18 år og ha førerkort i klasse B. Opplæringen omfatter minst sju timer, og BE avsluttes med førerprøve. Kilde: Statens vegvesen.";
+    }
+
+    if (licenseClass === "b96") {
+      return "For klasse B96 må du ha klasse B og gjennomføre minst sju timer obligatorisk opplæring. Du trenger ikke ta en ny førerprøve. Kilde: Statens vegvesen.";
+    }
+
+    if (licenseClass === "b") {
+      return "Veien til klasse B omfatter trafikalt grunnkurs, grunnleggende og trafikal opplæring, avsluttende obligatorisk opplæring, teoriprøve og førerprøve. Hvor mange kjøretimer du trenger, vurderes individuelt. Kilde: Statens vegvesen.";
+    }
+
+    return "Forutsetningene for den valgte førerkortklassen er ikke fullstendig spesifisert i kildene demoen bruker. Kontroller gjeldende krav hos Statens vegvesen eller spør skolen før du bestiller opplæring.";
+  }
+
+  if (
+    includesAny(t, ["henger", "tilhenger", "hengerlappen"]) &&
+    includesAny(t, ["hva må jeg ha", "hva ma jeg ha", "hva trenger jeg", "hva kreves", "krav", "forutsetning"])
+  ) {
+    return "Kravene avhenger av om du mener B96 eller BE. B96 krever klasse B og minst sju timer obligatorisk opplæring uten ny førerprøve. BE krever klasse B, minst sju timer opplæring og en ny førerprøve; du må være minst 18 år for BE. Kilde: Statens vegvesen.";
+  }
 
   if (includesAny(t, ["epost", "e-post", "email", "mail"])) {
     return "Du kan kontakte Fyllingsdalen Trafikkskole på e-post: dintrafikkskole@gmail.com.";
+  }
+
+  if (
+    (
+      includesAny(t, ["trafikalt grunnkurs", "tg"]) ||
+      (includesAny(t, ["grunnkurs"]) && !["a", "a1", "a2"].includes(licenseClass) && !includesAny(t, ["mc", "motorsykkel"]))
+    ) &&
+    !asksPrice
+  ) {
+    if (includesAny(t, [
+      "neste", "når", "nar", "dato", "ledig", "påmelding", "pamelding", "melde meg på",
+      "melde meg pa", "melder jeg meg på", "melder jeg meg pa", "booke", "booking", "bestille"
+    ])) {
+      return "Kursdatoer og ledige plasser endres. Se den oppdaterte kursoversikten via skolens nettside for neste trafikale grunnkurs og påmelding.";
+    }
+
+    return "Trafikalt grunnkurs er første steg mot førerkortet og er obligatorisk for personer under 25 år. Kurset gir grunnleggende forståelse for trafikk, ansvar og sikkerhet.";
+  }
+
+  if (includesAny(t, [
+    "mørkekjøring", "morkekjoring", "mørkedemo", "morkedemo", "mørkekurs", "morkekurs",
+    "mørkekjøringskurs", "morkekjoringskurs", "mørkedemonstrasjon", "morkedemonstrasjon",
+    "trafikant i mørket", "trafikant i morket", "nattkjøring", "nattkjoring"
+  ])) {
+    if (asksPrice) {
+      return "I skolens liveoversikt i TABS er Mørkedemo Jondal oppført til 1 500 kr. Hovednettsidens prisside viser også Trafikant i mørket til 2 200 kr, så kontroller riktig kurs i kursoversikten før påmelding.";
+    }
+
+    if (includesAny(t, [
+      "neste", "når", "nar", "dato", "ledig", "påmelding", "pamelding", "melde meg på",
+      "melde meg pa", "booke", "booking", "bestille"
+    ])) {
+      return "Se den oppdaterte kursoversikten via skolens nettside for neste mørkekjøring eller mørkedemo og ledige plasser.";
+    }
+
+    return "Mørkekjøring, også kalt Trafikant i mørket, handler om risiko og trafikantatferd ved kjøring i mørket. Kursnavn, sted og pris varierer, så bruk den oppdaterte kursoversikten for det konkrete tilbudet.";
+  }
+
+  const asksWeekendLesson =
+    includesAny(t, ["lørdag", "lordag", "helg", "weekend"]) &&
+    includesAny(t, ["kjøretime", "kjoretime", "time"]);
+
+  if (asksWeekendLesson) {
+    if (["a", "a1", "a2"].includes(licenseClass)) {
+      return "Skolen publiserer ikke en egen lørdagspris for den valgte MC-klassen. Kontakt skolen for å få bekreftet om lørdagstime er tilgjengelig og hva den koster.";
+    }
+
+    return "Kjøretime på lørdag for klasse B er oppført til 1 700 kr.";
+  }
+
+  const asksEveningLesson = includesAny(t, [
+    "etter kl 16", "etter klokken 16", "etter 16", "kveld", "ettermiddag", "sen time", "kveldstime"
+  ]);
+
+  if (asksEveningLesson) {
+    if (["a", "a1", "a2"].includes(licenseClass)) {
+      return "Kjøretime etter kl. 16 for MC-klassene er oppført til 1 150 kr på skolens hovednettside.";
+    }
+
+    return "Hovednettsiden oppgir 1 050 kr for klasse B etter kl. 16. TABS viser både 1 050 kr og en separat linje på 1 500 kr, så kontroller beløpet for den konkrete bookingen.";
+  }
+
+  if (asksDrivingTest && licenseClass === "b96") {
+    return "B96 kan tas uten en ny førerprøve og har derfor ingen oppkjøringspris. Du må ha klasse B og gjennomføre minst sju timer obligatorisk opplæring. Kilde: Statens vegvesen.";
+  }
+
+  if (asksDrivingTest && licenseClass === "be" && !asksPrice && !asksDrivingTestScheduling) {
+    return "Ja, klasse BE krever førerprøve. Du må ha klasse B, være minst 18 år og gjennomføre minst sju timer opplæring. Kilde: Statens vegvesen.";
+  }
+
+  if (asksDrivingTest && includesAny(t, ["hvor tidlig", "når bør jeg starte", "nar bor jeg starte", "før ønsket", "for onsket"])) {
+    return "Skolen anbefaler å starte opplæringen omtrent fem måneder før ønsket førerprøve for å redusere problemer med fravær fra skolen.";
+  }
+
+  if (asksDrivingTest && includesAny(t, ["vegvesen", "gebyr", "inkludert", "kommer i tillegg", "separat"])) {
+    return "Statens vegvesens prøvegebyr er separat og er ikke inkludert i skolens oppførte pris for kjøretøy og lærer ved førerprøven. Kontroller det gjeldende offentlige gebyret hos Statens vegvesen før betaling.";
+  }
+
+  if (asksDrivingTestScheduling) {
+    return "Oppkjøring bestilles hos Statens vegvesen. Du kan bestille selv eller gi trafikkskolen fullmakt til å bestille for deg; ledige tider vises i Statens vegvesens timebestilling.";
+  }
+
+  if (asksDrivingTest) {
+    if (asksPrice) {
+      if (licenseClass === "b") {
+        return "Skolens bil og lærer ved førerprøven for klasse B er oppført til 2 850 kr. Statens vegvesens prøvegebyr kommer separat.";
+      }
+
+      if (["a", "a1", "a2"].includes(licenseClass)) {
+        return "Skolens motorsykkel og lærer ved førerprøven for den valgte MC-klassen er oppført til 2 900 kr. Statens vegvesens prøvegebyr kommer separat.";
+      }
+
+      if (licenseClass === "be") {
+        return "Skolens bil og henger til førerprøven for BE er oppført til 2 900 kr. Statens vegvesens prøvegebyr kommer separat.";
+      }
+
+      return "Skolens kjøretøy og lærer ved førerprøven er oppført til 2 850 kr for klasse B og 2 900 kr for MC og BE. Statens vegvesens prøvegebyr kommer separat.";
+    }
+
+    return "Førerprøven er den praktiske avsluttende prøven hos Statens vegvesen. All obligatorisk opplæring må være fullført og registrert, og teoriprøven må være bestått for klassene der den kreves. Skolen oppgir 2 850 kr for bil og lærer ved klasse B-prøven og 2 900 kr for MC eller bil og henger ved BE; Statens vegvesens prøvegebyr kommer separat.";
+  }
+
+  if (
+    licenseClass === "b" &&
+    asksPackage &&
+    requestedPackageHours === 20
+  ) {
+    return "For klasse B viser hovednettsiden en 20-timers grunnpakke til 37 775 kr, mens TABS fremhever 41 000 kr for 20 kjøretimer, all obligatorisk opplæring og gebyr. Kontroller hvilket innhold og beløp som gjelder før bestilling.";
+  }
+
+  if (
+    licenseClass === "b" &&
+    asksPackage &&
+    requestedPackageHours === 16
+  ) {
+    return "For klasse B viser hovednettsiden og TABS en 16-timerspakke til 35 175 kr, mens TABS også fremhever 37 000 kr inkludert obligatorisk opplæring og gebyr. Kontroller innholdet og beløpet for den konkrete pakken.";
+  }
+
+  if (asksPackage && licenseClass === "a") {
+    if (requestedPackageHours && requestedPackageHours !== 10) {
+      return `Skolen publiserer ikke en egen ${requestedPackageHours}-timerspakke for klasse A i kildene demoen bruker. Den publiserte A-pakken har ti kjøretimer og er oppført til 28 450 kr; MC-grunnkurset er ikke inkludert.`;
+    }
+
+    return "Pakken for klasse A med ti kjøretimer og all obligatorisk opplæring er oppført til 28 450 kr. MC-grunnkurset er ikke inkludert.";
+  }
+
+  if (asksPackage && licenseClass === "a2") {
+    if (requestedPackageHours && requestedPackageHours !== 10) {
+      return `Skolen publiserer ikke en egen ${requestedPackageHours}-timerspakke for klasse A2 i kildene demoen bruker. Den publiserte A2-pakken har ti kjøretimer og er oppført til 27 850 kr; MC-grunnkurset er ikke inkludert.`;
+    }
+
+    return "Pakken for klasse A2 med ti kjøretimer og all obligatorisk opplæring er oppført til 27 850 kr. MC-grunnkurset er ikke inkludert.";
+  }
+
+  if (asksPackage && licenseClass === "a1") {
+    if (requestedPackageHours === 20) {
+      return "Pakken for klasse A1 med 20 kjøretimer og all obligatorisk opplæring er oppført til 36 359 kr. MC-grunnkurset er ikke inkludert.";
+    }
+
+    if (requestedPackageHours === 15) {
+      return "Pakken for klasse A1 med 15 kjøretimer og all obligatorisk opplæring er oppført til 31 150 kr. MC-grunnkurset er ikke inkludert.";
+    }
+
+    if (requestedPackageHours && requestedPackageHours !== 10) {
+      return `Skolen publiserer ikke en egen ${requestedPackageHours}-timerspakke for klasse A1. De publiserte pakkene har 10, 15 eller 20 kjøretimer og er oppført til henholdsvis 25 850 kr, 31 150 kr og 36 359 kr; MC-grunnkurset er ikke inkludert.`;
+    }
+
+    return "Pakken for klasse A1 med ti kjøretimer og all obligatorisk opplæring er oppført til 25 850 kr. MC-grunnkurset er ikke inkludert.";
+  }
+
+  if (asksPackage && licenseClass === "b" && requestedPackageHours && ![16, 20].includes(requestedPackageHours)) {
+    return `Skolen publiserer ikke en egen ${requestedPackageHours}-timerspakke for klasse B i kildene demoen bruker. De publiserte B-pakkene har 16 eller 20 kjøretimer, med ulike beløp mellom hovednettsiden og TABS.`;
+  }
+
+  if (asksPackage && !licenseClass && includesAny(t, ["mc", "motorsykkel"])) {
+    return "Skolen publiserer MC-pakker for A, A1 og A2. Klasse A er oppført til 28 450 kr med ti kjøretimer, A2 til 27 850 kr med ti timer, og A1 fra 25 850 kr med ti timer til 36 359 kr med 20 timer. MC-grunnkurset er ikke inkludert. Oppgi klasse for et mer presist svar.";
+  }
+
+  if (asksPackage && (!licenseClass || licenseClass === "b")) {
+    return "For klasse B viser hovednettsiden grunnpakker til 35 175 kr med 16 kjøretimer og 37 775 kr med 20 kjøretimer. TABS viser også 35 175 kr for 16 timer og fremhever 37 000 kr for 16 timer og 41 000 kr for 20 timer, inkludert obligatorisk opplæring og gebyr. Dette er startpakker, ikke en garantert totalpris. Egne MC-pakker finnes også; oppgi klasse for detaljer, og kontroller innholdet før bestilling.";
+  }
+
+  if (includesAny(t, [
+    "totalpris", "totalkostnad", "pris på lappen", "prisen på lappen", "hva koster lappen",
+    "alt inkludert", "alt til sammen", "hele opplæringen", "hele opplaeringen", "hele lappen",
+    "billigste løsning", "billigste losning", "billigste pakke"
+  ])) {
+    return "En pakke er en startpakke, ikke en garanti for totalprisen, fordi behovet for kjøretimer vurderes individuelt. For klasse B viser kildene 16-timersalternativer fra 35 175 kr og 20-timersalternativer fra 37 775 kr, med høyere fremhevede TABS-priser når obligatorisk opplæring og gebyr er inkludert. Kontroller innholdet før bestilling.";
+  }
+
+  if (includesAny(t, ["trinnvurdering", "trinn 2", "trinn 3"])) {
+    const asksStepTwo = includesAny(t, ["trinn 2", "trinn to"]);
+    const asksStepThree = includesAny(t, ["trinn 3", "trinn tre"]);
+
+    if (licenseClass === "b") {
+      if (asksStepTwo) {
+        return "For klasse B oppgir TABS 850 kr for trinnvurdering på trinn 2, mens hovednettsiden oppgir 950 kr. Kontroller beløpet for den konkrete bookingen.";
+      }
+
+      if (asksStepThree) {
+        return "Trinnvurdering på trinn 3 for klasse B er oppført til 1 265 kr for 60 minutter, både for manuelt gir og automat.";
+      }
+    }
+
+    if (["a", "a1", "a2"].includes(licenseClass)) {
+      if (asksStepTwo) return "Trinnvurdering på trinn 2 for den valgte MC-klassen er oppført til 1 050 kr for 45 minutter.";
+      if (asksStepThree) return "Trinnvurdering på trinn 3 for den valgte MC-klassen er oppført til 1 400 kr for 60 minutter.";
+    }
+
+    if (["be", "b96"].includes(licenseClass)) {
+      if (asksStepTwo) return "Trinnvurdering på trinn 2 for BE/B96 er oppført til 955 kr for 45 minutter.";
+      if (asksStepThree) return "Trinnvurdering på trinn 3 for BE/B96 er oppført til 1 275 kr for 60 minutter.";
+    }
+
+    return "En trinnvurdering brukes ved slutten av et opplæringstrinn for å vurdere om eleven har grunnlag for å gå videre. Prisene avhenger av klasse og trinn: B er oppført til 850/950 kr på trinn 2 og 1 265 kr på trinn 3; A/A1/A2 til 1 050/1 400 kr; BE/B96 til 955/1 275 kr. Oppgi klasse og trinn for et presist svar.";
+  }
+
+  if (
+    asksPrice &&
+    includesAny(t, ["sikkerhetskurs på veg", "sikkerhetskurs pa veg", "sikkerhetskurs på vei", "sikkerhetskurs pa vei"])
+  ) {
+    if (!licenseClass && includesAny(t, ["mc", "motorsykkel"])) {
+      return "Prisen avhenger av MC-klasse. Sikkerhetskurs på veg er oppført til 6 800 kr for A, 6 000 kr for A1 og 5 610 kr i TABS / 6 200 kr på hovednettsiden for A2. Oppgi A, A1 eller A2 for et presist svar.";
+    }
+
+    if (licenseClass === "a1") return "Sikkerhetskurs på veg for klasse A1 er oppført til 6 000 kr.";
+    if (licenseClass === "a2") return "TABS oppgir 5 610 kr for sikkerhetskurs på veg i klasse A2, mens hovednettsiden oppgir 6 200 kr. Kontroller beløpet for den konkrete bookingen.";
+    if (licenseClass === "a") return "Sikkerhetskurs på veg for klasse A er oppført til 6 800 kr.";
+    if (!licenseClass || licenseClass === "b") return "Sikkerhetskurs på vei for klasse B er oppført til 10 110 kr og 360 minutter, både for manuelt gir og automat.";
+  }
+
+  if (asksPrice && includesAny(t, [
+    "presis kjøreteknikk", "presis kjoreteknikk", "presisjonskjøring", "presisjonskjoring"
+  ])) {
+    if (["a", "a2"].includes(licenseClass)) {
+      return "Sikkerhetskurs i presis kjøreteknikk for den valgte MC-klassen er oppført til 5 800 kr. Banegebyr kommer i tillegg etter skolens prisliste.";
+    }
+
+    return "Prisen på sikkerhetskurs i presis kjøreteknikk avhenger av MC-klasse. Oppgi A, A1 eller A2 for et sikkert svar.";
+  }
+
+  if (
+    asksPrice &&
+    includesAny(t, ["grunnkurs"]) &&
+    (["a", "a1", "a2"].includes(licenseClass) || includesAny(t, ["mc", "motorsykkel"]))
+  ) {
+    return "MC-grunnkurset for A, A1 og A2 er oppført til 1 200 kr. Det er ikke inkludert i de publiserte MC-pakkene.";
+  }
+
+  if (
+    ["be", "b96"].includes(licenseClass) &&
+    includesAny(t, ["hvor mange timer", "minimum timer", "minimumstimer", "minst timer", "minstekrav", "omfatter minst"])
+  ) {
+    if (licenseClass === "b96") {
+      return "B96 krever minst sju timer obligatorisk opplæring og ingen ny førerprøve. Kilde: Statens vegvesen.";
+    }
+
+    return "BE-opplæringen omfatter minst sju timer og avsluttes med førerprøve. Kilde: Statens vegvesen.";
+  }
+
+  if (
+    asksPrice &&
+    ["be", "b96"].includes(licenseClass) &&
+    includesAny(t, ["landeveiskjøring", "landeveiskjoring", "landevei"])
+  ) {
+    return "Landeveiskjøring for BE/B96 er oppført til 3 200 kr.";
+  }
+
+  if (asksPrice && includesAny(t, ["lastsikringskurs", "lastsikring"])) {
+    return "Lastsikringskurs for BE/B96 er oppført til 1 700 kr.";
+  }
+
+  if (
+    includesAny(t, ["sikkerhetskurs på bane", "sikkerhetskurs pa bane", "glattkjøring", "glattkjoring", "øvingsbane", "ovingsbane"]) &&
+    (!licenseClass || licenseClass === "b")
+  ) {
+    if (!licenseClass && includesAny(t, ["mc", "motorsykkel"])) {
+      return "MC-kurs på bane varierer med klasse. Skolen oppfører sikkerhetskurs i presis kjøreteknikk til 5 800 kr for A og A2, med banegebyr i tillegg. Oppgi A, A1 eller A2 for riktig kurs.";
+    }
+
+    return "For klasse B oppgir TABS 7 150 kr for sikkerhetskurs på øvingsbane. Hovednettsiden oppgir 5 600 kr for manuelt gir og 5 400 kr for automat, så kontroller beløpet for den konkrete bookingen.";
+  }
+
+  if (asksLesson && includesAny(t, [
+    "bestille", "bestiller", "booke", "booking", "melde meg på", "melde meg pa", "ledig time"
+  ])) {
+    return "Du kan bestille kjøretime via elevsiden på Fyllingsdalen Trafikkskoles nettside eller kontakte skolen på 920 12 800.";
+  }
+
+  if (
+    asksLesson &&
+    includesAny(t, ["hva trenger", "hva må jeg ta med", "hva ma jeg ta med", "ta med på første", "ta med pa forste"])
+  ) {
+    return "Skolen publiserer ikke en fullstendig huskeliste for første kjøretime i kildene demoen bruker. Kontroller oppmøtested og hva du skal ta med på elevsiden eller med trafikklæreren før timen.";
+  }
+
+  if (asksLesson && includesAny(t, ["hvor lenge", "hvor lang", "varighet", "minutter", "varer"])) {
+    if (!licenseClass || licenseClass === "b") {
+      return "En ordinær kjøretime for klasse B varer 45 minutter. Oppgi førerkortklasse dersom du mener en annen type time eller et kurs.";
+    }
+
+    return "Varigheten er ikke publisert like tydelig for alle time- og kurstyper i den valgte klassen. Kontroller varigheten i den konkrete bookingen eller spør skolen.";
+  }
+
+  if (asksLesson && includesAny(t, ["ledig", "første time", "forste time", "neste time", "når kan", "nar kan", "tilgjengelig"])) {
+    return "Ledige kjøretimer endres fortløpende. Bruk elevsiden eller kontakt skolen på 920 12 800 for å se første ledige time.";
+  }
+
+  if (
+    includesAny(t, ["hvor lang tid", "hvor lenge", "varighet", "tidsbruk"]) &&
+    includesAny(t, ["førerkortet", "forerkortet", "ta lappen", "opplæringen", "opplaeringen"])
+  ) {
+    return "Tiden fram til førerkortet varierer med forkunnskaper, øvelseskjøring og behovet for kjøretimer. Skolen anbefaler oppstart omtrent fem måneder før ønsket førerprøve, men kan ikke love en fast tidsplan.";
+  }
+
+  if (includesAny(t, ["hva inngår", "hva inngar", "inneholder", "obligatorisk opplæring", "obligatorisk opplaering"])) {
+    if (licenseClass === "be") {
+      return "BE-opplæringen omfatter minst sju timer og avsluttes med førerprøve. Skolen publiserer egne priser for blant annet trinnvurderinger, landeveiskjøring og lastsikringskurs. Kilde: skolen og Statens vegvesen.";
+    }
+
+    if (licenseClass === "b96") {
+      return "B96 krever minst sju timer obligatorisk opplæring og ingen ny førerprøve. Skolen publiserer egne priser for blant annet trinnvurderinger, landeveiskjøring og lastsikringskurs. Kilde: skolen og Statens vegvesen.";
+    }
+
+    if (["a", "a1", "a2"].includes(licenseClass)) {
+      return "Den obligatoriske MC-opplæringen varierer mellom A, A1 og A2 og kan omfatte grunnkurs, trinnvurderinger og klassebestemte sikkerhetskurs. Oppgi hvilken MC-klasse du mener for de konkrete kursene og prisene.";
+    }
+
+    return "Innholdet i obligatorisk opplæring avhenger av førerkortklasse. For klasse B omfatter løpet blant annet trinnvurderinger, sikkerhetskurs på øvingsbane og sikkerhetskurs på vei, i tillegg til trafikalt grunnkurs når det kreves. Oppgi klasse for et mer presist svar.";
+  }
+
+  if (includesAny(t, ["øvelseskjøre privat", "ovelseskjore privat", "privat øvelseskjøring", "privat ovelseskjoring"])) {
+    return "Ja. For klasse B kan du kombinere opplæring på trafikkskole med privat øvelseskjøring. Du må ha oppfylt kravene til trafikalt grunnkurs, og ledsageren må være minst 25 år og ha hatt førerkort i samme klasse sammenhengende i minst fem år. Kilde: Statens vegvesen.";
+  }
+
+  if (includesAny(t, ["kvinnelig lærer", "kvinnelig laerer", "mannlig lærer", "mannlig laerer", "velge lærer", "velge laerer", "ønsket lærer", "onsket laerer"])) {
+    return "Skolen publiserer flere trafikklærere, men ikke hvilke lærerønsker eller tider som er tilgjengelige. Kontakt skolen på 920 12 800 for å spørre om ønsket lærer.";
+  }
+
+  if (asksLesson && !asksPackage) {
+    if (licenseClass === "b") {
+      return "En ordinær kjøretime på 45 minutter for klasse B, med manuelt gir eller automat, er oppført til 900 kr.";
+    }
+
+    if (["a", "a1", "a2"].includes(licenseClass)) {
+      return "En kjøretime for den valgte MC-klassen er oppført til 1 050 kr.";
+    }
+
+    if (["be", "b96"].includes(licenseClass)) {
+      return "En kjøretime for tilhengerklassene BE/B96 er oppført til 955 kr.";
+    }
+
+    return "En ordinær kjøretime er oppført til 900 kr for klasse B, 1 050 kr for A/A1/A2 og 955 kr for BE/B96. Hvilken klasse mener du?";
+  }
+
+  if (includesAny(t, [
+    "påmelding", "pamelding", "melde seg på", "melde seg pa", "melde meg på", "melde meg pa",
+    "melder jeg meg på", "melder jeg meg pa", "booking", "booke", "bli elev", "starte"
+  ])) {
+    return "Du kan melde deg på via kursoversikten eller elevsiden på Fyllingsdalen Trafikkskoles nettside. Du kan også kontakte skolen på 920 12 800 eller dintrafikkskole@gmail.com.";
+  }
+
+  if (
+    !licenseClass &&
+    includesAny(t, ["sikkerhetskurs på bane", "sikkerhetskurs pa bane", "glattkjøring", "glattkjoring", "øvingsbane", "ovingsbane"])
+  ) {
+    return "For klasse B oppgir TABS 7 150 kr for sikkerhetskurs på øvingsbane. Hovednettsiden oppgir 5 600 kr for manuelt gir og 5 400 kr for automat, så kontroller beløpet for den konkrete bookingen.";
+  }
+
+  if (
+    asksPrice &&
+    includesAny(t, ["pakke", "pakken", "grunnpakke", "startpakke"]) &&
+    !licenseClass
+  ) {
+    return "Pakkeprisen avhenger av førerkortklasse og innhold. For klasse B fremhever TABS 37 000 kr for 16 kjøretimer og 41 000 kr for 20 kjøretimer, inkludert obligatorisk opplæring og gebyr. Oppgi klasse for andre pakker.";
+  }
+
+  if (
+    includesAny(t, ["hvor lenge", "hvor lang tid", "varighet"]) &&
+    includesAny(t, ["sikkerhetskurs på vei", "sikkerhetskurs pa vei", "sikkerhetskurs på veg", "sikkerhetskurs pa veg"])
+  ) {
+    if (!licenseClass && includesAny(t, ["mc", "motorsykkel"])) {
+      return "Varigheten varierer mellom MC-klassene A, A1 og A2 og er ikke fullstendig spesifisert i kildene demoen bruker. Oppgi MC-klasse eller kontroller den konkrete kursoppføringen.";
+    }
+
+    if (!licenseClass || licenseClass === "b") {
+      return "Sikkerhetskurs på vei for klasse B er oppført med en varighet på 360 minutter. For MC varierer kurset etter klasse; se kursoversikten eller kontakt skolen for riktig varighet.";
+    }
+
+    return "Varigheten for dette MC-kurset er ikke spesifisert i kildene demoen bruker. Se kursoversikten eller kontakt skolen for riktig tidsplan.";
+  }
+
+  const namesSpecificPriceItem = includesAny(t, [
+    "kjøretime", "kjoretime", "timepris", "time", "grunnkurs", "trinn", "sikkerhetskurs",
+    "glattkjøring", "glattkjoring", "øvingsbane", "ovingsbane",
+    "førerprøve", "forerprove", "oppkjøring", "oppkjoring", "pakke", "utvidelse",
+    "landevei", "lastsikring"
+  ]);
+
+  if (asksPrice && !namesSpecificPriceItem) {
+    if (licenseClass === "a") {
+      return "For klasse A er en kjøretime oppført til 1 050 kr, mens pakken med ti kjøretimer og obligatorisk opplæring er oppført til 28 450 kr. MC-grunnkurset er ikke inkludert i pakken.";
+    }
+
+    if (licenseClass === "a1") {
+      return "For klasse A1 er en kjøretime oppført til 1 050 kr. Skolens hovednettside viser pakker fra 25 850 kr, avhengig av antall kjøretimer; MC-grunnkurset er ikke inkludert.";
+    }
+
+    if (licenseClass === "a2") {
+      return "For klasse A2 er en kjøretime oppført til 1 050 kr, mens pakken med ti kjøretimer og obligatorisk opplæring er oppført til 27 850 kr. MC-grunnkurset er ikke inkludert.";
+    }
+
+    if (licenseClass === "b") {
+      return "En ordinær kjøretime for klasse B er oppført til 900 kr. TABS fremhever pakker på 37 000 kr med 16 kjøretimer og 41 000 kr med 20 kjøretimer, inkludert obligatorisk opplæring og gebyr.";
+    }
   }
 
   if (
@@ -653,7 +1563,7 @@ function directFyllingsdalenAnswer(client, message) {
   // specialised questions so MC, trailer, pickup and accessibility queries
   // cannot be mistaken for a generic class-B question.
   const shouldUseExpandedKB =
-    /(^|\s)(a|a1|a2|be|b96)(\s|$)/.test(t.ascii) ||
+    Boolean(licenseClass) ||
     includesAny(t, [
       "motorsykkel",
       "mc",
@@ -667,12 +1577,22 @@ function directFyllingsdalenAnswer(client, message) {
       "automat",
       "pakke",
       "sikkerhetskurs",
+      "glattkjøring",
+      "glattkjoring",
+      "øvingsbane",
+      "ovingsbane",
       "førerprøve",
       "forerprove",
       "oppkjøring",
       "oppkjoring",
       "tegnspråk",
       "tegnsprak",
+      "døv",
+      "dove",
+      "dov",
+      "hørselshemmet",
+      "horselshemmet",
+      "tilrettelagt",
       "hente",
       "henting",
       "bringe",
@@ -691,31 +1611,27 @@ function directFyllingsdalenAnswer(client, message) {
       "trafikklaerer",
       "elevside",
       "kursoversikt",
-      "forskjell"
+      "forskjell",
+      "trinnvurdering",
+      "trinn 2",
+      "trinn 3",
+      "gebyr",
+      "naf",
+      "bomring",
+      "betaling",
+      "avbestill",
+      "endre kjøretime",
+      "kursdato",
+      "ledige plasser"
     ]);
 
   if (shouldUseExpandedKB) return null;
 
-  const asksPrice = includesAny(t, ["pris", "priser", "koster", "kostnad", "price", "cost"]);
-
-  // Normal kjøretime: this must run before package/startpakke logic.
+  // Course-price checks also precede the lesson fallback. Otherwise a query
+  // such as "hva koster grunnkurset og hvor mange timer" can be misread as a
+  // generic driving-lesson question.
   if (
-    includesAny(t, [
-      "kjøretime",
-      "kjøretimer",
-      "kjoretime",
-      "kjoretimer",
-      "timepris",
-      "vanlig time",
-      "klasse b time",
-      "45 min"
-    ]) ||
-    (asksPrice && includesAny(t, ["time", "timer"]))
-  ) {
-    return "En vanlig kjøretime på 45 minutter for klasse B er oppført til 900 kr hos Fyllingsdalen Trafikkskole.";
-  }
-
-  if (
+    asksPrice &&
     includesAny(t, [
       "trafikalt grunnkurs",
       "grunnkurs",
@@ -726,6 +1642,7 @@ function directFyllingsdalenAnswer(client, message) {
   }
 
   if (
+    asksPrice &&
     includesAny(t, [
       "trafikant i mørket",
       "trafikant i morket",
@@ -737,36 +1654,25 @@ function directFyllingsdalenAnswer(client, message) {
       "morkedemonstrasjon"
     ])
   ) {
-    return "Trafikant i mørket hos Fyllingsdalen Trafikkskole er oppført til 2 200 kr.";
+    return "I skolens liveoversikt i TABS er Mørkedemo Jondal oppført til 1 500 kr. Hovednettsidens prisside viser også Trafikant i mørket til 2 200 kr, så kontroller riktig kurs i kursoversikten før påmelding.";
   }
 
+  // Ordinary class-B lesson. Require lesson wording rather than any mention
+  // of "timer", which may describe a course duration instead of a lesson.
   if (
-    includesAny(t, [
-      "lørdag",
-      "lordag",
-      "helg",
-      "weekend"
-    ]) &&
+    asksPrice &&
     includesAny(t, [
       "kjøretime",
+      "kjøretimer",
       "kjoretime",
-      "time"
+      "kjoretimer",
+      "timepris",
+      "vanlig time",
+      "klasse b time",
+      "45 min"
     ])
   ) {
-    return "Kjøretime på lørdag er oppført til 1 700 kr hos Fyllingsdalen Trafikkskole.";
-  }
-
-  if (
-    includesAny(t, [
-      "etter kl 16",
-      "etter 16",
-      "kveld",
-      "ettermiddag",
-      "sen time",
-      "kveldstime"
-    ])
-  ) {
-    return "Kjøretime etter kl. 16 er oppført til 1 050 kr hos Fyllingsdalen Trafikkskole.";
+    return "En vanlig kjøretime på 45 minutter for klasse B er oppført til 900 kr hos Fyllingsdalen Trafikkskole.";
   }
 
   if (
@@ -781,7 +1687,7 @@ function directFyllingsdalenAnswer(client, message) {
       "20 kjoretimer"
     ])
   ) {
-    return "Fyllingsdalen Trafikkskole har startpakker for klasse B. På prissiden er 16 kjøretimer med obligatorisk opplæring oppført til 35 175 kr, og 20 kjøretimer med obligatorisk opplæring oppført til 37 775 kr.";
+    return "For klasse B fremhever TABS 37 000 kr for 16 kjøretimer og 41 000 kr for 20 kjøretimer, inkludert obligatorisk opplæring og gebyr. Andre grunnpriser vises også i kildene, så kontroller innhold og beløp for den konkrete pakken.";
   }
 
   if (
@@ -793,7 +1699,7 @@ function directFyllingsdalenAnswer(client, message) {
       "ovingsbane"
     ])
   ) {
-    return "Sikkerhetskurs på bane for klasse B er oppført til 5 600 kr hos Fyllingsdalen Trafikkskole.";
+    return "TABS oppgir 7 150 kr for sikkerhetskurs på øvingsbane. Hovednettsiden oppgir 5 600 kr for manuelt gir og 5 400 kr for automat, så kontroller beløpet for den konkrete bookingen.";
   }
 
   if (
@@ -820,24 +1726,14 @@ function directFyllingsdalenAnswer(client, message) {
     return "Førerprøve for klasse B er oppført til 2 850 kr hos Fyllingsdalen Trafikkskole.";
   }
 
-  if (
-    includesAny(t, [
-      "adresse",
-      "hvor er",
-      "hvor ligger",
-      "location",
-      "besøksadresse",
-      "besoksadresse",
-      "spectrum"
-    ])
-  ) {
+  if (isEmergencyAddressQuestion(message)) {
     return "Fyllingsdalen Trafikkskole holder til i Folke Bernadottes vei 44, 5147 Fyllingsdalen, i Spectrum-bygget.";
   }
 
   if (
     includesAny(t, [
       "telefon",
-      "nummer",
+      "telefonnummer",
       "ringe",
       "kontakt",
       "tlf"
@@ -863,16 +1759,19 @@ function directFyllingsdalenAnswer(client, message) {
       "apningstid",
       "aapningstid",
       "åpent",
+      "åpne",
       "apent",
+      "apne",
       "kontortid",
       "når er dere åpne",
       "nar er dere apne"
     ])
   ) {
-    return "Fyllingsdalen Trafikkskole har oppført kontortider tirsdag 11:00–12:30, onsdag 11:00–12:30 og torsdag 16:00–17:30.";
+    return "Skolens liveoversikt i TABS oppgir kontortid tirsdag kl. 15–16, onsdag kl. 11–13 og torsdag kl. 16–18. Sjekk gjerne oversikten eller ring 920 12 800 før du møter opp, siden hovednettsiden viser andre tider.";
   }
 
   if (
+    !asksPrice &&
     includesAny(t, [
       "klasse",
       "klasser",
@@ -906,10 +1805,54 @@ function directFyllingsdalenAnswer(client, message) {
 }
 
 // -------------------- Chat --------------------
+const CHAT_RATE_WINDOW_MS = 60_000;
+const CHAT_RATE_LIMIT = 120;
+const chatRateBuckets = new Map();
+
+function enforceChatRateLimit(req, res, next) {
+  const now = Date.now();
+  const key = req.ip || req.socket?.remoteAddress || "unknown";
+  let bucket = chatRateBuckets.get(key);
+
+  if (!bucket || now - bucket.startedAt >= CHAT_RATE_WINDOW_MS) {
+    bucket = { startedAt: now, count: 0 };
+    chatRateBuckets.set(key, bucket);
+  }
+
+  bucket.count += 1;
+
+  if (bucket.count > CHAT_RATE_LIMIT) {
+    const retryAfterSeconds = Math.max(1, Math.ceil((CHAT_RATE_WINDOW_MS - (now - bucket.startedAt)) / 1000));
+    res.setHeader("Retry-After", String(retryAfterSeconds));
+
+    return res.status(429).json({
+      reply: "Det kom mange spørsmål på kort tid. Vent litt og prøv igjen.",
+      unsure: true
+    });
+  }
+
+  if (chatRateBuckets.size > 1000) {
+    for (const [ip, entry] of chatRateBuckets) {
+      if (now - entry.startedAt >= CHAT_RATE_WINDOW_MS) chatRateBuckets.delete(ip);
+    }
+  }
+
+  return next();
+}
+
 app.post("/chat", async (req, res) => {
   const origin = req.headers.origin || "";
   const client = safeSlug(req.body?.client || "demo");
-  const message = String(req.body?.message || "").slice(0, 2000);
+  const message = String(req.body?.message || "").slice(0, 2000).trim();
+
+  res.setHeader("Cache-Control", "no-store");
+
+  if (!message) {
+    return res.status(400).json({
+      reply: "Skriv et spørsmål før du sender.",
+      unsure: true
+    });
+  }
 
   if (!REGISTRY[client] && !clientHasKB(client)) {
     return res.status(400).json({
@@ -924,6 +1867,13 @@ app.post("/chat", async (req, res) => {
       unsure: true
     });
   }
+
+  let withinRateLimit = false;
+  enforceChatRateLimit(req, res, () => {
+    withinRateLimit = true;
+  });
+
+  if (!withinRateLimit) return;
 
   // Direct Fyllingsdalen demo answers. This runs before KB ranking and before OpenAI.
   const fyllingsdalenReply = directFyllingsdalenAnswer(client, message);
@@ -941,6 +1891,25 @@ app.post("/chat", async (req, res) => {
     return res.json({
       reply: fyllingsdalenReply,
       unsure: false,
+      suggestions: []
+    });
+  }
+
+  if (client === "fyllingsdalen") {
+    const reply = "Jeg finner ikke et sikkert svar på det i de verifiserte kildene demoen bruker. Du kan kontakte Fyllingsdalen Trafikkskole på 920 12 800 eller dintrafikkskole@gmail.com. Ikke skriv sensitive personopplysninger i chatten.";
+
+    logUsage({
+      ts: new Date().toISOString(),
+      client,
+      origin,
+      kind: "safe_fyllingsdalen_fallback",
+      in: message.length,
+      out: reply.length
+    });
+
+    return res.json({
+      reply,
+      unsure: true,
       suggestions: []
     });
   }
@@ -999,7 +1968,7 @@ app.post("/chat", async (req, res) => {
     ? (intentQuery(intent) || message)
     : message;
 
-  const ranked = rankFAQ_TFIDF(queryForRanking, kb);
+  const ranked = rankFAQForQuestion(queryForRanking, kb);
   const top = ranked[0];
 
   const threshold = intent ? 0.08 : MIN_SIM;
