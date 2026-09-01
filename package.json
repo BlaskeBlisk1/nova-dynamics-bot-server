@@ -5,7 +5,8 @@
   "scripts": {
     "start": "node index.js",
     "new-client": "node new-client.js",
-    "test": "node scripts/smoke-demo.js"
+    "test": "node scripts/smoke-demo.js && node scripts/smoke-fram.js",
+    "test:fram": "node scripts/smoke-fram.js"
   },
   "dependencies": {
     "express": "^4.18.2",

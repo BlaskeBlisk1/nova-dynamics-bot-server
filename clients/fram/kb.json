@@ -1,0 +1,390 @@
+[
+  {
+    "q": "hvem er Fram Trafikkskole om trafikkskolen erfaring hvor lenge",
+    "a": "Fram Trafikkskole tilbyr trafikkopplæring med fokus på sikkerhet, kvalitet og respekt. Skolen opplyser at den har mer enn 15 års erfaring."
+  },
+  {
+    "q": "hvor holder dere til adresse besøksadresse lokasjon finne frem",
+    "a": "Fram Trafikkskole holder til i Kongeveien 47, 1412 Sofiemyr."
+  },
+  {
+    "q": "telefon telefonnummer ringe kontakt mobilnummer",
+    "a": "Du kan ringe Fram Trafikkskole på 90 27 33 33. Under kjøretimer brukes ikke mobilen; send gjerne SMS, så svarer skolen når den er ledig."
+  },
+  {
+    "q": "epost e-post mail kontaktadresse skrive til dere",
+    "a": "E-postadressen til Fram Trafikkskole er post@framtrafikkskole.no."
+  },
+  {
+    "q": "åpningstid kontortid når er kontoret åpent resepsjon",
+    "a": "Kontoret er åpent fredager kl. 12.15–13.45. Du kan ellers kontakte skolen på telefon, SMS eller e-post."
+  },
+  {
+    "q": "hvorfor svarer dere ikke telefon opptatt kjøretime sms",
+    "a": "Trafikklærerne bruker ikke mobilen mens de har kjøretime. Send gjerne SMS til 90 27 33 33, så svarer skolen når den er ledig."
+  },
+  {
+    "q": "nettside hjemmeside webside",
+    "a": "Fram Trafikkskoles nettside er https://framtrafikkskole.no/."
+  },
+  {
+    "q": "hvordan melde på bestille kjøretime booking registrere ny elev",
+    "a": "Du kan bestille kjøretime eller registrere deg via bestillingssiden på framtrafikkskole.no. Du kan også kontakte skolen på 90 27 33 33 eller post@framtrafikkskole.no."
+  },
+  {
+    "q": "TABS elevside elevinnlogging logge inn",
+    "a": "Elever kan bruke TABS-elevsiden via lenken på Fram Trafikkskoles nettside."
+  },
+  {
+    "q": "hvilke klasser førerkortklasser tilbud",
+    "a": "Fram Trafikkskole tilbyr trafikalt grunnkurs, klasse B med manuelt gir eller automat, tilhengerklassene BE og B96 samt motorsykkelklassene A, A1 og A2."
+  },
+  {
+    "q": "manuelt gir automat klasse B begge deler bilvalg",
+    "a": "Ja. Fram Trafikkskole tilbyr klasse B med både manuelt gir og automat."
+  },
+  {
+    "q": "verdier sikkerhet kvalitet respekt nullvisjon undervisning",
+    "a": "Fram Trafikkskole fremhever sikkerhet, kvalitet og respekt, og bygger opplæringen på nullvisjonen og en individuelt tilpasset plan."
+  },
+  {
+    "q": "hvem jobber der ansatte trafikklærere team",
+    "a": "Teamet består av daglig leder Nicolai Samuelsen Hansen og trafikklærerne Silje Sæther, Kyrre Myrlund og Erik Eng."
+  },
+  {
+    "q": "Nicolai Samuelsen Hansen daglig leder kontakt",
+    "a": "Nicolai Samuelsen Hansen er daglig leder. Han kan kontaktes på post@framtrafikkskole.no eller 90 27 33 33."
+  },
+  {
+    "q": "Silje Sæther trafikklærer telefon kontakt",
+    "a": "Silje Sæther er trafikklærer og kan kontaktes på 92 97 33 33."
+  },
+  {
+    "q": "Kyrre Myrlund trafikklærer telefon kontakt",
+    "a": "Kyrre Myrlund er trafikklærer og kan kontaktes på 94 08 33 33."
+  },
+  {
+    "q": "Erik Eng trafikklærer telefon kontakt",
+    "a": "Erik Eng er trafikklærer og kan kontaktes på 92 91 33 33."
+  },
+  {
+    "q": "pris kjøretime klasse B kjøretime",
+    "a": "En kjøretime på 45 minutter for klasse B, både manuelt gir og automat, er oppført til 950 kr."
+  },
+  {
+    "q": "pris klasse B trinnvurdering trinn 2 45 minutter",
+    "a": "Trinnvurdering på trinn 2 for klasse B er oppført til 950 kr for 45 minutter."
+  },
+  {
+    "q": "pris klasse B trinnvurdering trinn 3 60 minutter",
+    "a": "Trinnvurdering på trinn 3 for klasse B er oppført til 1 300 kr for 60 minutter."
+  },
+  {
+    "q": "pris sikkerhetskurs øvingsbane glattkjøring NAF klasse B",
+    "a": "Sikkerhetskurs på øvingsbane for klasse B er oppført til 6 500 kr for 180 minutter, inkludert NAF-gebyr."
+  },
+  {
+    "q": "hvor foregår sikkerhetskurs øvingsbane glattkjøring NAF Nesodden Fet",
+    "a": "Fram Trafikkskole bruker NAFs anlegg på Nesodden eller Fet til sikkerhetskurs på øvingsbane."
+  },
+  {
+    "q": "oppmøte sikkerhetskurs øvingsbane transport møte direkte banen",
+    "a": "Transporten til og fra øvingsbanen kan inngå i opplæringen på trinn 3. Hvis denne delen allerede er gjennomført, avtales normalt direkte oppmøte på banen. Spør trafikklæreren hva som gjelder for deg."
+  },
+  {
+    "q": "pris klasse B sikkerhetskontroll bil 90 minutter",
+    "a": "Sikkerhetskontroll for klasse B er oppført til 1 300 kr for 90 minutter."
+  },
+  {
+    "q": "pris TABSgo klasse B",
+    "a": "TABSgo for klasse B er oppført til 300 kr."
+  },
+  {
+    "q": "pris sikkerhetskurs vei bilkjøringens risiko 4.1.1 klasse B",
+    "a": "Del 4.1.1, Bilkjøringens risiko, er oppført til 900 kr for 90 minutter."
+  },
+  {
+    "q": "pris sikkerhetskurs vei landeveismiljø 4.1.2 klasse B",
+    "a": "Del 4.1.2, Kjøring i landeveismiljø, er oppført til 5 250 kr for 225 minutter."
+  },
+  {
+    "q": "pris sikkerhetskurs vei planlegging variert miljø 4.1.3 klasse B",
+    "a": "Del 4.1.3, Planlegging og kjøring i variert miljø, er oppført til 4 250 kr for 180 minutter."
+  },
+  {
+    "q": "pris sikkerhetskurs vei refleksjon oppsummering 4.1.4 klasse B",
+    "a": "Del 4.1.4, Refleksjon og oppsummering, er oppført til 900 kr for 90 minutter."
+  },
+  {
+    "q": "pris førerprøve oppkjøring leie bil klasse B",
+    "a": "Førerprøve med leie av bil for klasse B er oppført til 3 500 kr for 90 minutter."
+  },
+  {
+    "q": "pris test prøveoppkjøring førerprøve TEST klasse B",
+    "a": "Førerprøve TEST for klasse B er oppført til 1 900 kr for 90 minutter."
+  },
+  {
+    "q": "pakker klasse B Fram Basic pris innhold",
+    "a": "Fram Basic er beregnet for elever som har øvelseskjørt mye privat. Pakken omfatter trafikalt grunnkurs, fem kjøretimer, obligatorisk opplæring og tilpasset plan. Nettsiden viser et prisanslag på 29 500 kr; ekstra timer faktureres separat."
+  },
+  {
+    "q": "pakker klasse B Fram Standard pris innhold",
+    "a": "Fram Standard gir tettere oppfølging og omfatter obligatorisk opplæring, ti kjøretimer og en ekstra simulering før førerprøven. Nettsiden viser et prisanslag på 32 062 kr; ekstra timer faktureres separat."
+  },
+  {
+    "q": "pakker klasse B Fram Total pris innhold",
+    "a": "Fram Total gir mer tid og fleksibilitet og omfatter obligatorisk opplæring, 15 kjøretimer og en ekstra simulering før førerprøven. Nettsiden viser et prisanslag på 37 400 kr; ekstra timer faktureres separat."
+  },
+  {
+    "q": "hvilken pakke Basic Standard Total velge forskjell",
+    "a": "Basic passer best når du har mye privat øvelseskjøring, Standard gir tettere oppfølging med ti kjøretimer, og Total omfatter 15 kjøretimer og mer fleksibilitet. Skolen kan hjelpe deg med å velge ut fra erfaring og behov."
+  },
+  {
+    "q": "er pakkepris fast pris garanti estimat ekstra kjøretimer",
+    "a": "Pakkeprisene er prisanslag. Behovet varierer fra elev til elev, og kjøretimer utover det som inngår, faktureres separat."
+  },
+  {
+    "q": "hvor mange kjøretimer trenger jeg klasse B privat øvelseskjøring",
+    "a": "Fram opplyser at mange elever trenger 8–16 kjøretimer, avhengig av erfaring og hvor mye de øvelseskjører privat. Trafikklæreren lager en individuell plan."
+  },
+  {
+    "q": "trafikalt grunnkurs TGK hva tilbyr dere",
+    "a": "Fram tilbyr trafikalt grunnkurs, førstehjelp og trafikant i mørket. Aktuelle kursdatoer og ledige plasser finner du i den oppdaterte kursoversikten på nettsiden."
+  },
+  {
+    "q": "pris trafikalt grunnkurs med førstehjelp TGK komplett",
+    "a": "Trafikalt grunnkurs med førstehjelp er oppført til 2 690 kr. Trafikant i mørket kommer i tillegg når det er påkrevd."
+  },
+  {
+    "q": "pris trafikalt grunnkurs uten førstehjelp TGK alene",
+    "a": "Trafikalt grunnkurs uten førstehjelpsdelen er oppført til 1 890 kr for 150 minutter."
+  },
+  {
+    "q": "pris førstehjelpskurs førstehjelp TGK",
+    "a": "Førstehjelpskurset er oppført til 800 kr for 180 minutter."
+  },
+  {
+    "q": "pris mørkekjøring trafikant i mørket mørkekurs",
+    "a": "Trafikant i mørket, ofte kalt mørkekjøring, er oppført til 1 850 kr for 135 minutter."
+  },
+  {
+    "q": "pris TABSgo teori video trafikalt grunnkurs",
+    "a": "TABSgo teori/video for trafikalt grunnkurs er oppført til 50 kr."
+  },
+  {
+    "q": "pris teoritentamen trafikalt grunnkurs TGK",
+    "a": "Teoritentamen for trafikalt grunnkurs er oppført til 50 kr."
+  },
+  {
+    "q": "aldersgrense trafikalt grunnkurs hvor gammel 15 år",
+    "a": "Fram opplyser at du må ha fylt 15 år for å delta på trafikalt grunnkurs."
+  },
+  {
+    "q": "når trenger jeg mørkekjøring øvelseskjøre november desember januar februar mars",
+    "a": "For å øvelseskjøre i perioden 1. november–31. mars må trafikant i mørket være gjennomført."
+  },
+  {
+    "q": "hva må være gjennomført før øvelseskjøring trafikalt grunnkurs førstehjelp",
+    "a": "Du må ha gjennomført hele trinn 1, inkludert førstehjelp, før du kan øvelseskjøre. I perioden 1. november–31. mars må du også ha gjennomført trafikant i mørket."
+  },
+  {
+    "q": "når er neste kurs kursdato ledige plasser trafikalt grunnkurs mørkekjøring",
+    "a": "Kursdatoer og tilgjengelighet endres. Se den oppdaterte kursoversikten på framtrafikkskole.no for neste kurs og ledige plasser."
+  },
+  {
+    "q": "BE tilhenger hva tilbyr dere klasse BE",
+    "a": "Fram tilbyr opplæring i klasse BE. Du kan bestille en kjøretime, så hjelper trafikklæreren deg med videre plan og nødvendige kurs."
+  },
+  {
+    "q": "pris kjøretime BE henger tilhenger 45 minutter",
+    "a": "En kjøretime med tilhenger for klasse BE er oppført til 1 100 kr for 45 minutter."
+  },
+  {
+    "q": "pris trinnvurdering trinn 2 BE tilhenger",
+    "a": "Trinnvurdering på trinn 2 for klasse BE er oppført til 1 100 kr."
+  },
+  {
+    "q": "pris trinnvurdering trinn 3 BE tilhenger 60 minutter",
+    "a": "Trinnvurdering på trinn 3 for klasse BE er oppført til 1 500 kr for 60 minutter."
+  },
+  {
+    "q": "pris sikkerhetskurs på veg BE tilhenger 135 minutter",
+    "a": "Sikkerhetskurs på veg for klasse BE er oppført til 3 200 kr for 135 minutter."
+  },
+  {
+    "q": "pris lastsikringskurs BE tilhenger",
+    "a": "Lastsikringskurs for klasse BE er oppført til 2 000 kr for 60 minutter."
+  },
+  {
+    "q": "pris TABSgo BE tilhenger",
+    "a": "TABSgo for klasse BE er oppført til 300 kr."
+  },
+  {
+    "q": "pris førerprøve oppkjøring BE tilhenger",
+    "a": "Førerprøven for klasse BE er oppført til 3 900 kr for 60 minutter."
+  },
+  {
+    "q": "B96 tilhenger hva tilbyr dere klasse B96",
+    "a": "Fram tilbyr opplæring i klasse B96. Dette omfatter kjøretimer, trinnvurderinger, sikkerhetskurs på veg og lastsikringskurs etter behov."
+  },
+  {
+    "q": "pris kjøretime B96 henger tilhenger 45 minutter",
+    "a": "En kjøretime med tilhenger for klasse B96 er oppført til 1 100 kr for 45 minutter."
+  },
+  {
+    "q": "pris trinnvurdering trinn 2 B96 tilhenger",
+    "a": "Trinnvurdering på trinn 2 for klasse B96 er oppført til 1 100 kr for 45 minutter."
+  },
+  {
+    "q": "pris trinnvurdering trinn 3 B96 tilhenger",
+    "a": "Trinnvurdering på trinn 3 for klasse B96 er oppført til 1 500 kr for 60 minutter."
+  },
+  {
+    "q": "pris sikkerhetskurs på veg B96 tilhenger",
+    "a": "Sikkerhetskurs på veg for klasse B96 er oppført til 3 200 kr for 135 minutter."
+  },
+  {
+    "q": "pris lastsikringskurs B96 tilhenger",
+    "a": "Lastsikringskurs for klasse B96 er oppført til 2 000 kr for 90 minutter."
+  },
+  {
+    "q": "pris TABSgo B96 tilhenger",
+    "a": "TABSgo for klasse B96 er oppført til 300 kr."
+  },
+  {
+    "q": "forskjell BE B96",
+    "a": "Fram tilbyr både BE og B96, men hvilken klasse du trenger avhenger av bilens og tilhengerens tillatte totalvekt. Kontakt skolen eller kontroller kjøretøyene hos Statens vegvesen før du velger."
+  },
+  {
+    "q": "hvilke motorsykkelklasser MC tilbyr dere A A1 A2",
+    "a": "Fram tilbyr motorsykkelopplæring i klassene A1, A2 og A."
+  },
+  {
+    "q": "pris MC klasse A kjøretime motorsykkel 45 minutter",
+    "a": "En kjøretime på 45 minutter for motorsykkel klasse A er oppført til 1 190 kr."
+  },
+  {
+    "q": "pris MC klasse A trinnvurdering trinn 2",
+    "a": "Trinnvurdering på trinn 2 for klasse A er oppført til 1 190 kr for 45 minutter."
+  },
+  {
+    "q": "pris MC klasse A trinnvurdering trinn 3",
+    "a": "Trinnvurdering på trinn 3 for klasse A er oppført til 1 500 kr for 60 minutter."
+  },
+  {
+    "q": "pris MC klasse A grunnkurs motorsykkel",
+    "a": "Grunnkurs for motorsykkel klasse A er oppført til 990 kr."
+  },
+  {
+    "q": "pris MC klasse A sikkerhetskurs presis kjøreteknikk bane",
+    "a": "Sikkerhetskurs i presis kjøreteknikk for klasse A er oppført til 4 300 kr for 180 minutter, inkludert banegebyr."
+  },
+  {
+    "q": "pris MC klasse A sikkerhetskurs på veg vei",
+    "a": "Sikkerhetskurs på veg for motorsykkel klasse A er oppført til 7 600 kr for 360 minutter."
+  },
+  {
+    "q": "pris MC klasse A førerprøve oppkjøring motorsykkel",
+    "a": "Førerprøven for motorsykkel klasse A er oppført til 3 500 kr."
+  },
+  {
+    "q": "pris utvidelse A2 til A motorsykkel kurs overgang",
+    "a": "Utvidelseskurs fra A2 til A er oppført til 6 900 kr for 315 minutter. Kurset kan tidligst påbegynnes ett år etter førerprøven i A2; skolen kan forklare hele løpet."
+  },
+  {
+    "q": "pris MC klasse A1 kjøretime lett motorsykkel 45 minutter",
+    "a": "En kjøretime på 45 minutter for klasse A1 er oppført til 1 100 kr."
+  },
+  {
+    "q": "pris MC klasse A1 trinnvurdering trinn 2",
+    "a": "Trinnvurdering på trinn 2 for klasse A1 er oppført til 1 100 kr for 45 minutter."
+  },
+  {
+    "q": "pris MC klasse A1 trinnvurdering trinn 3",
+    "a": "Trinnvurdering på trinn 3 for klasse A1 er oppført til 1 300 kr for 60 minutter."
+  },
+  {
+    "q": "pris MC klasse A1 grunnkurs motorsykkel",
+    "a": "Grunnkurs for motorsykkel klasse A1 er oppført til 990 kr for 135 minutter."
+  },
+  {
+    "q": "pris MC klasse A1 sikkerhetskurs i trafikk",
+    "a": "Sikkerhetskurs i trafikk for klasse A1 er oppført til 4 400 kr for 180 minutter."
+  },
+  {
+    "q": "pris MC klasse A1 sikkerhetskurs på vei veg",
+    "a": "Sikkerhetskurs på vei for klasse A1 er oppført til 5 500 kr for 225 minutter."
+  },
+  {
+    "q": "pris MC klasse A1 førerprøve oppkjøring lett motorsykkel",
+    "a": "Førerprøven for klasse A1 er oppført til 3 500 kr for 70 minutter."
+  },
+  {
+    "q": "pris MC klasse A2 kjøretime mellomtung motorsykkel 45 minutter",
+    "a": "En kjøretime på 45 minutter for klasse A2 er oppført til 1 190 kr."
+  },
+  {
+    "q": "pris MC klasse A2 trinnvurdering trinn 2",
+    "a": "Trinnvurdering på trinn 2 for klasse A2 er oppført til 1 190 kr for 45 minutter."
+  },
+  {
+    "q": "pris MC klasse A2 trinnvurdering trinn 3",
+    "a": "Trinnvurdering på trinn 3 for klasse A2 er oppført til 1 500 kr for 60 minutter."
+  },
+  {
+    "q": "pris MC klasse A2 grunnkurs motorsykkel",
+    "a": "Grunnkurs for motorsykkel klasse A2 er oppført til 990 kr for 135 minutter."
+  },
+  {
+    "q": "pris MC klasse A2 sikkerhetskurs bane",
+    "a": "Sikkerhetskurs på bane for klasse A2 er oppført til 4 300 kr for 180 minutter. Dette kurset bestilles av trafikklæreren."
+  },
+  {
+    "q": "pris MC klasse A2 sikkerhetskurs på veg vei",
+    "a": "Sikkerhetskurs på veg for klasse A2 er oppført til 5 800 kr for 225 minutter."
+  },
+  {
+    "q": "pris MC klasse A2 førerprøve oppkjøring mellomtung motorsykkel",
+    "a": "Førerprøven for klasse A2 er oppført til 3 500 kr for 70 minutter."
+  },
+  {
+    "q": "pris utvidelse A1 til A2 del 1 motorsykkel",
+    "a": "Del 1 av utvidelsen fra A1 til A2 er oppført til 2 200 kr for 90 minutter."
+  },
+  {
+    "q": "pris utvidelse A1 til A2 del 3 sikkerhetskurs vei motorsykkel",
+    "a": "Del 3, sikkerhetskurs på vei ved utvidelse fra A1 til A2, er oppført til 5 500 kr for 225 minutter."
+  },
+  {
+    "q": "pris komplett utvidelse A1 til A2 motorsykkel",
+    "a": "Komplett utvidelse fra A1 til A2 er oppført til 11 700 kr."
+  },
+  {
+    "q": "nedlastinger dokumenter sikkerhetskontroll klasse B BE B96",
+    "a": "På nedlastingssiden finner du blant annet ny elev-informasjon for klasse B, sikkerhetskontroll for B og BE/B96 samt daglig kontroll av tilhenger."
+  },
+  {
+    "q": "parkering tips video rygge lukeparkering",
+    "a": "Fram har en video med parkeringstips på nedlastingssiden sin."
+  },
+  {
+    "q": "gavekort kjøpe gavekort kjøretimer",
+    "a": "Fram tilbyr gavekort via nettsiden. For beløp, betaling og vilkår kan du bruke gavekortsiden eller kontakte skolen direkte."
+  },
+  {
+    "q": "betaling betalingsmåter faktura delbetaling finansiering",
+    "a": "Nettsiden oppgir priser, men ikke alle betalingsvilkår. Kontakt Fram på 90 27 33 33 eller post@framtrafikkskole.no for korrekt informasjon om betaling."
+  },
+  {
+    "q": "avbestille kjøretime avbestillingsfrist endre time",
+    "a": "For å endre eller avbestille en time bør du kontakte Fram direkte på 90 27 33 33. Be skolen bekrefte hvilken frist og hvilke vilkår som gjelder for timen din."
+  },
+  {
+    "q": "prisene oppdatert gjeldende priser prisendring",
+    "a": "Prisene her bygger på Fram Trafikkskoles publiserte prislister. Siden priser kan endres, bør du kontrollere den aktuelle prissiden eller kontakte skolen før bestilling."
+  },
+  {
+    "q": "kontakt ved usikker spørsmål ikke finner svar hjelp",
+    "a": "Hvis du ikke finner svaret, kan du kontakte Fram Trafikkskole på 90 27 33 33 eller post@framtrafikkskole.no."
+  }
+]

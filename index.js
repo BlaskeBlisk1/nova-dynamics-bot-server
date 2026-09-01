@@ -515,7 +515,7 @@ function detectIntent(message) {
     return "opening_hours";
   }
 
-  if (/(adresse|adressen|addressen|addresse|addres|addr|hvor\s+ligger|hvor\s+finner|hvor\s+er|hvor\s+holder|kor\s+er|lokasjon|location|address|where\s+are|where\s+is|find\s+you)/.test(m)) {
+  if (/(\b(adresse|adressen|addressen|addresse|addres|addr|lokasjon|location|address)\b|hvor\s+ligger|hvor\s+finner|hvor\s+er|hvor\s+holder|kor\s+er|where\s+are|where\s+is|find\s+you)/.test(m)) {
     return "address";
   }
 
@@ -559,7 +559,7 @@ function isEmergencyAddressQuestion(message) {
     .toLowerCase()
     .normalize("NFKD");
 
-  return /(adresse|adressen|address|addressen|addresse|addres|addr|hvor\s+er|hvor\s+ligger|hvor\s+finner|hvor\s+holder|kor\s+er|lokasjon|location|where\s+are|where\s+is|find\s+you)/.test(m);
+  return /(\b(adresse|adressen|address|addressen|addresse|addres|addr|lokasjon|location)\b|hvor\s+er|hvor\s+ligger|hvor\s+finner|hvor\s+holder|kor\s+er|where\s+are|where\s+is|find\s+you)/.test(m);
 }
 
 function intentQuery(intent) {
@@ -899,7 +899,7 @@ app.post("/chat", async (req, res) => {
     });
 
     const reply = addressEntry?.a ||
-      "Jeg fant ikke adressen i kunnskapsgrunnlaget akkurat nå. Kan jeg samle inn navnet ditt og e-posten din for oppfølging?";
+      "Jeg fant ikke adressen i kunnskapsgrunnlaget akkurat nå. Ta gjerne kontakt med bedriften direkte for å få riktig adresse.";
 
     logUsage({
       ts: new Date().toISOString(),
@@ -970,7 +970,8 @@ app.post("/chat", async (req, res) => {
 You are a concise, friendly customer-service assistant.
 - Detect the user's language (Norwegian or English) and respond in that language.
 - You are given up to 3 FAQ entries with similarity scores.
-- ONLY answer if one entry clearly matches the user's question. If none match, say you’re not entirely sure and offer to collect name and email for follow-up.
+- ONLY answer if one entry clearly matches the user's question. If none match, say you’re not entirely sure and direct the user to the business's published contact details.
+- Do not claim that you can collect, store or forward the user's contact information.
 - Do NOT invent facts or merge unrelated entries.
 `.trim();
 
@@ -1033,7 +1034,7 @@ You are a concise, friendly customer-service assistant.
     console.error("OpenAI error:", resp.status, resp.data);
 
     return res.status(502).json({
-      reply: "Beklager – midlertidig problem med AI-svaret.",
+      reply: "Beklager – det oppstod et midlertidig problem med svaret.",
       unsure: true
     });
   }
