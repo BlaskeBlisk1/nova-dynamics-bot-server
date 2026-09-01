@@ -21,7 +21,7 @@ assert.ok(routePaths.includes("/demos/:client"));
 assert.ok(routePaths.includes("/demos/:client/"));
 assert.ok(routePaths.includes("/api/demo-config/:client"));
 
-for (const client of ["bedriver", "fyllingsdalen"]) {
+for (const client of ["bedriver", "fyllingsdalen", "fram"]) {
   const config = publicDemoConfig(client);
   assert.equal(config.client, client);
   assert.ok(config.name.length > 3);
