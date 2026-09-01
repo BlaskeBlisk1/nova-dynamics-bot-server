@@ -77,6 +77,7 @@ function publicDemoConfig(client) {
 
 // ---- HOTFIX fallback allowlist ----
 const FALLBACK_ALLOWED = new Set([
+  "https://nova-dynamics-bot-server.onrender.com",
   "https://prismatic-taffy-e96ac7.netlify.app",
   "https://nova-dynamics.no",
   "https://www.nova-dynamics.no",
