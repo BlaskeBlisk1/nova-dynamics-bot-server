@@ -69,6 +69,15 @@ function publicDemoConfig(client) {
     greeting: demo.greeting || `Hei! Jeg er den digitale assistenten for ${cfg.name || client}. Hva kan jeg hjelpe deg med?`,
     website: demo.website || "",
     accent: demo.accent || "#4f7cff",
+    accentSecondary: demo.accentSecondary || "#7c5cff",
+    theme: demo.theme || "nova",
+    eyebrow: demo.eyebrow || "NETTSIDEASSISTENT",
+    contextTitle: demo.contextTitle || "Still et vanlig kundespørsmål",
+    contextDescription: demo.contextDescription || "Prøv et forslag eller skriv spørsmålet slik en ekte kunde ville formulert det.",
+    assistantLabel: demo.assistantLabel || "Digital assistent",
+    logo: demo.logo || "",
+    locationLabel: demo.locationLabel || "",
+    highlights: Array.isArray(demo.highlights) ? demo.highlights.slice(0, 3) : [],
     suggestedQuestions: Array.isArray(demo.suggestedQuestions)
       ? demo.suggestedQuestions.slice(0, 6)
       : []
@@ -264,6 +273,7 @@ function norm(str) {
     .toLowerCase()
     .normalize("NFKD")
     .replace(/[^\w\sæøåäöü\-]/g, " ")
+    .replace(/-/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -627,6 +637,65 @@ function directFyllingsdalenAnswer(client, message) {
 
   const t = makeNorwegianSearchText(message);
 
+  if (includesAny(t, ["epost", "e-post", "email", "mail"])) {
+    return "Du kan kontakte Fyllingsdalen Trafikkskole på e-post: dintrafikkskole@gmail.com.";
+  }
+
+  if (
+    includesAny(t, ["forskjell", "forskjellen"]) &&
+    includesAny(t, ["be"]) &&
+    includesAny(t, ["b96"])
+  ) {
+    return "B96 gjelder når summen av bilens og tilhengerens tillatte totalvekt er mellom 3 500 og 4 250 kg. BE gir mulighet for tilhenger med tillatt totalvekt opptil 3 500 kg, innenfor reglene som ellers gjelder for bil og tilhenger.";
+  }
+
+  // The original demo used broad class-B shortcuts. Let the expanded KB handle
+  // specialised questions so MC, trailer, pickup and accessibility queries
+  // cannot be mistaken for a generic class-B question.
+  const shouldUseExpandedKB =
+    /(^|\s)(a|a1|a2|be|b96)(\s|$)/.test(t.ascii) ||
+    includesAny(t, [
+      "motorsykkel",
+      "mc",
+      "a1",
+      "a2",
+      "klasse a",
+      " be",
+      "b96",
+      "tilhenger",
+      "henger",
+      "automat",
+      "pakke",
+      "sikkerhetskurs",
+      "førerprøve",
+      "forerprove",
+      "oppkjøring",
+      "oppkjoring",
+      "tegnspråk",
+      "tegnsprak",
+      "hente",
+      "henting",
+      "bringe",
+      "stor-bergen",
+      "stor bergen",
+      "loddefjord",
+      "fana",
+      "nesttun",
+      "askøy",
+      "askoy",
+      "sotra",
+      "åsane",
+      "asane",
+      "ansatt",
+      "trafikklærer",
+      "trafikklaerer",
+      "elevside",
+      "kursoversikt",
+      "forskjell"
+    ]);
+
+  if (shouldUseExpandedKB) return null;
+
   const asksPrice = includesAny(t, ["pris", "priser", "koster", "kostnad", "price", "cost"]);
 
   // Normal kjøretime: this must run before package/startpakke logic.
@@ -883,13 +952,17 @@ app.post("/chat", async (req, res) => {
   if (isEmergencyAddressQuestion(message)) {
     const addressEntry = kb.find(x => {
       const q = String(x.q || "").toLowerCase();
-      const a = String(x.a || "").toLowerCase();
 
       return (
         q.includes("adresse") ||
         q.includes("address") ||
         q.includes("location") ||
-        q.includes("lokasjon") ||
+        q.includes("lokasjon")
+      );
+    }) || kb.find(x => {
+      const a = String(x.a || "").toLowerCase();
+
+      return (
         a.includes("folke bernadottes") ||
         a.includes("5147 fyllingsdalen") ||
         a.includes("spectrum") ||
