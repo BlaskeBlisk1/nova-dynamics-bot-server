@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Personlig demo | Nova Dynamics</title>
+  <link rel="stylesheet" href="/demo/styles.css">
+  <script src="/demo/app.js" defer></script>
+</head>
+<body>
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+
+  <main class="page-shell">
+    <header class="topbar">
+      <a class="brand" href="https://nova-dynamics.no" target="_blank" rel="noreferrer">
+        <span class="brand-mark">N</span>
+        <span>NOVA DYNAMICS</span>
+      </a>
+      <span class="demo-pill"><span class="live-dot"></span> PERSONLIG LIVE-DEMO</span>
+    </header>
+
+    <section class="intro">
+      <p class="eyebrow">NETTSIDEASSISTENT</p>
+      <h1 id="business-name">Laster demo…</h1>
+      <p id="business-description" class="description">Denne assistenten svarer med informasjon tilpasset virksomheten.</p>
+    </section>
+
+    <section class="demo-grid">
+      <aside class="context-card">
+        <div>
+          <p class="context-label">SLIK TESTER DU</p>
+          <h2>Still et vanlig kundespørsmål</h2>
+          <p>Prøv et forslag eller skriv spørsmålet slik en ekte kunde ville formulert det.</p>
+        </div>
+
+        <div id="suggestions" class="suggestions" aria-label="Forslag til spørsmål"></div>
+
+        <div class="source-note">
+          <span class="source-icon">✓</span>
+          <div>
+            <strong>Bygget fra virksomhetens informasjon</strong>
+            <span>Dette er en uforpliktende demonstrasjon.</span>
+          </div>
+        </div>
+      </aside>
+
+      <section class="chat-card" aria-label="Chatdemo">
+        <div class="chat-header">
+          <div class="assistant-avatar">N</div>
+          <div>
+            <strong>Digital assistent</strong>
+            <span><i></i> Tilgjengelig nå</span>
+          </div>
+          <a id="website-link" class="website-link" href="#" target="_blank" rel="noreferrer" hidden>Besøk nettsiden ↗</a>
+        </div>
+
+        <div id="messages" class="messages" aria-live="polite"></div>
+
+        <form id="chat-form" class="chat-form">
+          <label class="sr-only" for="message-input">Skriv et spørsmål</label>
+          <input id="message-input" name="message" placeholder="Skriv et spørsmål…" autocomplete="off" maxlength="2000" required>
+          <button id="send-button" type="submit" aria-label="Send spørsmål">
+            <span>Send</span>
+            <span aria-hidden="true">↗</span>
+          </button>
+        </form>
+      </section>
+    </section>
+
+    <footer>
+      <span>Demo levert av Nova Dynamics</span>
+      <span>Ingen møtebooking eller forpliktelse</span>
+    </footer>
+  </main>
+</body>
+</html>
