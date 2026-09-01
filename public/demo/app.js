@@ -3,6 +3,14 @@ const client = pathParts[0] === "demos" ? pathParts[1] : "";
 
 const businessName = document.getElementById("business-name");
 const businessDescription = document.getElementById("business-description");
+const eyebrow = document.getElementById("eyebrow");
+const locationLabel = document.getElementById("location-label");
+const highlights = document.getElementById("highlights");
+const contextTitle = document.getElementById("context-title");
+const contextDescription = document.getElementById("context-description");
+const assistantLabel = document.getElementById("assistant-label");
+const clientLogoWrap = document.getElementById("client-logo-wrap");
+const clientLogo = document.getElementById("client-logo");
 const suggestions = document.getElementById("suggestions");
 const websiteLink = document.getElementById("website-link");
 const messages = document.getElementById("messages");
@@ -68,8 +76,32 @@ function renderConfig(payload) {
   config = payload;
   document.title = `${config.name} | Nova Dynamics demo`;
   document.documentElement.style.setProperty("--accent", config.accent || "#4f7cff");
+  document.documentElement.style.setProperty("--accent-secondary", config.accentSecondary || "#7c5cff");
+  document.body.dataset.theme = config.theme || "nova";
   businessName.textContent = config.name;
   businessDescription.textContent = config.description;
+  eyebrow.textContent = config.eyebrow || "NETTSIDEASSISTENT";
+  contextTitle.textContent = config.contextTitle || "Still et vanlig kundespørsmål";
+  contextDescription.textContent = config.contextDescription || "Prøv et forslag eller skriv spørsmålet slik en ekte kunde ville formulert det.";
+  assistantLabel.textContent = config.assistantLabel || "Digital assistent";
+
+  if (config.locationLabel) {
+    locationLabel.textContent = config.locationLabel;
+    locationLabel.hidden = false;
+  }
+
+  for (const highlight of config.highlights || []) {
+    const item = document.createElement("span");
+    item.textContent = highlight;
+    highlights.appendChild(item);
+  }
+
+  if (config.logo) {
+    clientLogo.src = config.logo;
+    clientLogo.alt = `${config.name} logo`;
+    clientLogoWrap.hidden = false;
+  }
+
   addMessage(config.greeting, "bot");
 
   for (const question of config.suggestedQuestions || []) {
