@@ -29,6 +29,7 @@ if (fs.existsSync(publicDir)) {
 const OPENAI_KEY = process.env.OPENAI_API_KEY || "";
 const MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
 const PORT = process.env.PORT || 8787;
+const ENABLE_DEBUG_ROUTES = process.env.ENABLE_DEBUG_ROUTES === "true";
 
 const CLIENTS_DIR = path.join(__dirname, "clients");
 const REGISTRY_FILE = path.join(CLIENTS_DIR, "clients.json");
@@ -522,7 +523,15 @@ app.get("/ping", (req, res) => {
   });
 });
 
-app.get("/debug-kb", (req, res) => {
+function requireDebugRoutesEnabled(req, res, next) {
+  if (!ENABLE_DEBUG_ROUTES) {
+    return res.status(404).json({ error: "Not found." });
+  }
+
+  next();
+}
+
+app.get("/debug-kb", requireDebugRoutesEnabled, (req, res) => {
   const client = safeSlug(req.query.client || "demo");
   const kbPath = path.join(CLIENTS_DIR, client, "kb.json");
 
@@ -548,7 +557,7 @@ app.get("/debug-kb", (req, res) => {
   });
 });
 
-app.get("/debug-cors", (req, res) => {
+app.get("/debug-cors", requireDebugRoutesEnabled, (req, res) => {
   res.json({
     seenOrigin: req.headers.origin || null,
     fallbackAllowed: Array.from(FALLBACK_ALLOWED),
@@ -557,7 +566,7 @@ app.get("/debug-cors", (req, res) => {
   });
 });
 
-app.get("/debug-intent", (req, res) => {
+app.get("/debug-intent", requireDebugRoutesEnabled, (req, res) => {
   const message = String(req.query.message || "");
   const intent = detectIntent(message);
   const emergency = isEmergencyAddressQuestion(message);
@@ -570,7 +579,7 @@ app.get("/debug-intent", (req, res) => {
   });
 });
 
-app.get("/debug-rank", (req, res) => {
+app.get("/debug-rank", requireDebugRoutesEnabled, (req, res) => {
   const client = safeSlug(req.query.client || "demo");
   const message = String(req.query.message || "");
   const kb = getKB(client);
@@ -2426,6 +2435,557 @@ function directFyllingsdalenAnswer(client, message) {
   return null;
 }
 
+function directTillerAnswer(client, message) {
+  const c = String(client || "").toLowerCase().trim();
+
+  if (c !== "tiller") return null;
+
+  const t = makeNorwegianSearchText(message);
+  const normalizedMessage = norm(message);
+  const rawMessage = String(message || "").toLowerCase();
+  const known = reply => ({ reply, unsure: false });
+  const uncertain = reply => ({ reply, unsure: true });
+  const unknown = detail => ({
+    reply: `Det står ikke spesifisert på Tiller Trafikkskoles nettside.${detail ? ` ${detail}` : ""} Kontakt skolen på 96 84 73 41, post@tillertrafikkskole.no eller via https://tillertrafikkskole.no/contact.`,
+    unsure: true
+  });
+  const asksPrice = includesAny(t, [
+    "pris", "priser", "prisen", "prisene", "koster", "koste", "kostnad", "hvor mye", "kor mye", "gebyr", "price", "cost"
+  ]);
+  const asksTrafficBasicCourse = includesAny(t, [
+    "trafikalt grunnkurs", "trafikalt grunnkurset", "grunnkurs", "tgk"
+  ]);
+  const asksPackage = includesAny(t, [
+    "pakke", "pakken", "pakker", "standardpakke", "standardpakken", "superpakke", "superpakken"
+  ]);
+  const asksStandardPackage = includesAny(t, ["standardpakke", "standardpakken", "standard pakke", "18 900", "18900"]) ||
+    (asksPrice && /\bstandard\b/.test(normalizedMessage));
+  const asksSuperPackage = includesAny(t, ["superpakke", "superpakken", "super pakke", "24 900", "24900"]) ||
+    (asksPrice && /\bsuper\b/.test(normalizedMessage));
+  const asksDrivingTest = includesAny(t, [
+    "førerprøve", "forerprove", "oppkjøring", "oppkjoring", "praktisk prøve", "praktisk prove"
+  ]);
+  const asksForLink = includesAny(t, ["lenke", "link", "url"]);
+  const asksCancellation = includesAny(t, [
+    "avbestill", "avlys", "kanseller", "kansellere", "endre kjøretime", "flytte kjøretime", "no-show", "ikke møte", "ikke mote"
+  ]);
+  const asksBooking = !asksCancellation && (
+    includesAny(t, [
+      "booke", "booking", "bestille", "bestiller", "bestilling", "melde meg på", "melde meg pa",
+      "melde mæ på", "melde mae pa", "melde seg på", "melde seg pa", "registrere meg", "påmelding", "pamelding"
+    ]) || /\bbook\b/.test(normalizedMessage)
+  );
+  const statedAgeMatch = normalizedMessage.match(
+    /\b(?:jeg er|jeg e|ae e|er jeg|fylt|alderen min er)\s*(\d{1,2})\b/
+  ) || normalizedMessage.match(/\b(\d{1,2})\s*(?:aring|aringer|ar gammel)\b/);
+  const statedAge = statedAgeMatch ? Number(statedAgeMatch[1]) : null;
+
+  // The demo answers questions only. It must not appear to collect a lead or
+  // echo personal information entered by a visitor.
+  const enteredEmails = rawMessage.match(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi) || [];
+  const enteredEmail = enteredEmails.some(email => email.toLowerCase() !== "post@tillertrafikkskole.no");
+  const phoneScanText = rawMessage
+    .replace(/\b\d{1,2}[./-]\d{1,2}[./-]\d{2,4}\b/g, " ")
+    .replace(/\b\d{4}-\d{1,2}-\d{1,2}\b/g, " ");
+  const enteredNumberCandidates = phoneScanText.match(/(?:^|\D)(?:\+?\d[\s.-]*){8,11}(?!\d)/g) || [];
+  const enteredLongNumber = enteredNumberCandidates.some(candidate => {
+    const digits = candidate.replace(/\D/g, "");
+    return digits !== "96847341" && digits !== "4796847341";
+  });
+  const asksToStoreOrContact = includesAny(t, [
+    "lagre kontakt", "lagre navnet", "lagre e-post", "lagre epost", "lagre telefon",
+    "kontakt meg", "ring meg", "ringe meg", "ring meg tilbake", "ringe meg tilbake",
+    "kan dere ringe", "tilbakeringing", "navnet mitt", "jeg heter", "min e-post", "min epost",
+    "mitt telefonnummer", "telefonnummeret mitt", "send svaret til", "fødselsnummer", "fodselsnummer",
+    "personopplysning", "fylle inn e-post", "fylle inn epost", "send henvendelsen",
+    "videresend meldingen", "videresende meldingen", "min adresse", "adressen min"
+  ]);
+
+  if (includesAny(t, [
+    "ip-adresse", "ip adresse", "ip-adressen", "dataene mine", "behandles data", "personvern",
+    "lagres chat", "lagrer chat", "lagrer dere chat", "chatloggen", "chatlogg", "samtalen lagret"
+  ])) {
+    return known("Demoen lagrer ikke selve spørsmålet i bruksloggen. En teknisk nettverksadresse behandles midlertidig for å begrense misbruk. Ikke skriv sensitive personopplysninger i chatten; kontakt Nova Dynamics dersom du trenger flere detaljer om behandlingen.");
+  }
+
+  if (enteredEmail || enteredLongNumber || asksToStoreOrContact) {
+    return known("Denne demoen kan ikke lagre, videresende eller følge opp navn, telefonnummer, e-post eller andre personopplysninger. Ikke skriv sensitive opplysninger i chatten. Kontakt skolen direkte på 96 84 73 41 eller post@tillertrafikkskole.no.");
+  }
+
+  if (includesAny(t, [
+    "kan du sende meg en e-post", "kan du sende meg en epost", "send meg en e-post", "send meg en epost",
+    "kan chatten sende e-post", "kan chatten sende epost", "send e-post", "send epost", "sende e-post",
+    "sende epost", "send svar", "sende svar"
+  ])) {
+    return known("Jeg kan ikke sende e-post eller følge opp henvendelser. Kontakt Tiller Trafikkskole direkte på post@tillertrafikkskole.no, 96 84 73 41 eller via https://tillertrafikkskole.no/contact.");
+  }
+
+  const directBookingRequest = asksBooking && (
+    includesAny(t, [
+      "kan du", "kan chatten", "gjør det", "gjor det", "for meg", "til meg", "her i chatten",
+      "i denne chatten", "via chatten", "på nettsiden", "pa nettsiden"
+    ]) ||
+    (includesAny(t, ["kan jeg", "kan æ", "kan ae"]) && includesAny(t, ["her", "chatten", "nettsiden"])) ||
+    /^(?:book|booke|bestill|bestille|meld|melde)\b/.test(normalizedMessage)
+  );
+
+  if (directBookingRequest) {
+    return known("Denne demoen kan ikke bestille kjøretimer eller melde deg på kurs. Send en forespørsel via https://tillertrafikkskole.no/contact eller ring skolen på 96 84 73 41.");
+  }
+
+  if (asksCancellation) {
+    return unknown("Avbestillingsfrist og regler for endring eller uteblivelse er ikke publisert; avklar dette før timen.");
+  }
+
+  if (
+    asksPackage &&
+    includesAny(t, ["forhåndsbetale", "forhandsbetale", "forhåndsbetales", "forhandsbetales", "betales på forhånd", "betales pa forhand", "betale før pakken", "betale for pakken på forhånd"])
+  ) {
+    return known("Ja. Tiller Trafikkskoles prisside sier at pakkene må betales på forhånd. Betalingsmåten er ikke oppgitt.");
+  }
+
+  if (
+    includesAny(t, [
+      "vipps", "vips", "bankkort", "kortbetaling", "betale med kort", "tar dere kort", "tar dokker kort", "faktura", "kontant", "delbetaling",
+      "dele opp betalingen", "delt opp betalingen", "klarna", "betalingsmåte", "betalingsmate", "hvordan betale",
+      "hvordan betaler", "betale etter", "betale senere", "etter timen", "etter kjøretimen", "etter kjoretimen",
+      "må jeg betale før", "ma jeg betale for", "betalingstidspunkt"
+    ])
+  ) {
+    return unknown("Nettsiden sier at pakkene skal forhåndsbetales, men oppgir ikke betalingsmåte eller vilkår for delbetaling.");
+  }
+
+  if (
+    includesAny(t, ["hvor lenge varer", "varighet", "lengde på", "lengden på"]) &&
+    includesAny(t, ["kjøretime", "kjoretime", "vanlig time"])
+  ) {
+    return unknown("Varigheten på en vanlig kjøretime er ikke publisert. Trinnvurdering 2 og 3 er derimot oppgitt til henholdsvis 45 og 60 minutter i pakkene.");
+  }
+
+  if (includesAny(t, ["henter dere", "hente meg", "henting", "hentetjeneste", "oppmøtested", "oppmotested", "skolen min", "jobben min"])) {
+    return unknown("Skolen fremhever fleksible kjøretimer, men faste hentesteder er ikke publisert; avtal oppmøtested direkte med trafikklæreren.");
+  }
+
+  if (
+    includesAny(t, [
+      "åpningstid", "apningstid", "kontortid", "åpent", "apent", "åpne", "apne",
+      "stengt", "stenger", "opening hours"
+    ]) || /\bapen\b/.test(normalizedMessage)
+  ) {
+    return unknown("Faste åpningstider er ikke publisert; ring før oppmøte.");
+  }
+
+  if (
+    (
+      includesAny(t, ["ledig kjøretime", "ledig kjoretime", "ledige kjøretimer", "ledige kjoretimer", "ledig time", "time ledig", "tilgjengelig kjøretime", "tilgjengelig kjoretime"]) ||
+      (includesAny(t, ["ledig", "ledige", "tilgjengelig"]) && includesAny(t, ["kjøretim", "kjoretim"]))
+    ) &&
+    !asksTrafficBasicCourse
+  ) {
+    return unknown("Ledige kjøretimer publiseres ikke på nettsiden. Kontakt skolen for å avklare tilgjengelighet.");
+  }
+
+  const asksAgeExemption = includesAny(t, [
+    "fritatt", "fritak", "slippe grunnkurs", "slipper grunnkurs", "må jeg ta grunnkurs", "ma jeg ta grunnkurs",
+    "må jeg ta trafikalt grunnkurs", "ma jeg ta trafikalt grunnkurs", "må jeg ta tgk", "ma jeg ta tgk"
+  ]);
+
+  if ((asksTrafficBasicCourse || asksAgeExemption) && statedAge !== null) {
+    if (statedAge < 15) {
+      return known(`Nei, ikke ennå. Tiller Trafikkskole opplyser at trafikalt grunnkurs kan tas fra fylte 15 år. Du oppgir at du er ${statedAge}.`);
+    }
+
+    if (statedAge > 25) {
+      return known("Skolens nettside opplyser at kandidater over 25 år bare trenger deler av trafikalt grunnkurs før oppstart med klasse B. Kontakt skolen for å få bekreftet nøyaktig hvilke deler du må gjennomføre.");
+    }
+
+    if (statedAge === 25 && asksAgeExemption) {
+      return unknown("Nettsiden bruker formuleringen «over 25 år». Be skolen bekrefte hvilke deler som gjelder akkurat når du er 25.");
+    }
+
+    return known("Tiller Trafikkskole opplyser at trafikalt grunnkurs kan tas fra fylte 15 år.");
+  }
+
+  if (asksTrafficBasicCourse && includesAny(t, ["over 25", "fylt 26", "eldre enn 25"])) {
+    return known("Skolens nettside opplyser at kandidater over 25 år bare trenger deler av trafikalt grunnkurs før oppstart med klasse B. Kontakt skolen for å få bekreftet nøyaktig hvilke deler du må gjennomføre.");
+  }
+
+  if (asksTrafficBasicCourse && includesAny(t, ["alder", "aldersgrense", "hvor gammel", "15 år", "15 ar"])) {
+    return known("Tiller Trafikkskole opplyser at trafikalt grunnkurs kan tas fra fylte 15 år.");
+  }
+
+  if (asksTrafficBasicCourse && includesAny(t, ["øvelseskjøre", "ovelseskjore", "øvelseskjøring", "ovelseskjoring"])) {
+    return known("Trafikalt grunnkurs er første trinn før øvelseskjøring. Når de delene som gjelder for deg er fullført, må du følge Statens vegvesens regler og ha nødvendig dokumentasjon før du øvelseskjører. Kontakt skolen hvis du er usikker på hva som gjenstår.");
+  }
+
+  if (
+    asksTrafficBasicCourse &&
+    includesAny(t, ["uten mørkekjøring", "uten morkekjoring", "uten mørke", "uten morke", "ikke mørkekjøring", "ikke morkekjoring"])
+  ) {
+    return unknown("Nettsiden publiserer bare TGK-pakken til 2 900 kr, og den er oppgitt med teori, førstehjelp og mørkekjøring. En egen pris for grunnkurs uten mørkekjøring er ikke publisert.");
+  }
+
+  if (
+    asksTrafficBasicCourse &&
+    !asksPrice &&
+    includesAny(t, ["påmelding", "pamelding", "melde meg på", "melde meg pa", "melde mæ på", "melde mae pa", "melder jeg meg på", "melder jeg meg pa", "bestille", "registrere"])
+  ) {
+    return known("For å melde interesse for trafikalt grunnkurs, send en forespørsel via https://tillertrafikkskole.no/contact eller ring skolen på 96 84 73 41. Bekreft dato og ledig plass direkte med skolen.");
+  }
+
+  if (
+    !asksPrice && (asksBooking ||
+    includesAny(t, [
+      "hvordan kommer jeg i gang", "hvordan kommer æ i gang", "hvordan kommer ae i gang", "vil ta lappen",
+      "ta lappen", "ka gjør æ", "ka gjor ae", "hva gjør jeg for å starte", "hva gjor jeg for a starte", "bli elev"
+    ]))
+  ) {
+    return known("For å starte eller melde interesse, send en forespørsel via https://tillertrafikkskole.no/contact eller kontakt skolen på 96 84 73 41 eller post@tillertrafikkskole.no. Demoen kan ikke utføre bestillingen.");
+  }
+
+  if (includesAny(t, ["nettsiden deres", "nettside", "hjemmeside", "webside", "website"])) {
+    return known("Den offisielle nettsiden til Tiller Trafikkskole er https://tillertrafikkskole.no/.");
+  }
+
+  if (includesAny(t, ["e-postadresse", "epostadresse", "e-postadressen", "epostadressen", "e-post", "epost", "email", "mailadresse", "mailen", "mail"])) {
+    return known("Skolens publiserte e-postadresse er post@tillertrafikkskole.no.");
+  }
+
+  if (includesAny(t, ["telefonnummer", "telefon", "tlf", "phone number"]) || /\bringe\b/.test(normalizedMessage)) {
+    return known("Telefonnummeret til Tiller Trafikkskole er 96 84 73 41.");
+  }
+
+  if (includesAny(t, ["hvordan kontakter", "ta kontakt", "kontaktinformasjon", "kontaktinfo", "kontakte dere", "kontakte skolen", "contact you"])) {
+    return known("Du kan kontakte Tiller Trafikkskole på 96 84 73 41, post@tillertrafikkskole.no eller via https://tillertrafikkskole.no/contact.");
+  }
+
+  if (
+    isEmergencyAddressQuestion(message) ||
+    includesAny(t, [
+      "besøksadresse", "besoksadresse", "adressa", "ka e adressa", "industriveien", "heimdal", "ligger skolen",
+      "ligger trafikkskolen", "where are you", "kor e dokker", "hvor e dokker", "hvor e dokker hen", "kor holder dokker",
+      "kor e skolen", "hvor e skolen"
+    ])
+  ) {
+    return known("Tiller Trafikkskole oppgir besøksadressen Industriveien 3, 7080 Heimdal.");
+  }
+
+  if (includesAny(t, [
+    "hvem driver", "daglig leder", "dagligleder", "mohammad", "mohammed", "trafikklærer", "trafikklaerer",
+    "hvem jobber", "ansatte", "instruktør", "instruktor", "læreren", "laereren", "lærern", "laerern"
+  ])) {
+    return known("Tiller Trafikkskoles offisielle nettside presenterer Mohammad Alsayed som daglig leder og trafikklærer.");
+  }
+
+  if (includesAny(t, ["språk", "sprak", "engelsk", "english", "arabisk", "polsk", "flere språk", "undervisningsspråk", "undervisningssprak"])) {
+    return known("Skolen opplyser at den tilbyr undervisning på flere språk, men nettsiden navngir ikke hvilke. Kontakt skolen for å bekrefte språket du ønsker.");
+  }
+
+  if (includesAny(t, ["hvilke klasser", "førerkortklasser", "forerkortklasser", "hva tilbyr", "tilbud har dere"])) {
+    return known("Tiller Trafikkskoles offisielle nettside oppgir klasse B automat og trafikalt grunnkurs. Andre førerkortklasser er ikke oppført.");
+  }
+
+  // The official site markets class B automatic only. Explicitly rule out
+  // other classes instead of allowing another client's knowledge to leak in.
+  if (includesAny(t, ["manuell", "manuelt gir", "gire selv", "manual car"])) {
+    return known("Tiller Trafikkskoles nettside beskriver tilbudet som klasse B automat. Opplæring med manuelt gir er ikke oppført.");
+  }
+
+  if (/(^|\s)(be|b96)(\s|$)/.test(normalizedMessage) || includesAny(t, ["tilhenger", "hengerlappen"])) {
+    return known("BE og B96 er ikke oppført blant tilbudene på Tiller Trafikkskoles offisielle nettside.");
+  }
+
+  if (
+    includesAny(t, ["motorsykkel", "a1", "a2", "tung mc", "lett mc", "mellomtung"]) ||
+    /(^|\s)(?:mc|klasse a)(\s|$)/.test(normalizedMessage)
+  ) {
+    return known("Motorsykkelopplæring er ikke oppført blant tilbudene på Tiller Trafikkskoles offisielle nettside.");
+  }
+
+  if (includesAny(t, ["moped", "am146", "am 146", "traktor", "lastebil", "tungbil", "buss", "klasse c", "klasse d"])) {
+    return known("Moped-, traktor-, lastebil- og bussopplæring er ikke oppført blant tilbudene på Tiller Trafikkskoles offisielle nettside.");
+  }
+
+  const mentionsPublishedSeptemberCourse =
+    includesAny(t, ["grunnkurs", "tgk", "kurset", "kursdato"]) &&
+    includesAny(t, [
+      "18-21 september", "18.–21. september", "18. til 21. september", "18 til 21 september"
+    ]);
+
+  if (asksTrafficBasicCourse && asksPrice && mentionsPublishedSeptemberCourse) {
+    return uncertain("Trafikalt grunnkurs er publisert til 2 900 kr og inkluderer teori, førstehjelp og mørkekjøring. Nettsiden viser teksten «grunnkurs 18.–21. september», men oppgir ikke år, klokkeslett eller ledige plasser. Bekreft dato og plass direkte med skolen.");
+  }
+
+  if (
+    (asksTrafficBasicCourse && includesAny(t, ["kursdato", "dato for", "neste grunnkurs", "neste kurs", "ledig plass", "ledige plasser"])) ||
+    mentionsPublishedSeptemberCourse
+  ) {
+    return uncertain("Nettsiden viser teksten «grunnkurs 18.–21. september», men oppgir ikke år, klokkeslett eller ledige plasser, så det kan ikke bekreftes at dette er neste kurs. Bekreft dato og plass direkte via https://tillertrafikkskole.no/contact eller på 96 84 73 41.");
+  }
+
+  if (
+    includesAny(t, ["mørkekjøring", "morkekjoring", "trafikant i mørket", "trafikant i morket"]) &&
+    includesAny(t, ["når", "nar", "sesong", "sommer", "vinter", "periode"])
+  ) {
+    return known("Statens vegvesen opplyser at Trafikant i mørket gjennomføres i mørkekjøringssesongen 1. november–15. mars. Mellom 16. mars og 31. oktober er det ikke mørkt nok. Dette avviker fra sesongteksten på skolens kursside, så bekreft aktuelle datoer med skolen.");
+  }
+
+  if (asksForLink && includesAny(t, ["pris", "prisene", "prisliste", "prislisten", "pakke", "pakker"])) {
+    return known("Her er Tiller Trafikkskoles publiserte prisside: https://tillertrafikkskole.no/priser.");
+  }
+
+  if (asksForLink && includesAny(t, ["påmelding", "pamelding", "bestilling", "bestille", "kontakt", "kurs"])) {
+    return known("Du kan sende en forespørsel til skolen her: https://tillertrafikkskole.no/contact.");
+  }
+
+  if (
+    includesAny(t, ["hvor lenge", "varighet", "hvor mange timer"]) &&
+    includesAny(t, ["sikkerhetskurs på bane", "sikkerhetskurs bane", "glattkjøring", "glattkjoring"])
+  ) {
+    return known("Sikkerhetskurs på bane er oppgitt til fire timer. Standardpakken beskriver i tillegg to timers kjøring tur-retur Lånke.");
+  }
+
+  if (
+    includesAny(t, ["hvor lenge", "varighet", "hvor mange timer"]) &&
+    includesAny(t, ["sikkerhetskurs på veg", "sikkerhetskurs på vei", "sikkerhetskurs veg", "sikkerhetskurs vei"])
+  ) {
+    return known("Sikkerhetskurs på veg er oppgitt til 13 undervisningstimer, fordelt på fire deler.");
+  }
+
+  if (
+    includesAny(t, ["hvor lenge", "varighet", "hvor mange timer"]) &&
+    includesAny(t, ["mørkekjøring", "morkekjoring", "trafikant i mørket", "trafikant i morket"])
+  ) {
+    return known("Mørkekjøringsdelen i trafikalt grunnkurs er oppgitt til tre undervisningstimer.");
+  }
+
+  if (
+    includesAny(t, ["hvor lenge", "varighet", "hvor mange timer"]) &&
+    includesAny(t, ["førstehjelp", "forstehjelp", "førstehjelpskurs", "forstehjelpskurs"])
+  ) {
+    return known("Førstehjelpsdelen i trafikalt grunnkurs er oppgitt til fire undervisningstimer.");
+  }
+
+  if (
+    asksPackage &&
+    (includesAny(t, ["forskjell", "sammenlign", "hvilken", "velge", "best"]) ||
+      (asksStandardPackage && asksSuperPackage))
+  ) {
+    return known("Standardpakken koster 18 900 kr og Superpakken 24 900 kr. Den tydeligste forskjellen på prissiden er at Superpakken inkluderer ti vanlige kjøretimer. Begge pakkene har publiserte tillegg og må forhåndsbetales; se https://tillertrafikkskole.no/priser for hele oversikten.");
+  }
+
+  if (
+    asksStandardPackage &&
+    includesAny(t, ["kjøretim", "kjoretim"])
+  ) {
+    return known("Vanlige kjøretimer er ikke oppført som inkludert i Standardpakken. Superpakken oppgir derimot ti kjøretimer. Bekreft alltid pakkeinnholdet på https://tillertrafikkskole.no/priser før kjøp.");
+  }
+
+  if (
+    asksStandardPackage &&
+    includesAny(t, ["alle gebyr", "med gebyr", "totalpris", "totalt", "alt sammen", "komplett pris"])
+  ) {
+    return known("Det kan ikke oppgis én komplett totalsum fra prislisten. Standardpakken koster 18 900 kr, men vanlige kjøretimer er ikke oppført som inkludert. Førstehjelp, mørkekjøring, førerprøvegebyret på 1 490 kr og NAFs banegebyr på 1 550 kr er også listet som tillegg. Offentlige gebyrer kan endres.");
+  }
+
+  if (asksStandardPackage) {
+    return known("Standardpakke 2026 koster 18 900 kr. Den inkluderer trinnvurdering 2 og 3, sikkerhetskurs på bane med to timers kjøring tur-retur Lånke, sikkerhetskurs på veg og leie av bil til førerprøven med oppvarmingstime. Førstehjelp, mørkekjøring, førerprøvegebyret på 1 490 kr og NAFs banegebyr på 1 550 kr er ikke inkludert. Pakken må forhåndsbetales.");
+  }
+
+  if (asksSuperPackage) {
+    return known("Superpakke 2026 koster 24 900 kr. Den inkluderer ti kjøretimer, trinnvurdering 2 og 3, sikkerhetskurs på bane, sikkerhetskurs på veg og leie av bil til førerprøven med oppvarmingstime. Førstehjelp, mørkekjøring, førerprøvegebyret på 1 490 kr og NAFs banegebyr på 1 550 kr er ikke inkludert. Pakken må forhåndsbetales.");
+  }
+
+  if (asksPackage && includesAny(t, ["ikke inkludert", "utenom", "ekstra", "tillegg", "gebyr"])) {
+    return known("Prislisten sier at førstehjelp, mørkekjøring, Statens vegvesens førerprøvegebyr på 1 490 kr og NAFs banegebyr på 1 550 kr ikke er inkludert i pakkene. Pakkene må forhåndsbetales.");
+  }
+
+  if (asksPackage || (asksPrice && includesAny(t, ["pakker", "pakkene"]))) {
+    return known("Tiller Trafikkskole publiserer to klasse B-pakker for 2026: Standardpakke til 18 900 kr og Superpakke til 24 900 kr. Superpakken oppgir ti kjøretimer i tillegg. Se hele innholdet og tilleggene på https://tillertrafikkskole.no/priser.");
+  }
+
+  const compoundPublishedPrices = [];
+
+  if (asksTrafficBasicCourse) {
+    compoundPublishedPrices.push("Trafikalt grunnkurs er publisert til 2 900 kr og inkluderer teori, førstehjelp og mørkekjøring.");
+  }
+
+  if (includesAny(t, ["mørkekjøring", "morkekjoring", "trafikant i mørket", "trafikant i morket"])) {
+    compoundPublishedPrices.push("Mørkekjøring koster 1 400 kr når den kjøpes separat.");
+  }
+
+  if (includesAny(t, ["førstehjelp", "forstehjelp", "førstehjelpskurs", "forstehjelpskurs"])) {
+    compoundPublishedPrices.push("Førstehjelp koster 800 kr når det kjøpes separat.");
+  }
+
+  if (includesAny(t, ["kjøretime", "kjoretime", "kjøretima", "kjoretima", "kjøretimen", "kjoretimen"])) {
+    compoundPublishedPrices.push("En kjøretime for klasse B er publisert til 800 kr; vanlig timevarighet er ikke oppgitt.");
+  }
+
+  if (asksPrice && compoundPublishedPrices.length >= 2) {
+    return known(compoundPublishedPrices.join(" "));
+  }
+
+  if (asksPrice && asksTrafficBasicCourse) {
+    return known("Trafikalt grunnkurs er publisert til 2 900 kr og inkluderer teori, førstehjelp og mørkekjøring. Skolen oppgir 17 undervisningstimer fordelt på fem samlinger.");
+  }
+
+  if (asksPrice && includesAny(t, ["mørkekjøring", "morkekjoring", "trafikant i mørket", "trafikant i morket"])) {
+    return known("Mørkekjøring er publisert til 1 400 kr når den kjøpes separat. Den er inkludert i TGK-pakken til 2 900 kr.");
+  }
+
+  if (asksPrice && includesAny(t, ["førstehjelp", "forstehjelp", "førstehjelpskurs", "forstehjelpskurs"])) {
+    return known("Førstehjelp er publisert til 800 kr når den kjøpes separat. Den er inkludert i TGK-pakken til 2 900 kr.");
+  }
+
+  if (asksPrice && includesAny(t, ["trinnvurdering 2", "trinnvurdering trinn 2", "trinnvurdering to"])) {
+    return known("Trinnvurdering 2 koster 850 kr som enkeltpost. I pakkene er den oppgitt til 45 minutter.");
+  }
+
+  if (asksPrice && includesAny(t, ["trinnvurdering 3", "trinnvurdering trinn 3", "trinnvurdering tre"])) {
+    return known("Trinnvurdering 3 koster 1 000 kr som enkeltpost og er oppgitt til 60 minutter.");
+  }
+
+  if (asksPrice && includesAny(t, ["trinnvurdering", "trinn vurdering"])) {
+    return known("Trinnvurdering 2 koster 850 kr og er oppgitt til 45 minutter. Trinnvurdering 3 koster 1 000 kr og er oppgitt til 60 minutter.");
+  }
+
+  if (asksPrice && includesAny(t, ["trinn 2", "trinn to", "trinn 3", "trinn tre"])) {
+    return unknown("En totalpris for hele opplæringstrinnet er ikke publisert. Bare trinnvurdering 2 til 850 kr og trinnvurdering 3 til 1 000 kr er oppført som egne poster; øvrig behov varierer.");
+  }
+
+  if (asksPrice && includesAny(t, ["sikkerhetskurs på bane", "sikkerhetskurs bane", "glattkjøring", "glattkjoring", "naf bane", "naf-gebyr", "naf gebyr", "naf-banegebyr"])) {
+    return known("Sikkerhetskurs på bane koster 4 600 kr. NAFs banegebyr på 1 550 kr kommer i tillegg. Pakkebeskrivelsen oppgir fire timer på banen og, for Standardpakken, to timer kjøring tur-retur Lånke.");
+  }
+
+  if (asksPrice && includesAny(t, ["4.1.1", "bilkjøringens risiko", "bilkjoringens risiko"])) {
+    return known("Del 4.1.1, Bilkjøringens risiko, er publisert til 890 kr.");
+  }
+
+  if (asksPrice && includesAny(t, ["4.1.2", "landeveg", "landevei", "landevegsmiljø", "landevegsmiljo"])) {
+    return known("Del 4.1.2, Kjøring i landevegsmiljø, er publisert til 4 600 kr.");
+  }
+
+  if (asksPrice && includesAny(t, ["4.1.3", "planlegging", "variert trafikkmiljø", "variert trafikkmiljo"])) {
+    return known("Del 4.1.3, Planlegging og kjøring i variert trafikkmiljø, er publisert til 3 600 kr.");
+  }
+
+  if (asksPrice && includesAny(t, ["4.1.4", "refleksjon", "oppsummering"])) {
+    return known("Del 4.1.4, Refleksjon og oppsummering, er publisert til 890 kr.");
+  }
+
+  if (asksPrice && includesAny(t, [
+    "sikkerhetskurs på veg", "sikkerhetskurs på vei", "sikkerhetskurs veg", "sikkerhetskurs vei",
+    "kjøring på veg", "kjøring på vei", "kjoring pa veg", "kjoring pa vei"
+  ])) {
+    return known("Prislisten deler sikkerhetskurs på veg i fire deler: 4.1.1 til 890 kr, 4.1.2 til 4 600 kr, 4.1.3 til 3 600 kr og 4.1.4 til 890 kr.");
+  }
+
+  if (asksPrice && includesAny(t, ["sikkerhetskurs"])) {
+    return known("Sikkerhetskurs på bane koster 4 600 kr, med NAFs banegebyr på 1 550 kr i tillegg. Sikkerhetskurs på veg er delt i fire publiserte deler: 890 kr, 4 600 kr, 3 600 kr og 890 kr.");
+  }
+
+  if (asksPrice && asksDrivingTest && includesAny(t, ["leie", "skolebil", "bil", "oppvarming"])) {
+    return known("Leie av bil til førerprøven koster 2 900 kr og inkluderer en oppvarmingstime. Statens vegvesens gebyr for den praktiske prøven er oppført separat til 1 490 kr på skolens prisside.");
+  }
+
+  if (asksPrice && asksDrivingTest) {
+    return known("Tiller Trafikkskoles prisside oppgir 1 490 kr i gebyr for den praktiske prøven. Leie av skolebil med oppvarmingstime koster 2 900 kr i tillegg når den kjøpes separat. Kontroller alltid dagens offentlige gebyr hos Statens vegvesen.");
+  }
+
+  if (asksPrice && includesAny(t, ["teoriprøve", "teoriprove", "teorieksamen"])) {
+    return known("Skolens prisside oppgir 480 kr som gebyr for teoriprøven. Kontroller alltid dagens offentlige gebyr hos Statens vegvesen.");
+  }
+
+  if (asksPrice && includesAny(t, ["utstedelse", "utstede"]) && includesAny(t, ["gebyr", "pris", "koster"])) {
+    return known("Skolens prisside oppgir 160 kr for utstedelse av førerkort. Kontroller alltid dagens offentlige gebyr hos Statens vegvesen.");
+  }
+
+  if (asksPrice && includesAny(t, [
+    "kjøretime", "kjoretime", "kjøretima", "kjoretima", "kjøretimen", "kjoretimen", "timepris", "biltime",
+    "vanlig time", "automat-time", "automat time"
+  ])) {
+    return known("En kjøretime for klasse B er publisert til 800 kr. Varigheten på en vanlig kjøretime er ikke spesifisert på prissiden.");
+  }
+
+  if (asksPrice && includesAny(t, ["totalpris", "totalt", "alt sammen", "hele førerkortet", "hele forerkortet"])) {
+    return known("Totalprisen varierer med hvor mange kjøretimer du trenger og hvilket opplegg du velger. Standardpakken koster 18 900 kr og Superpakken 24 900 kr, men førstehjelp, mørkekjøring og enkelte offentlige eller eksterne gebyrer er oppført som tillegg.");
+  }
+
+  if (asksPrice && includesAny(t, ["skjult gebyr", "skjulte gebyr", "ekstra kostnad", "ekstra gebyr"])) {
+    return known("Tiller Trafikkskole skriver at de ikke har skjulte gebyrer. Prissiden lister likevel førstehjelp, mørkekjøring, førerprøvegebyret og NAFs banegebyr som tillegg til pakkene, så kontroller alltid hele oversikten før kjøp.");
+  }
+
+  if (asksPrice) {
+    return known("Prislisten oppgir blant annet kjøretime til 800 kr, Standardpakke 2026 til 18 900 kr, Superpakke 2026 til 24 900 kr og trafikalt grunnkurs til 2 900 kr. Se hele oversikten på https://tillertrafikkskole.no/priser.");
+  }
+
+  if (asksTrafficBasicCourse && includesAny(t, ["inneholder", "inkludert", "består", "bestar", "varighet", "hvor lenge", "timer", "samlinger"])) {
+    return known("Skolen beskriver trafikalt grunnkurs som 17 undervisningstimer fordelt på fem samlinger: omtrent ti timer teori, fire timer førstehjelp og tre timer mørkekjøring.");
+  }
+
+  if (asksTrafficBasicCourse) {
+    return known("Trafikalt grunnkurs er første trinn før øvelseskjøring. Tiller Trafikkskole oppgir 17 undervisningstimer over fem samlinger, og publiserer en pakke med teori, førstehjelp og mørkekjøring til 2 900 kr.");
+  }
+
+  if (includesAny(t, ["trinn 1", "første trinn", "forste trinn"])) {
+    return known("Trinn 1 er trafikalt grunnkurs. Det dekker trafikkforståelse, førstehjelp, tiltak ved ulykke og mørkekjøring.");
+  }
+
+  if (includesAny(t, ["trinn 2", "andre trinn", "teknisk nivå"])) {
+    return known("Trinn 2 handler om grunnleggende kjøretøy- og kjørekompetanse, som styring, bremsing og enkle trafikksituasjoner. Det avsluttes med trinnvurdering 2.");
+  }
+
+  if (includesAny(t, ["trinn 3", "tredje trinn", "trafikal del"])) {
+    return known("Trinn 3 handler om variert trafikk, samhandling og risikoforståelse. Sikkerhetskurs på øvingsbane er obligatorisk, og trinnet avsluttes med trinnvurdering 3 på 60 minutter.");
+  }
+
+  if (includesAny(t, ["trinn 4", "fjerde trinn", "avsluttende opplæring"])) {
+    return known("Trinn 4 er avsluttende opplæring med sikkerhetskurs på veg: bilkjøringens risiko, landevegskjøring, planlegging og kjøring i variert trafikkmiljø samt refleksjon og oppsummering.");
+  }
+
+  if (includesAny(t, ["fire trinn", "opplæringstrinn", "opplaeringstrinn", "prosessen", "opplæringsløp", "opplaeringslop"])) {
+    return known("Klasse B-opplæringen er delt i fire trinn: trafikalt grunnkurs, grunnleggende kjøretøy- og kjørekompetanse, trafikal del og avsluttende opplæring.");
+  }
+
+  if (includesAny(t, ["automat", "automatgir", "klasse b", "personbil", "bilopplæring", "bilopplaering", "førerkort", "forerkort"])) {
+    return known("Tiller Trafikkskole tilbyr opplæring i klasse B automat. Skolen fremhever moderne biler, fleksible kjøretimer og trygg veiledning.");
+  }
+
+  if (includesAny(t, [
+    "moderne biler", "fleksible kjøretimer", "fleksible løsninger", "lavt stress", "trygg veiledning",
+    "hvorfor velge", "koffer ska æ velge", "koffer ska ae velge", "koffer velge"
+  ])) {
+    return known("Skolen fremhever moderne biler, fleksible kjøretimer, trygg veiledning, lavt stress og et støttende læringsmiljø.");
+  }
+
+  if (includesAny(t, ["påmelding", "pamelding", "melde seg på", "melde seg pa", "melde mæ på", "melde ma på", "bestille", "booking", "booke", "bli elev", "starte", "komme i gang"])) {
+    return known("For å starte eller melde interesse, send en forespørsel via https://tillertrafikkskole.no/contact eller kontakt skolen på 96 84 73 41 eller post@tillertrafikkskole.no.");
+  }
+
+  if (includesAny(t, ["hva kan du", "hva kan jeg spørre", "hva kan jeg sporre", "hjelpe med"])) {
+    return known("Jeg kan svare på spørsmål om klasse B automat, trafikalt grunnkurs, Standardpakken, Superpakken, enkeltpriser, opplæringstrinn, kontakt og beliggenhet.");
+  }
+
+  if (includesAny(t, ["fortell om skolen", "om tiller", "hvem er tiller", "hva tilbyr dere", "tilbudet deres"])) {
+    return known("Tiller Trafikkskole holder til i Industriveien 3 på Heimdal og tilbyr klasse B automat og trafikalt grunnkurs. Skolen fremhever moderne biler, fleksible løsninger, trygg veiledning og undervisning på flere språk.");
+  }
+
+  if (includesAny(t, ["takk", "tusen takk", "supert", "flott"])) {
+    return known("Bare hyggelig! Spør gjerne hvis du lurer på noe mer om Tiller Trafikkskole.");
+  }
+
+  if (includesAny(t, ["ha det", "hadet", "adjø", "adjo", "snakkes"])) {
+    return known("Ha det bra, og lykke til med veien mot førerkortet!");
+  }
+
+  if (includesAny(t, ["hei", "hallo", "god dag"])) {
+    return known("Hei! Hva vil du vite om klasse B automat, trafikalt grunnkurs, priser eller oppstart hos Tiller Trafikkskole?");
+  }
+
+  return null;
+}
+
 // -------------------- Chat --------------------
 const CHAT_RATE_WINDOW_MS = 60_000;
 const CHAT_RATE_LIMIT = 120;
@@ -2502,6 +3062,47 @@ app.post("/chat", async (req, res) => {
   });
 
   if (!withinRateLimit) return;
+
+  // Tiller's focused demo answers from the school's verified published
+  // information. Any unanswered Tiller question receives a safe fallback
+  // rather than leaking another client's data through fuzzy retrieval.
+  const tillerAnswer = directTillerAnswer(client, message);
+
+  if (tillerAnswer) {
+    logUsage({
+      ts: new Date().toISOString(),
+      client,
+      origin,
+      kind: tillerAnswer.unsure ? "safe_tiller_answer" : "direct_tiller",
+      in: message.length,
+      out: tillerAnswer.reply.length
+    });
+
+    return res.json({
+      reply: tillerAnswer.reply,
+      unsure: tillerAnswer.unsure,
+      suggestions: []
+    });
+  }
+
+  if (client === "tiller") {
+    const reply = "Jeg finner ikke et sikkert svar på det i de verifiserte kildene demoen bruker. Du kan kontakte Tiller Trafikkskole på 96 84 73 41, post@tillertrafikkskole.no eller via https://tillertrafikkskole.no/contact. Ikke skriv sensitive personopplysninger i chatten.";
+
+    logUsage({
+      ts: new Date().toISOString(),
+      client,
+      origin,
+      kind: "safe_tiller_fallback",
+      in: message.length,
+      out: reply.length
+    });
+
+    return res.json({
+      reply,
+      unsure: true,
+      suggestions: []
+    });
+  }
 
   // Deterministic Onsøy answers run before fuzzy KB ranking and before OpenAI.
   // The helper can explicitly mark an answer as uncertain when the requested

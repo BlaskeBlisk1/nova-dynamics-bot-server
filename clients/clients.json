@@ -137,6 +137,45 @@
       ]
     }
   },
+  "tiller": {
+    "name": "Tiller Trafikkskole",
+    "origins": [
+      "https://tillertrafikkskole.no",
+      "https://www.tillertrafikkskole.no",
+      "https://nova-dynamics.no",
+      "https://www.nova-dynamics.no",
+      "https://prismatic-taffy-e96ac7.netlify.app"
+    ],
+    "demo": {
+      "description": "Få raske svar om klasse B automat, trafikalt grunnkurs, priser og veien videre hos Tiller Trafikkskole.",
+      "greeting": "Hei! Jeg er elevassistenten for Tiller Trafikkskole. Spør meg gjerne om klasse B automat, trafikalt grunnkurs, priser eller hvordan du kommer i gang.",
+      "website": "https://tillertrafikkskole.no/",
+      "accent": "#D9A16C",
+      "accentSecondary": "#63C9DB",
+      "theme": "nightdrive",
+      "eyebrow": "AUTOMATOPPLÆRING I TRONDHEIM",
+      "contextTitle": "Prøv den som en ny elev",
+      "contextDescription": "Still et spørsmål med dine egne ord. Demoen svarer fra skolens publiserte informasjon og sier tydelig fra når noe må bekreftes.",
+      "assistantLabel": "Elevassistent",
+      "assistantInitial": "T",
+      "statusLabel": "Klar til å hjelpe",
+      "logo": "https://impro.usercontent.one/appid/uniwebWsb/domain/tillertrafikkskole.no/media/tillertrafikkskole.no/onewebmedia/LOGO-00.png?etag=null&sourceContentType=image%2Fpng&quality=85",
+      "locationLabel": "INDUSTRIVEIEN • HEIMDAL",
+      "sourceTitle": "Bygget på skolens egne opplysninger",
+      "sourceDescription": "Tiller Trafikkskoles offisielle nettside brukes for tilbud og priser; Statens vegvesen brukes når generelle regler må presiseres.",
+      "highlights": [
+        "Klasse B automat",
+        "Flere språk",
+        "Fleksible kjøretimer"
+      ],
+      "suggestedQuestions": [
+        "Hva koster en kjøretime?",
+        "Hva er forskjellen på Standardpakken og Superpakken?",
+        "Hva koster trafikalt grunnkurs?",
+        "Hvilke språk tilbyr dere undervisning på?"
+      ]
+    }
+  },
   "fram": {
     "name": "Fram Trafikkskole",
     "origins": [
