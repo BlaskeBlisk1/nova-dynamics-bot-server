@@ -724,6 +724,628 @@ function includesAny(textObj, phrases) {
   });
 }
 
+function directOnsoyAnswer(client, message) {
+  const c = String(client || "").toLowerCase().trim();
+
+  if (c !== "onsoy") return null;
+
+  const t = makeNorwegianSearchText(message);
+  const normalizedMessage = norm(message);
+  const rawMessage = String(message || "").toLowerCase();
+  let licenseClass = requestedLicenseClass(message);
+  if (/\b(?:ta|få|fa|skaffe)\s+(?:klasse\s+)?a\b/.test(rawMessage)) {
+    licenseClass = "a";
+  }
+  const mentionsA1 = /(^|\s)a1(\s|$)/.test(normalizedMessage);
+  const mentionsA2 = /(^|\s)a2(\s|$)/.test(normalizedMessage);
+  const mentionsA = /(^|\s)(?:klasse\s+)?a(\s|$)/.test(normalizedMessage);
+  const hasCalendarDate =
+    /\b\d{1,2}[./-]\d{1,2}[./-]\d{2,4}\b/.test(rawMessage) ||
+    /\b\d{4}-\d{1,2}-\d{1,2}\b/.test(rawMessage);
+  const hasNamedCourseDate =
+    includesAny(t, ["kurs", "tgk", "mc-grunnkurs", "førstehjelp", "forstehjelp", "mørkekjøring", "morkekjoring"]) &&
+    /\b\d{1,2}\.?\s+(januar|februar|mars|april|mai|juni|juli|august|september|oktober|november|desember)\b/.test(rawMessage);
+  const statedAgeMatch = normalizedMessage.match(/\b(?:jeg er|alder)\s+(\d{1,2})(?:\s+ar)?\b/);
+  const statedAge = statedAgeMatch ? Number(statedAgeMatch[1]) : null;
+  const isAtLeast25 =
+    includesAny(t, ["over 25", "fylt 25", "eldre enn 25"]) ||
+    (Number.isInteger(statedAge) && statedAge >= 25);
+  const asksA1ToA2 =
+    includesAny(t, ["a1 til a2", "fra a1 til a2"]) ||
+    /\ba1\s*(?:-|–|—|\/|->)\s*a2\b/.test(rawMessage);
+  const asksA2ToA =
+    includesAny(t, ["a2 til a", "fra a2 til a"]) ||
+    /\ba2\s*(?:-|–|—|\/|->)\s*a\b/.test(rawMessage);
+  const known = reply => ({ reply, unsure: false });
+  const unknown = detail => ({
+    reply: `Jeg finner ikke et sikkert svar på det i de verifiserte kildene demoen bruker.${detail ? ` ${detail}` : ""} Du kan kontakte Onsøy Trafikkskole på 92 98 99 98 eller post@onsoytrafikkskole.no.`,
+    unsure: true
+  });
+  const asksPrice = includesAny(t, [
+    "pris", "priser", "prisen", "prisene", "koster", "kostnad", "hvor mye", "betale", "price", "cost"
+  ]);
+  if (!licenseClass && asksPrice && /(^|\s)(b|baut)(\s|$)/.test(normalizedMessage)) {
+    licenseClass = "b";
+  }
+  const asksTrafficBasicCourse = includesAny(t, ["trafikalt grunnkurs", "trafikalt grunnkurset", "tgk"]) ||
+    /(^|\s)tg(\s|$)/.test(normalizedMessage);
+  const asksDrivingTest = includesAny(t, [
+    "førerprøve", "forerprove", "oppkjøring", "oppkjoring", "praktisk prøve", "praktisk prove"
+  ]);
+  const asksMotorcycle = ["a", "a1", "a2"].includes(licenseClass) || includesAny(t, [
+    "mc", "motorsykkel", "motorsykkelen", "a1", "a2", "tung mc", "lett mc", "mellomtung"
+  ]) || /(^|\s)klasse a(\s|$)/.test(normalizedMessage);
+  const asksCar = licenseClass === "b" || includesAny(t, ["bil", "automat", "manuell", "baut"]);
+
+  // The current demo only answers questions; it must never appear to capture a
+  // lead or echo personal data that a visitor has entered into the chat.
+  const enteredEmails = rawMessage.match(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi) || [];
+  const enteredEmail = enteredEmails.some(email => email.toLowerCase() !== "post@onsoytrafikkskole.no");
+  const phoneScanText = rawMessage
+    .replace(/\b\d{1,2}[./-]\d{1,2}[./-]\d{2,4}\b/g, " ")
+    .replace(/\b\d{4}-\d{1,2}-\d{1,2}\b/g, " ");
+  const enteredNumberCandidates = phoneScanText.match(/(?:^|\D)(?:\+?\d[\s.-]*){8,11}(?!\d)/g) || [];
+  const enteredLongNumber = enteredNumberCandidates.some(candidate => {
+    const digits = candidate.replace(/\D/g, "");
+    return digits !== "92989998" && digits !== "4792989998";
+  });
+  const asksToStoreOrContact = includesAny(t, [
+    "lagre kontakt", "lagre navnet", "lagre e-post", "lagre epost", "lagre telefon",
+    "kontakt meg", "ring meg", "ringe meg", "ring meg tilbake", "ringe meg tilbake",
+    "kan dere ringe", "tilbakeringing", "navnet mitt", "jeg heter", "min e-post", "min epost",
+    "mitt telefonnummer", "telefonnummeret mitt", "send svaret til", "fødselsnummer", "fodselsnummer",
+    "personopplysning", "fylle inn e-post", "fylle inn epost", "skrive e-post", "skrive epost",
+    "send henvendelsen", "sende henvendelsen", "videresend meldingen", "videresende meldingen",
+    "videresend henvendelsen", "videresende henvendelsen", "min adresse", "adressen min"
+  ]);
+
+  if (includesAny(t, ["ip-adresse", "ip adresse", "ip-adressen", "dataene mine", "behandles data", "personvern"])) {
+    return known("Demoen lagrer ikke selve spørsmålet i bruksloggen. En teknisk nettverksadresse behandles midlertidig for å begrense misbruk. Ikke skriv sensitive personopplysninger i chatten; kontakt Nova Dynamics dersom du trenger flere detaljer om behandlingen.");
+  }
+
+  if (enteredEmail || enteredLongNumber || asksToStoreOrContact) {
+    return known("Denne demoen kan ikke lagre, videresende eller følge opp navn, telefonnummer, e-post eller andre personopplysninger. Ikke skriv sensitive opplysninger i chatten. Kontakt skolen direkte på 92 98 99 98 eller post@onsoytrafikkskole.no.");
+  }
+
+  // Questions about policies that are not published must not be guessed from
+  // another school or allowed to fall through to the language model.
+  if (includesAny(t, ["avbestill", "avlys", "kanseller", "kansellere", "endre kjøretime", "flytte kjøretime"])) {
+    return unknown("Avbestillingsfristen er ikke tydelig oppgitt; kontroller vilkårene i TABS før du endrer en time.");
+  }
+
+  if (includesAny(t, ["vipps", "vips", "delbetaling", "betalingsmåte", "betalingsmate", "faktura", "kontant"])) {
+    return unknown("Betalingsmåter og eventuelle ordninger for delbetaling er ikke tydelig oppgitt.");
+  }
+
+  if (
+    includesAny(t, ["hvor lenge varer", "varighet", "lengde på", "lengden på"]) &&
+    includesAny(t, ["kjøretime", "kjoretime", "time"])
+  ) {
+    return unknown("Varigheten på en vanlig kjøretime er ikke tydelig publisert.");
+  }
+
+  if (includesAny(t, ["henter dere", "hente meg", "henting", "hentetjeneste", "oppmøtested", "oppmotested"])) {
+    return unknown("Nettsiden oppgir ikke en generell hentetjeneste eller faste oppmøtesteder.");
+  }
+
+  if (
+    includesAny(t, ["engelsk", "english", "språk", "sprak"]) &&
+    includesAny(t, ["opplæring", "opplaering", "undervisning", "tilbyr", "kurs"])
+  ) {
+    return unknown("Det er ikke tydelig publisert hvilke undervisningsspråk skolen tilbyr.");
+  }
+
+  if (
+    includesAny(t, ["booke", "bestille", "melde meg på", "melde meg pa"]) &&
+    includesAny(t, ["kan du", "kan chatten", "gjør det", "gjor det", "for meg"])
+  ) {
+    return known("Jeg kan ikke booke en kjøretime eller melde deg på. Send en forespørsel gjennom TABS, eller kontakt skolen på 92 98 99 98 eller post@onsoytrafikkskole.no.");
+  }
+
+  // The motorcycle department is listed at FMV, but no separate street
+  // address is published. Handle this before the general address answer.
+  if (
+    includesAny(t, ["mc-avdeling", "mc avdeling", "motorsykkelavdeling", "motorsykkel avdeling", "fmv"]) &&
+    includesAny(t, ["adresse", "gateadresse", "oppgitt", "hvor ligger", "hvor er"])
+  ) {
+    return known("MC-avdelingen er oppgitt å ligge på FMV-området i Fredrikstad, men en egen gateadresse er ikke publisert i kildene demoen bruker. Kontakt skolen før oppmøte.");
+  }
+
+  if (includesAny(t, ["mc-avdeling", "mc avdeling", "motorsykkelavdeling", "motorsykkel avdeling", "fmv-området", "fmv omradet"])) {
+    return known("Onsøy Trafikkskoles MC-avdeling holder til på FMV-området i Fredrikstad.");
+  }
+
+  if (includesAny(t, ["hvilket bygg", "hva slags bygg", "family treningssenter", "family-bygget"])) {
+    return known("Kontoret ligger i Freskoveien 16, i bygget til Family treningssenter i Fredrikstad.");
+  }
+
+  if (includesAny(t, ["nettsiden deres", "nettside", "hjemmeside", "webside", "website"])) {
+    return known("Den offisielle nettsiden til Onsøy Trafikkskole er https://onsoytrafikkskole.no/.");
+  }
+
+  if (includesAny(t, ["e-postadresse", "epostadresse", "e-postadressen", "epostadressen", "e-post", "epost", "email", "mailadresse", "mailen", "mail"])) {
+    return known("Skolens felles e-postadresse er post@onsoytrafikkskole.no.");
+  }
+
+  if (includesAny(t, ["telefonnummer", "telefon", "tlf", "ringe"])) {
+    return known("Telefonnummeret til Onsøy Trafikkskole er 92 98 99 98.");
+  }
+
+  if (includesAny(t, ["hvordan kontakter", "ta kontakt", "kontaktinformasjon", "kontakte dere", "kontakte skolen"])) {
+    return known("Du kan kontakte Onsøy Trafikkskole på telefon 92 98 99 98 eller e-post post@onsoytrafikkskole.no.");
+  }
+
+  if (
+    includesAny(t, ["åpningstid", "apningstid", "kontortid", "åpent", "apent", "åpne", "apne", "stengt", "stenger"]) ||
+    (/\b(mandag|tirsdag|onsdag|torsdag|fredag)\b/.test(t.raw) && includesAny(t, ["kontor", "åpen", "apen", "åpent", "apent"]))
+  ) {
+    return known("Kontoret er oppgitt å være åpent mandag–torsdag kl. 09.00–15.00. Fredag er ikke oppført som kontordag. Kontakt skolen før oppmøte dersom du vil kontrollere at noen er til stede.");
+  }
+
+  if (
+    isEmergencyAddressQuestion(message) ||
+    includesAny(t, ["besøksadresse", "besoksadresse", "freskoveien", "ligger skolen", "ligger trafikkskolen"])
+  ) {
+    return known("Onsøy Trafikkskole holder til i Freskoveien 16, 1605 Fredrikstad, i bygget til Family treningssenter.");
+  }
+
+  // Explicitly rule out classes that do not appear in the published offer.
+  if (/(^|\s)(be|b96)(\s|$)/.test(normalizedMessage)) {
+    return known("BE og B96 er ikke oppført blant førerkortklassene Onsøy Trafikkskole tilbyr på den publiserte nettsiden.");
+  }
+
+  if (includesAny(t, ["moped", "am146", "am 146"])) {
+    return known("Mopedopplæring er ikke oppført blant tilbudene på Onsøy Trafikkskoles publiserte nettside.");
+  }
+
+  if (includesAny(t, ["lastebil", "tungbil", "buss", "traktor", "klasse c", "klasse d"])) {
+    return known("Lastebil-, buss- og traktoropplæring er ikke oppført blant tilbudene på Onsøy Trafikkskoles publiserte nettside.");
+  }
+
+  const asksForLink = includesAny(t, ["lenke", "link"]);
+
+  if (asksForLink && includesAny(t, ["pris", "prisene", "prisliste", "prislisten"])) {
+    return known("Her er skolens oppdaterte prisliste i TABS: https://onsoytrafikkskole.tabs.no/. Velg førerkortklasse for å se de relevante prisene.");
+  }
+
+  if (asksForLink && includesAny(t, ["kurs", "kursene", "kursoversikt"])) {
+    return known("Her er skolens oppdaterte kursoversikt i TABS: https://onsoytrafikkskole.tabs.no/kursoversikt.");
+  }
+
+  if (asksForLink && includesAny(t, ["booking", "bestilling", "bestille", "opplæring", "opplaering"])) {
+    return known("Du kan sende en forespørsel om opplæring via TABS: https://onsoytrafikkskole.tabs.no/. Skolen følger opp forespørselen.");
+  }
+
+  // Dynamic course availability must always point at the live TABS view.
+  if (
+    includesAny(t, ["neste kurs", "neste trafikale grunnkurs", "kursdato", "kursoversikt", "ledige plasser", "ledig plass"]) ||
+    (asksTrafficBasicCourse && includesAny(t, ["når er neste", "nar er neste", "når starter", "nar starter", "neste tg", "dato", "ledig"])) ||
+    includesAny(t, ["neste mc-grunnkurs", "neste mc grunnkurs", "neste motorsykkelgrunnkurs", "neste mørkekjøring", "neste morkekjoring", "neste førstehjelp", "neste forstehjelp"]) ||
+    (asksTrafficBasicCourse && includesAny(t, ["i morgen", "neste uke"])) ||
+    ((hasCalendarDate || hasNamedCourseDate) && includesAny(t, ["kurs", "tgk", "førstehjelp", "forstehjelp", "mørkekjøring", "morkekjoring"])) ||
+    (includesAny(t, ["melder jeg meg på kurs", "melde meg på kurs", "melde meg pa kurs", "påmelding til kurs", "pamelding til kurs"]))
+  ) {
+    return known("Kursdatoer og ledige plasser endres. Se den oppdaterte kursoversikten i TABS: https://onsoytrafikkskole.tabs.no/kursoversikt. Der kan du også gå videre med påmelding.");
+  }
+
+  if (includesAny(t, ["elevside", "elevsiden", "elev side", "logger", "logge inn", "innlogging"])) {
+    return known("Eksisterende elever logger inn på TABS Elevside: https://tabs.no/start.");
+  }
+
+  if (
+    !asksPrice &&
+    isAtLeast25 &&
+    (asksTrafficBasicCourse || includesAny(t, ["førstehjelp", "forstehjelp", "mørkekjøring", "morkekjoring"]))
+  ) {
+    return known("Har du fylt 25 år, er du fritatt fra selve trafikale grunnkurset, men må fortsatt gjennomføre førstehjelp og Trafikant i mørket. Kilde: Statens vegvesen.");
+  }
+
+  if (
+    !asksPrice &&
+    asksTrafficBasicCourse &&
+    includesAny(t, ["hva er", "må jeg", "ma jeg", "trenger jeg", "første steg", "forste steg"])
+  ) {
+    return known("Trafikalt grunnkurs er første trinn i føreropplæringen. Før du kan øvelseskjøre, må du normalt ha gjennomført kurset og fått øvelseskjøringsbevis. Kilde: Statens vegvesen.");
+  }
+
+  if (
+    !asksPrice &&
+    includesAny(t, ["mørkekjøring", "morkekjoring", "trafikant i mørket", "trafikant i morket"]) &&
+    includesAny(t, ["når kan", "nar kan", "sesong", "sommer", "vinter"])
+  ) {
+    return known("Statens vegvesen opplyser at det ikke er mørkt nok til Trafikant i mørket mellom 16. mars og 31. oktober. Se skolens oppdaterte kursoversikt for aktuelle datoer.");
+  }
+
+  const staffAnswers = [
+    [/\beinar\b/, "Einar Oliver Udnæs Lie er oppført som trafikklærer hos Onsøy Trafikkskole."],
+    [/\bmari\b/, "Mari Fernanda Thøgersen er oppført som trafikklærer hos Onsøy Trafikkskole."],
+    [/\brenate\b/, "Renate Tomasli er oppført som kontoransvarlig hos Onsøy Trafikkskole."]
+  ];
+  const staffAnswer = staffAnswers.find(([namePattern]) => namePattern.test(normalizedMessage));
+
+  if (staffAnswer) return known(staffAnswer[1]);
+
+  if (includesAny(t, ["hvem jobber", "ansatte", "trafikklærere", "trafikklaerere", "lærere", "laerere", "teamet"])) {
+    return known("Ansattoversikten oppgir Einar Oliver Udnæs Lie og Mari Fernanda Thøgersen som trafikklærere, og Renate Tomasli som kontoransvarlig.");
+  }
+
+  if (includesAny(t, ["hvaler tgk", "tgk hvaler", "hvaler grunnkurs", "grunnkurs hvaler"])) {
+    return known("Onsøy Trafikkskoles nettside lenker til Hvaler TGK. Datoer, sted og ledige plasser kan endres, så kontroller den oppdaterte kursoversikten i TABS: https://onsoytrafikkskole.tabs.no/kursoversikt.");
+  }
+
+  // Prices below are unambiguous values from the school's open TABS list.
+  if (
+    asksPrice &&
+    asksTrafficBasicCourse &&
+    includesAny(t, ["uten mørkekjøring", "uten morkekjoring", "uten trafikant i mørket", "uten trafikant i morket"])
+  ) {
+    return unknown("En separat pris for trafikalt grunnkurs uten Trafikant i mørket er ikke tydelig publisert. Den generelle kombinasjonen med Trafikant i mørket står til 3 950 kr i TABS.");
+  }
+
+  if (asksPrice && asksTrafficBasicCourse && includesAny(t, ["mørkekjøring", "morkekjoring", "trafikant i mørket", "trafikant i morket"])) {
+    return known("Trafikalt grunnkurs med mørkekjøring er oppført til 3 950 kr. Kontroller alltid den oppdaterte prisen i TABS før bestilling.");
+  }
+
+  if (asksPrice && asksTrafficBasicCourse) {
+    return known("Trafikalt grunnkurs inkludert Trafikant i mørket er oppført til 3 950 kr i den generelle prislisten. En konkret kursdato kan ha en annen pris, så kontroller alltid den aktuelle oppføringen i TABS før påmelding.");
+  }
+
+  if (
+    asksPrice &&
+    includesAny(t, ["førstehjelp", "forstehjelp", "førstehjelpskurs", "forstehjelpskurs"]) &&
+    includesAny(t, ["mørkekjøring", "morkekjoring", "trafikant i mørket", "trafikant i morket"])
+  ) {
+    return known("Førstehjelp er oppført til 875 kr, og Trafikant i mørket er oppført til 1 900 kr. Kontroller alltid de aktuelle prisene i TABS før påmelding.");
+  }
+
+  if (asksPrice && includesAny(t, ["førstehjelp", "forstehjelp", "førstehjelpskurs", "forstehjelpskurs"])) {
+    return known("Førstehjelpskurset er oppført til 875 kr. Kontroller alltid den oppdaterte prisen i TABS før bestilling.");
+  }
+
+  if (asksPrice && includesAny(t, ["mørkekjøring", "morkekjoring", "trafikant i mørket", "trafikant i morket"])) {
+    return known("Mørkekjøring, også kalt trafikant i mørket, er oppført til 1 900 kr. Kontroller alltid den oppdaterte prisen i TABS før bestilling.");
+  }
+
+  if (asksPrice && asksA1ToA2) {
+    return unknown("Onsøy tilbyr overgang fra A1 til A2, men en egen pris for denne utvidelsen er ikke tydelig publisert i den åpne prislisten.");
+  }
+
+  if (asksPrice && asksA2ToA) {
+    return known("Utvidelse fra klasse A2 til A er oppført til 7 500 kr. Kontroller hvilken opplæring som gjelder for deg og den oppdaterte prisen i TABS.");
+  }
+
+  if (
+    asksPrice &&
+    (
+      includesAny(t, ["mc-grunnkurs", "mc grunnkurs", "motorsykkelgrunnkurs", "motorsykkel grunnkurs", "obligatorisk mc-kurs", "obligatorisk mc kurs"]) ||
+      (["a", "a1", "a2"].includes(licenseClass) && includesAny(t, ["grunnkurs"]))
+    )
+  ) {
+    return known("MC-grunnkurset er oppført til 1 400 kr. Kontroller alltid den oppdaterte prisen i TABS før bestilling.");
+  }
+
+  if (asksPrice && includesAny(t, ["trinnvurdering", "trinn vurdering"]) && includesAny(t, ["trinn 2", "trinnvurdering 2"])) {
+    if (asksMotorcycle) {
+      return known("Trinnvurdering på trinn 2 for MC er oppført til 1 160 kr. Kontroller alltid den valgte MC-klassen i TABS.");
+    }
+
+    if (licenseClass === "b") {
+      return known("Trinnvurdering på trinn 2 for klasse B er oppført til 930 kr, både for manuelt gir og automat.");
+    }
+
+    return known("Trinnvurdering på trinn 2 er oppført til 930 kr for klasse B og 1 160 kr for MC. Oppgi B, A1, A2 eller A for et entydig svar.");
+  }
+
+  if (asksPrice && includesAny(t, ["trinnvurdering", "trinn vurdering"]) && includesAny(t, ["trinn 3", "trinnvurdering 3"])) {
+    if (asksMotorcycle) {
+      return known("Trinnvurdering på trinn 3 for MC er oppført til 1 540 kr. Kontroller alltid den valgte MC-klassen i TABS.");
+    }
+
+    if (licenseClass === "b") {
+      return known("Trinnvurdering på trinn 3 for klasse B er oppført til 1 220 kr, både for manuelt gir og automat.");
+    }
+
+    return known("Trinnvurdering på trinn 3 er oppført til 1 220 kr for klasse B og 1 540 kr for MC. Oppgi B, A1, A2 eller A for et entydig svar.");
+  }
+
+  if (
+    asksPrice &&
+    includesAny(t, ["øvingsbane", "ovingsbane", "glattkjøring", "glattkjoring"]) &&
+    !asksMotorcycle &&
+    (licenseClass === "b" || includesAny(t, ["bil"]))
+  ) {
+    return known("Sikkerhetskurs på øvingsbane i klasse B, inkludert NAF-gebyr, er oppført til 6 650 kr.");
+  }
+
+  if (
+    asksPrice &&
+    includesAny(t, ["sikkerhetskurs på veg", "sikkerhetskurs pa veg", "sikkerhetskurs på vei", "sikkerhetskurs pa vei", "sikkerhetskurs vei"]) &&
+    !asksMotorcycle &&
+    licenseClass === "b"
+  ) {
+    return known("Sikkerhetskurs på veg i klasse B er oppført til 11 375 kr.");
+  }
+
+  if (asksPrice && includesAny(t, ["sikkerhetskurs i trafikk", "trafikksikkerhetskurs"]) && /(^|\s)a1(\s|$)/.test(normalizedMessage)) {
+    return known("Sikkerhetskurs i trafikk for klasse A1 er oppført til 4 650 kr.");
+  }
+
+  if (asksPrice && includesAny(t, ["presis kjøreteknikk", "presis kjoreteknikk", "presisjonskjøring", "presisjonskjoring"])) {
+    if (["a2", "a"].includes(licenseClass)) {
+      return known("Sikkerhetskurs i presis kjøreteknikk for A2 og A, inkludert gebyr, er oppført til 7 250 kr. Kontroller valgt klasse i TABS før bestilling.");
+    }
+
+    return unknown("Prisen avhenger av MC-klassen; velg klasse i TABS for riktig kurs.");
+  }
+
+  if (asksPrice && includesAny(t, ["sikkerhetskurs på veg", "sikkerhetskurs pa veg", "sikkerhetskurs på vei", "sikkerhetskurs pa vei", "sikkerhetskurs vei"]) && asksMotorcycle) {
+    if ([mentionsA1, mentionsA2, mentionsA].filter(Boolean).length > 1) {
+      return known("Sikkerhetskurs på veg er oppført til 5 800 kr for A1 og A2, og 9 100 kr for A. Kontroller de valgte klassene i TABS før bestilling.");
+    }
+
+    if (licenseClass === "a") {
+      return known("Sikkerhetskurs på veg for klasse A er oppført til 9 100 kr.");
+    }
+    if (licenseClass === "a1") return known("Sikkerhetskurs på veg for klasse A1 er oppført til 5 800 kr.");
+    if (licenseClass === "a2") return known("Sikkerhetskurs på veg for klasse A2 er oppført til 5 800 kr.");
+    return unknown("Prisen avhenger av om du mener A1, A2 eller A; velg klasse i TABS for riktig kurs.");
+  }
+
+  if (asksPrice && includesAny(t, ["sikkerhetskurs på veg", "sikkerhetskurs pa veg", "sikkerhetskurs på vei", "sikkerhetskurs pa vei", "sikkerhetskurs vei"])) {
+    return known("Sikkerhetskurs på veg er oppført til 11 375 kr for klasse B, 5 800 kr for A1 og A2, og 9 100 kr for A. Oppgi klasse for et entydig svar.");
+  }
+
+  if (asksPrice && includesAny(t, ["øvingsbane", "ovingsbane", "glattkjøring", "glattkjoring"])) {
+    return unknown("For klasse B er øvingsbanen inkludert NAF-gebyr oppført til 6 650 kr. MC bruker andre kursnavn, så oppgi klasse dersom du mener motorsykkel.");
+  }
+
+  if (
+    asksPrice &&
+    asksDrivingTest &&
+    !asksMotorcycle &&
+    (licenseClass === "b" || includesAny(t, ["bil"]))
+  ) {
+    return known("Førerprøve med 90 minutter oppvarming og leie av bil er oppført til 4 450 kr for klasse B og BAut. Offentlige prøvegebyrer kan komme i tillegg.");
+  }
+
+  if (asksPrice && includesAny(t, ["landeveismiljø", "landeveismiljo", "4.1.2", "landevei"])) {
+    return known("Del 4.1.2, kjøring i landeveismiljø, er oppført til 4 725 kr for klasse B og BAut.");
+  }
+
+  if (asksPrice && includesAny(t, ["variert miljø", "variert miljo", "4.1.3", "planlegging og kjøring", "planlegging og kjoring"])) {
+    return known("Del 4.1.3, planlegging og kjøring i variert miljø, er oppført til 3 750 kr for klasse B og BAut.");
+  }
+
+  if (asksPrice && includesAny(t, ["mc-kjøretime", "mc kjøretime", "mc-kjoretime", "mc kjoretime", "motorsykkeltime"])) {
+    return known("En MC-kjøretime er oppført til 1 160 kr. Kontroller alltid den valgte klassen og oppdaterte prisen i TABS.");
+  }
+
+  if (
+    asksPrice &&
+    asksCar &&
+    asksMotorcycle &&
+    includesAny(t, ["kjøretime", "kjoretime", "timepris", "time pris", "vanlig time", "time på", "time pa", "b time", "a time"])
+  ) {
+    return known("En kjøretime er oppført til 930 kr for klasse B og 1 160 kr for A1, A2 og A.");
+  }
+
+  if (
+    asksPrice &&
+    asksMotorcycle &&
+    includesAny(t, ["kjøretime", "kjoretime", "timepris", "time pris", "vanlig time", "time på", "time pa", "a time"])
+  ) {
+    return known("En kjøretime for A1, A2 eller A er oppført til 1 160 kr. Kontroller alltid den valgte klassen og oppdaterte prisen i TABS.");
+  }
+
+  if (
+    asksPrice &&
+    includesAny(t, ["kjøretime", "kjoretime", "automat-time", "automat time", "timepris", "time pris", "b time"]) &&
+    !asksMotorcycle &&
+    (licenseClass === "b" || includesAny(t, ["bil", "automat", "manuell"]))
+  ) {
+    return known("En kjøretime i klasse B er oppført til 930 kr, både for manuelt gir og automat.");
+  }
+
+  if (asksPrice && asksDrivingTest && asksMotorcycle) {
+    return known("Førerprøve med 90 minutter oppvarming og leie av motorsykkel er oppført til 5 100 kr for A1 og 5 110 kr for A2/A. Offentlige prøvegebyrer kan komme i tillegg.");
+  }
+
+  if (asksPrice && includesAny(t, ["kjøretime", "kjoretime", "timepris", "time pris", "vanlig time", "b time", "a time"])) {
+    return known("En kjøretime er oppført til 930 kr for klasse B og 1 160 kr for A1, A2 og A. Oppgi klasse for et entydig svar.");
+  }
+
+  if (asksPrice && asksDrivingTest) {
+    return known("Skolens førerprøvepris med 90 minutter oppvarming og kjøretøy er oppført til 4 450 kr for klasse B, 5 100 kr for A1 og 5 110 kr for A2/A. Oppgi klasse for et entydig svar; offentlige gebyrer kan komme i tillegg.");
+  }
+
+  if (includesAny(t, ["prisene alltid", "pris alltid", "prisene faste", "kan prisen endres", "kan prisene endres", "oppdatert pris"])) {
+    return known("Prisene er hentet fra skolens åpne TABS-prisliste, men de kan endres. Kontroller alltid den oppdaterte prisen i TABS før bestilling.");
+  }
+
+  if (includesAny(t, ["prisliste", "prislisten", "prisoversikt", "oppdaterte priser", "alle priser"])) {
+    return known("Den oppdaterte prislisten finner du i TABS: https://onsoytrafikkskole.tabs.no/. Velg førerkortklasse for å se relevante priser.");
+  }
+
+  if (asksPrice && includesAny(t, ["totalpris", "totalt", "hele førerkortet", "hele forerkortet", "førerkortet", "forerkortet", "lappen"])) {
+    return known("Jeg kan ikke oppgi en sikker totalpris for førerkortet. Totalprisen varierer fordi behovet for kjøretimer er individuelt. Bruk prislisten i TABS og be skolen vurdere opplæringsbehovet ditt.");
+  }
+
+  if (asksPrice && ["a", "a1", "a2", "b"].includes(licenseClass)) {
+    return known(`Det finnes ikke én samlet pris for klasse ${licenseClass.toUpperCase()}; beløpet avhenger av hvilken time eller hvilket kurs du mener og hvor mye opplæring du trenger. Velg klassen i TABS-prislisten, eller skriv for eksempel «kjøretime ${licenseClass.toUpperCase()}».`);
+  }
+
+  if (asksPrice && includesAny(t, ["baut"])) {
+    return known("Det finnes ikke én samlet pris for BAut; beløpet avhenger av hvilken time eller hvilket kurs du mener og hvor mye opplæring du trenger. Velg BAut i TABS-prislisten, eller spør for eksempel om prisen på en kjøretime.");
+  }
+
+  // Published motorcycle classes, transitions and age/vehicle definitions.
+  if (asksA1ToA2) {
+    return known("Ja. Onsøy Trafikkskole opplyser at de tilbyr overgang fra klasse A1 til A2.");
+  }
+
+  if (asksA2ToA) {
+    return known("Ja. Onsøy Trafikkskole opplyser at de tilbyr overgang fra klasse A2 til A.");
+  }
+
+  if (
+    includesAny(t, ["automat", "automatgir", "manuell", "manuelt gir", "kode 78"]) &&
+    includesAny(t, ["forskjell", "kode 78", "kjøre manuell", "kjore manuell", "gjelder bare"])
+  ) {
+    return known("Kjører du opp med automatgir, får førerkortet kode 78 og kan bare kjøre automat. For å få rett til å kjøre manuelt gir må du senere bestå en ny førerprøve med manuelt gir. Kilde: Statens vegvesen.");
+  }
+
+  if (includesAny(t, ["hvor mange kjøretimer", "hvor mange kjoretimer", "antall kjøretimer", "antall kjoretimer"])) {
+    return known("Antall kjøretimer vurderes individuelt ut fra ferdighetene dine og hvor mye du øvelseskjører privat. Det finnes ikke ett fast antall som passer alle.");
+  }
+
+  if (
+    licenseClass === "a" &&
+    Number.isInteger(statedAge) &&
+    includesAny(t, ["har hatt a2 i to år", "har hatt a2 i 2 år", "har hatt a2 i to ar", "har hatt a2 i 2 ar"])
+  ) {
+    if (statedAge >= 20) {
+      return known("Har du fylt 20 år og hatt klasse A2 i minst to år, kan du utvide til klasse A gjennom den obligatoriske overgangsopplæringen. Onsøy opplyser at de tilbyr A2–A; kontakt skolen for å planlegge løpet. Kilde: Statens vegvesen.");
+    }
+
+    return known("For å utvide fra A2 til A må du ha hatt A2 i minst to år og ha fylt 20 år. Kontakt skolen for å planlegge riktig løp. Kilde: Statens vegvesen.");
+  }
+
+  if (
+    licenseClass === "a" &&
+    Number.isInteger(statedAge) &&
+    statedAge < 24 &&
+    includesAny(t, ["uten a2", "har ikke a2", "direkte", "kan jeg ta"])
+  ) {
+    return known("Direkte minstealder for klasse A er normalt 24 år. Før det kan utvidelse være mulig etter minst to år med A2. Kilde: Statens vegvesen.");
+  }
+
+  if (includesAny(t, ["aldersgrense", "hvor gammel", "minstealder", "alder"]) && licenseClass === "a1") {
+    return known("Minstealderen for førerkort klasse A1 er 16 år.");
+  }
+
+  if (includesAny(t, ["aldersgrense", "hvor gammel", "minstealder", "alder"]) && licenseClass === "a2") {
+    return known("Minstealderen for førerkort klasse A2 er 18 år.");
+  }
+
+  if (
+    includesAny(t, ["aldersgrense", "hvor gammel", "minstealder", "alder"]) &&
+    licenseClass === "a"
+  ) {
+    return known("Onsøy Trafikkskole oppgir 24 år som aldersgrense for å ta klasse A direkte. Har du hatt A2 i minst to år, kan andre overgangsregler gjelde.");
+  }
+
+  if (/\b(a1|lett mc|lett motorsykkel)\b/.test(normalizedMessage) && includesAny(t, ["hva er", "hva kan", "størrelse", "stor", "effekt", "ccm", "betyr"])) {
+    return known("Klasse A1 gjelder lett motorsykkel med høyst 125 ccm, effekt på høyst 11 kW og forhold mellom effekt og egenvekt på høyst 0,1 kW/kg.");
+  }
+
+  if (/\b(a2|mellomtung mc|mellomtung motorsykkel)\b/.test(normalizedMessage) && includesAny(t, ["hva betyr", "hva er", "effekt", "mellomtung"])) {
+    return known("Klasse A2 gjelder mellomtung motorsykkel med effekt på høyst 35 kW og forhold mellom effekt og egenvekt på høyst 0,2 kW/kg.");
+  }
+
+  if (
+    (/(^|\s)klasse a(\s|$)/.test(normalizedMessage) || includesAny(t, ["tung mc", "tung motorsykkel"])) &&
+    includesAny(t, ["hva er", "hva betyr", "hva kan", "effektbegrensning"])
+  ) {
+    return known("Klasse A gjelder tung motorsykkel uten effektbegrensningen som gjelder for A1 og A2. Direkte minstealder er normalt 24 år. Kilde: Statens vegvesen.");
+  }
+
+  if (
+    !asksPrice &&
+    includesAny(t, ["mc-grunnkurs", "mc grunnkurs", "motorsykkelgrunnkurs", "motorsykkel grunnkurs"]) &&
+    includesAny(t, ["hva er", "må jeg", "ma jeg", "obligatorisk", "samme kurs", "én gang", "en gang"])
+  ) {
+    return known("Før praktisk MC-opplæring må du gjennomføre et obligatorisk teoretisk MC-grunnkurs. Kurset er det samme for A1, A2 og A og tas bare én gang. Kilde: Statens vegvesen.");
+  }
+
+  if (includesAny(t, ["vegvesen-gebyr", "vegvesen gebyr", "offentlig gebyr", "offentlige gebyr", "teoriprøvegebyr", "teoriprovegebyr"])) {
+    return known("Skolens oppførte førerprøvepris dekker oppvarming og leie av kjøretøy slik det står i TABS. Kontroller eventuelle offentlige prøve- og førerkortgebyrer separat hos Statens vegvesen.");
+  }
+
+  if (asksDrivingTest && /(^|\s)a2(\s|$)/.test(normalizedMessage)) {
+    return known("For klasse A2 må du gjennomføre obligatorisk opplæring og bestå en praktisk førerprøve. Kontakt skolen for å planlegge løpet.");
+  }
+
+  if (
+    (
+      includesAny(t, ["mc-klasser", "mc klasser", "motorsykkel", "opplæring på mc", "opplaering pa mc"]) ||
+      /(^|\s)mc(\s|$)/.test(normalizedMessage) ||
+      (
+        /(^|\s)(a1|a2)(\s|$)/.test(normalizedMessage) &&
+        includesAny(t, ["har dere", "tar dere", "tilbyr", "kan jeg ta", "kan jeg få", "kan jeg fa", "opplæring", "opplaering"])
+      )
+    ) &&
+    !asksPrice
+  ) {
+    return known("Onsøy Trafikkskole tilbyr motorsykkelklassene A1, A2 og A.");
+  }
+
+  if (
+    !asksPrice &&
+    includesAny(t, ["har dere", "tar dere", "tilbyr", "kan jeg ta", "kan jeg få", "kan jeg fa", "opplæring", "opplaering"]) &&
+    (
+      asksCar ||
+      (licenseClass === "a" && includesAny(t, ["klasse a", "tung mc", "tung motorsykkel"]))
+    )
+  ) {
+    if (licenseClass === "a") {
+      return known("Ja. Onsøy Trafikkskole tilbyr klasse A for tung motorsykkel, i tillegg til A1 og A2.");
+    }
+
+    return known("Ja. Onsøy Trafikkskole tilbyr klasse B med både manuelt gir og automat.");
+  }
+
+  if (
+    includesAny(t, ["forskjellen på b og baut", "forskjell på b og baut", "forskjell b og baut"]) ||
+    (includesAny(t, ["forskjell"]) && /(^|\s)b(\s|$)/.test(normalizedMessage) && includesAny(t, ["baut"]))
+  ) {
+    return known("Klasse B med manuelt gir gir rett til å kjøre både manuell og automat. Tar du førerprøven med automatgir, får førerkortet kode 78 og kan bare kjøre automat inntil du eventuelt består en ny førerprøve med manuelt gir. Kilde: Statens vegvesen.");
+  }
+
+  if (
+    includesAny(t, ["både manuell og automat", "bade manuell og automat", "manuell og automat", "automat og manuell", "b og baut", "forskjellen på b og baut", "forskjell på b og baut"]) ||
+    (includesAny(t, ["klasse b", "bil"]) && includesAny(t, ["automat"]) && !asksPrice)
+  ) {
+    return known("Ja. Onsøy Trafikkskole tilbyr klasse B med både manuelt gir og automat.");
+  }
+
+  if (!asksPrice && includesAny(t, ["baut"])) {
+    return known("Ja. Onsøy Trafikkskole tilbyr BAut, som er klasse B med automatgir. De tilbyr også klasse B med manuelt gir.");
+  }
+
+  if (
+    includesAny(t, ["førerkortklasser", "forerkortklasser", "hvilke klasser", "hva slags sertifikat", "hva slags førerkort", "hva slags forerkort", "hva tilbyr", "opplæring tilbyr", "opplaering tilbyr"]) &&
+    !asksPrice
+  ) {
+    return known("Onsøy Trafikkskole tilbyr klasse B med manuelt gir og automat, samt motorsykkelklassene A1, A2 og A.");
+  }
+
+  if (includesAny(t, ["hvordan bestiller", "hvordan booker", "bestiller jeg", "hvor bestiller", "booke time", "bestille opplæring", "bestille opplaering", "bli elev", "starte opplæring", "starte opplaering", "påmelding", "pamelding"])) {
+    return known("Du kan sende en forespørsel om opplæring via TABS på https://onsoytrafikkskole.tabs.no/ eller kontakte skolen på 92 98 99 98 eller post@onsoytrafikkskole.no. Skolen følger opp forespørselen; dette er ikke en bekreftet time med én gang.");
+  }
+
+  if (includesAny(t, ["hva kan du hjelpe", "hva kan jeg spørre", "hva kan jeg sporre", "hva kan jeg spørre om", "hjelp meg", "hva vet du"])) {
+    return known("Jeg kan hjelpe med spørsmål om Onsøy Trafikkskoles førerkortklasser, priser, kurs, ansatte, åpningstider, adresser og kontaktinformasjon. Prøv gjerne å spørre om klasse B, A1, A2, A eller neste kurs.");
+  }
+
+  if (includesAny(t, ["fortell om skolen", "hva er onsøy trafikkskole", "hva er onsoy trafikkskole", "om onsøy trafikkskole", "om onsoy trafikkskole"])) {
+    return known("Onsøy Trafikkskole AS holder til i Freskoveien 16 i Fredrikstad og har en egen MC-avdeling på FMV-området. Skolen tilbyr klasse B med manuelt gir og automat samt MC-klassene A1, A2 og A.");
+  }
+
+  if (/^(takk|tusen takk|supert(?:,? takk)?|flott(?:,? takk)?)[!.?\s]*$/.test(rawMessage.trim())) {
+    return known("Bare hyggelig! Spør gjerne hvis du lurer på noe mer om opplæringen hos Onsøy Trafikkskole.");
+  }
+
+  if (/^(ha det|hadet|ha det bra|farvel)[!.?\s]*$/.test(rawMessage.trim())) {
+    return known("Ha det bra, og lykke til med opplæringen!");
+  }
+
+  if (/^(hei|heisann|hallo|hello)[!.?\s]*$/.test(rawMessage.trim())) {
+    return known("Hei! Jeg kan hjelpe med spørsmål om Onsøy Trafikkskoles førerkortklasser, priser, kurs, kontaktinformasjon og praktiske opplysninger. Hva lurer du på?");
+  }
+
+  return null;
+}
+
 function directFyllingsdalenAnswer(client, message) {
   const c = String(client || "").toLowerCase().trim();
 
@@ -1817,6 +2439,12 @@ function enforceChatRateLimit(req, res, next) {
   if (!bucket || now - bucket.startedAt >= CHAT_RATE_WINDOW_MS) {
     bucket = { startedAt: now, count: 0 };
     chatRateBuckets.set(key, bucket);
+
+    const cleanupTimer = setTimeout(() => {
+      const current = chatRateBuckets.get(key);
+      if (current && current.startedAt === bucket.startedAt) chatRateBuckets.delete(key);
+    }, CHAT_RATE_WINDOW_MS + 1000);
+    cleanupTimer.unref?.();
   }
 
   bucket.count += 1;
@@ -1874,6 +2502,47 @@ app.post("/chat", async (req, res) => {
   });
 
   if (!withinRateLimit) return;
+
+  // Deterministic Onsøy answers run before fuzzy KB ranking and before OpenAI.
+  // The helper can explicitly mark an answer as uncertain when the requested
+  // policy is not available in the school's published sources.
+  const onsoyAnswer = directOnsoyAnswer(client, message);
+
+  if (onsoyAnswer) {
+    logUsage({
+      ts: new Date().toISOString(),
+      client,
+      origin,
+      kind: onsoyAnswer.unsure ? "safe_onsoy_answer" : "direct_onsoy",
+      in: message.length,
+      out: onsoyAnswer.reply.length
+    });
+
+    return res.json({
+      reply: onsoyAnswer.reply,
+      unsure: onsoyAnswer.unsure,
+      suggestions: []
+    });
+  }
+
+  if (client === "onsoy") {
+    const reply = "Jeg finner ikke et sikkert svar på det i de verifiserte kildene demoen bruker. Du kan kontakte Onsøy Trafikkskole på 92 98 99 98 eller post@onsoytrafikkskole.no. Ikke skriv sensitive personopplysninger i chatten.";
+
+    logUsage({
+      ts: new Date().toISOString(),
+      client,
+      origin,
+      kind: "safe_onsoy_fallback",
+      in: message.length,
+      out: reply.length
+    });
+
+    return res.json({
+      reply,
+      unsure: true,
+      suggestions: []
+    });
+  }
 
   // Direct Fyllingsdalen demo answers. This runs before KB ranking and before OpenAI.
   const fyllingsdalenReply = directFyllingsdalenAnswer(client, message);

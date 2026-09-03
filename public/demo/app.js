@@ -24,13 +24,49 @@ const sendButton = document.getElementById("send-button");
 
 let config;
 
+function appendLinkedText(container, text) {
+  const value = String(text || "");
+  const urlPattern = /https?:\/\/[^\s<>"']+/g;
+  let cursor = 0;
+
+  for (const match of value.matchAll(urlPattern)) {
+    let url = match[0];
+    let trailing = "";
+
+    while (/[),.;!?]$/.test(url)) {
+      trailing = url.slice(-1) + trailing;
+      url = url.slice(0, -1);
+    }
+
+    container.append(document.createTextNode(value.slice(cursor, match.index)));
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.textContent = url;
+    link.target = "_blank";
+    link.rel = "noreferrer";
+    container.append(link);
+
+    if (trailing) container.append(document.createTextNode(trailing));
+    cursor = match.index + match[0].length;
+  }
+
+  container.append(document.createTextNode(value.slice(cursor)));
+}
+
 function addMessage(text, type) {
   const message = document.createElement("div");
   message.className = `message ${type}`;
   const sender = document.createElement("span");
   sender.className = "sr-only";
   sender.textContent = `${type === "user" ? "Du" : (config?.assistantLabel || "Digital assistent")}: `;
-  message.append(sender, document.createTextNode(text));
+  message.append(sender);
+
+  if (type === "bot") {
+    appendLinkedText(message, text);
+  } else {
+    message.append(document.createTextNode(text));
+  }
   messages.appendChild(message);
   messages.scrollTop = messages.scrollHeight;
   return message;

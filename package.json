@@ -5,9 +5,10 @@
   "scripts": {
     "start": "node index.js",
     "new-client": "node new-client.js",
-    "test": "node scripts/smoke-demo.js && node scripts/smoke-fram.js && node scripts/smoke-fyllingsdalen.js",
+    "test": "node scripts/smoke-demo.js && node scripts/smoke-fram.js && node scripts/smoke-fyllingsdalen.js && node scripts/smoke-onsoy.js",
     "test:fram": "node scripts/smoke-fram.js",
-    "test:fyllingsdalen": "node scripts/smoke-fyllingsdalen.js"
+    "test:fyllingsdalen": "node scripts/smoke-fyllingsdalen.js",
+    "test:onsoy": "node scripts/smoke-onsoy.js"
   },
   "dependencies": {
     "express": "^4.18.2",
