@@ -2687,22 +2687,36 @@ function directTillerAnswer(client, message) {
 
   // The official site markets class B automatic only. Explicitly rule out
   // other classes instead of allowing another client's knowledge to leak in.
-  if (includesAny(t, ["manuell", "manuelt gir", "gire selv", "manual car"])) {
+  const asksManualTraining = includesAny(t, ["manuell", "manuelt gir", "gire selv", "manual car"]);
+  const asksTrailerTraining = /(^|\s)(be|b96)(\s|$)/.test(normalizedMessage) || includesAny(t, ["tilhenger", "hengerlappen"]);
+  const asksMotorcycleTraining =
+    includesAny(t, ["motorsykkel", "a1", "a2", "tung mc", "lett mc", "mellomtung"]) ||
+    /(^|\s)(?:mc|klasse a)(\s|$)/.test(normalizedMessage);
+  const asksOtherVehicleTraining = includesAny(t, ["moped", "am146", "am 146", "traktor", "lastebil", "tungbil", "buss", "klasse c", "klasse d"]);
+  const unsupportedClassGroups = [
+    asksManualTraining && "manuelt gir",
+    asksTrailerTraining && "BE/B96 eller tilhenger",
+    asksMotorcycleTraining && "motorsykkel",
+    asksOtherVehicleTraining && "andre nevnte kjøretøyklasser"
+  ].filter(Boolean);
+
+  if (unsupportedClassGroups.length > 1) {
+    return known(`Tiller Trafikkskoles nettside oppgir bare klasse B automat og trafikalt grunnkurs. ${unsupportedClassGroups.join(", ")} er ikke oppført blant tilbudene.`);
+  }
+
+  if (asksManualTraining) {
     return known("Tiller Trafikkskoles nettside beskriver tilbudet som klasse B automat. Opplæring med manuelt gir er ikke oppført.");
   }
 
-  if (/(^|\s)(be|b96)(\s|$)/.test(normalizedMessage) || includesAny(t, ["tilhenger", "hengerlappen"])) {
+  if (asksTrailerTraining) {
     return known("BE og B96 er ikke oppført blant tilbudene på Tiller Trafikkskoles offisielle nettside.");
   }
 
-  if (
-    includesAny(t, ["motorsykkel", "a1", "a2", "tung mc", "lett mc", "mellomtung"]) ||
-    /(^|\s)(?:mc|klasse a)(\s|$)/.test(normalizedMessage)
-  ) {
+  if (asksMotorcycleTraining) {
     return known("Motorsykkelopplæring er ikke oppført blant tilbudene på Tiller Trafikkskoles offisielle nettside.");
   }
 
-  if (includesAny(t, ["moped", "am146", "am 146", "traktor", "lastebil", "tungbil", "buss", "klasse c", "klasse d"])) {
+  if (asksOtherVehicleTraining) {
     return known("Moped-, traktor-, lastebil- og bussopplæring er ikke oppført blant tilbudene på Tiller Trafikkskoles offisielle nettside.");
   }
 
