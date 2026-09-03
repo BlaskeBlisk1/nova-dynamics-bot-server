@@ -766,12 +766,231 @@ body[data-theme="harbor"] .chat-form input {
   background: rgba(255, 255, 255, 0.043);
 }
 
+/* Tiller's night-drive treatment keeps Nova's dark technical character while
+   echoing the school's road identity in warm copper and clear Nordic blue. */
+body[data-theme="nightdrive"] {
+  --bg: #080d14;
+  --panel: rgba(13, 20, 30, 0.9);
+  --panel-strong: #101925;
+  --line: rgba(125, 201, 218, 0.14);
+  --text: #f6f8fa;
+  --muted: #9ba9b6;
+  --success: #66d5a7;
+  background:
+    radial-gradient(circle at 82% 12%, rgba(99, 201, 219, 0.15), transparent 28%),
+    radial-gradient(circle at 8% 88%, rgba(217, 161, 108, 0.09), transparent 30%),
+    linear-gradient(148deg, #0a111a 0%, #080d14 54%, #0d141d 100%);
+}
+
+body[data-theme="nightdrive"] .route-lines {
+  opacity: 0.33;
+  background-image:
+    linear-gradient(112deg, transparent 0 47%, rgba(99, 201, 219, 0.08) 47.15% 47.28%, transparent 47.45% 100%),
+    repeating-linear-gradient(112deg, transparent 0 105px, rgba(217, 161, 108, 0.095) 106px 112px, transparent 113px 218px),
+    radial-gradient(ellipse at 77% 20%, transparent 0 20%, rgba(99, 201, 219, 0.1) 20.2% 20.45%, transparent 20.7% 31%);
+  mask-image: linear-gradient(to bottom, black, transparent 88%);
+}
+
+body[data-theme="nightdrive"] .brand-mark,
+body[data-theme="nightdrive"] .assistant-avatar {
+  color: #071017;
+  background: linear-gradient(145deg, #a9edf4, var(--accent-secondary) 50%, #3aa1b6);
+  box-shadow: 0 10px 34px rgba(99, 201, 219, 0.23);
+}
+
+body[data-theme="nightdrive"] .demo-pill {
+  border-color: rgba(217, 161, 108, 0.2);
+  color: #e8d4c0;
+  background: rgba(217, 161, 108, 0.055);
+  font-size: 12px;
+}
+
+body[data-theme="nightdrive"] .live-dot {
+  background: var(--accent-secondary);
+  box-shadow: 0 0 0 4px rgba(99, 201, 219, 0.11);
+}
+
+body[data-theme="nightdrive"] .intro {
+  max-width: 950px;
+}
+
+body[data-theme="nightdrive"] .eyebrow {
+  color: var(--accent);
+  font-size: 12px;
+}
+
+body[data-theme="nightdrive"] .location-label {
+  border-color: rgba(99, 201, 219, 0.28);
+  color: #9ecbd3;
+  font-size: 12px;
+}
+
+body[data-theme="nightdrive"] h1 {
+  max-width: 900px;
+  background: linear-gradient(102deg, #ffffff 6%, #e5edf1 58%, #e4bd97);
+  background-clip: text;
+  color: transparent;
+}
+
+body[data-theme="nightdrive"] .highlights span {
+  border-color: rgba(99, 201, 219, 0.16);
+  color: #d0e3e7;
+  background: linear-gradient(110deg, rgba(99, 201, 219, 0.07), rgba(217, 161, 108, 0.045));
+  font-size: 12px;
+}
+
+body[data-theme="nightdrive"] .demo-grid {
+  grid-template-columns: minmax(330px, 0.91fr) minmax(480px, 1.09fr);
+}
+
+body[data-theme="nightdrive"] .context-card {
+  position: relative;
+  isolation: isolate;
+  border-color: rgba(217, 161, 108, 0.2);
+  background:
+    linear-gradient(151deg, rgba(28, 35, 45, 0.96), rgba(13, 23, 33, 0.94)),
+    var(--panel);
+}
+
+body[data-theme="nightdrive"] .context-card::before {
+  position: absolute;
+  z-index: -1;
+  right: -32px;
+  bottom: -18px;
+  width: 235px;
+  height: 235px;
+  border: 1px solid rgba(99, 201, 219, 0.12);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 30px rgba(217, 161, 108, 0.025),
+    0 0 0 62px rgba(99, 201, 219, 0.018);
+  content: "";
+  pointer-events: none;
+}
+
+body[data-theme="nightdrive"] .context-card::after {
+  position: absolute;
+  z-index: -1;
+  right: -24px;
+  bottom: 65px;
+  width: 220px;
+  height: 1px;
+  border-top: 1px dashed rgba(217, 161, 108, 0.32);
+  content: "";
+  pointer-events: none;
+  transform: rotate(-29deg);
+}
+
+body[data-theme="nightdrive"] .client-logo-wrap {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: #f9fafb;
+  box-shadow: 0 15px 42px rgba(0, 0, 0, 0.26);
+}
+
+body[data-theme="nightdrive"] .client-logo-wrap img {
+  height: 56px;
+}
+
+body[data-theme="nightdrive"] .context-label,
+body[data-theme="nightdrive"] .source-note div span,
+body[data-theme="nightdrive"] .chat-header div > span,
+body[data-theme="nightdrive"] .website-link,
+body[data-theme="nightdrive"] .privacy-note,
+body[data-theme="nightdrive"] footer {
+  font-size: 12px;
+}
+
+body[data-theme="nightdrive"] .suggestion,
+body[data-theme="nightdrive"] .message,
+body[data-theme="nightdrive"] .chat-form input,
+body[data-theme="nightdrive"] .chat-form button {
+  font-size: 14px;
+}
+
+body[data-theme="nightdrive"] .suggestions {
+  counter-reset: nightdrive-question;
+}
+
+body[data-theme="nightdrive"] .suggestion {
+  position: relative;
+  padding: 14px 17px 14px 44px;
+  border-color: rgba(125, 201, 218, 0.3);
+  background: rgba(255, 255, 255, 0.033);
+  counter-increment: nightdrive-question;
+}
+
+body[data-theme="nightdrive"] .suggestion::before {
+  position: absolute;
+  top: 50%;
+  left: 16px;
+  color: var(--accent);
+  content: "0" counter(nightdrive-question);
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  transform: translateY(-50%);
+}
+
+body[data-theme="nightdrive"] .suggestion:hover {
+  border-color: rgba(99, 201, 219, 0.36);
+  background: linear-gradient(100deg, rgba(99, 201, 219, 0.1), rgba(217, 161, 108, 0.055));
+}
+
+body[data-theme="nightdrive"] .source-icon {
+  color: #0d141a;
+  background: linear-gradient(145deg, #f2c69d, var(--accent));
+}
+
+body[data-theme="nightdrive"] .chat-card {
+  height: 560px;
+  align-self: start;
+  border-color: rgba(125, 201, 218, 0.18);
+  background: rgba(7, 14, 22, 0.92);
+  box-shadow: 0 30px 94px rgba(0, 5, 10, 0.47);
+}
+
+body[data-theme="nightdrive"] .chat-header {
+  background: linear-gradient(90deg, rgba(99, 201, 219, 0.065), rgba(217, 161, 108, 0.035));
+}
+
+body[data-theme="nightdrive"] .message.bot {
+  border-color: rgba(125, 201, 218, 0.14);
+  color: #e2edf0;
+  background: rgba(99, 201, 219, 0.052);
+}
+
+body[data-theme="nightdrive"] .message.bot a {
+  color: #91e2ec;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+  text-decoration-color: rgba(145, 226, 236, 0.48);
+  text-underline-offset: 3px;
+}
+
+body[data-theme="nightdrive"] .message.bot a:hover {
+  color: #f1c9a4;
+  text-decoration-color: currentColor;
+}
+
+body[data-theme="nightdrive"] .message.user,
+body[data-theme="nightdrive"] .chat-form button {
+  color: #071017;
+  background: linear-gradient(135deg, #9fe9f1, var(--accent-secondary) 58%, #3da5b8);
+  font-weight: 750;
+}
+
+body[data-theme="nightdrive"] .chat-form input {
+  border-color: rgba(125, 201, 218, 0.32);
+  background: rgba(255, 255, 255, 0.043);
+}
+
 @media (max-width: 900px) {
   .page-shell { width: min(100% - 24px, 680px); padding-top: 18px; }
   .intro { padding: 42px 4px 26px; }
   .demo-grid { grid-template-columns: 1fr; }
   body[data-theme="fjord"] .demo-grid { grid-template-columns: 1fr; }
   body[data-theme="harbor"] .demo-grid { grid-template-columns: 1fr; }
+  body[data-theme="nightdrive"] .demo-grid { grid-template-columns: 1fr; }
   .context-card { min-height: auto; padding: 26px; }
   .chat-card { height: auto; min-height: 560px; }
 }
@@ -798,7 +1017,8 @@ body[data-theme="harbor"] .chat-form input {
 
 @media (forced-colors: active) {
   body[data-theme="fjord"] h1,
-  body[data-theme="harbor"] h1 {
+  body[data-theme="harbor"] h1,
+  body[data-theme="nightdrive"] h1 {
     color: CanvasText;
     background: none;
   }
