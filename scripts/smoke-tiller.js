@@ -63,7 +63,7 @@ const checks = [
   { message: "Hvilke førerkortklasser tilbyr dere?", includes: ["klasse B automat", "trafikalt grunnkurs"] },
   { message: "Har dere automat?", includes: ["klasse B automat", "moderne biler"] },
   { message: "Tilbyr dere manuell?", includes: ["automat", "manuelt gir", "ikke oppført"] },
-  { message: "Tilbyr dere manuell eller MC?", includes: ["klasse B automat", "manuelt gir", "motorsykkel", "ikke oppført"] },
+  { message: "Tilbyr dere manuell eller MC?", includes: ["klasse B automat", "Manuelt gir og motorsykkel", "ikke oppført"] },
   { message: "Kan jeg ta MC hos dere?", includes: ["ikke oppført"], forbids: ["A1", "A2"] },
   { message: "Tilbyr dere BE eller B96?", includes: ["ikke oppført"] },
   { message: "Kan jeg ta mopedlappen hos dere?", includes: ["ikke oppført"] },

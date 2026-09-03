@@ -2701,7 +2701,11 @@ function directTillerAnswer(client, message) {
   ].filter(Boolean);
 
   if (unsupportedClassGroups.length > 1) {
-    return known(`Tiller Trafikkskoles nettside oppgir bare klasse B automat og trafikalt grunnkurs. ${unsupportedClassGroups.join(", ")} er ikke oppført blant tilbudene.`);
+    const lastGroup = unsupportedClassGroups[unsupportedClassGroups.length - 1];
+    const unsupportedList = `${unsupportedClassGroups.slice(0, -1).join(", ")} og ${lastGroup}`;
+    const formattedList = unsupportedList.charAt(0).toUpperCase() + unsupportedList.slice(1);
+
+    return known(`Tiller Trafikkskoles nettside oppgir bare klasse B automat og trafikalt grunnkurs. ${formattedList} er ikke oppført blant tilbudene.`);
   }
 
   if (asksManualTraining) {
