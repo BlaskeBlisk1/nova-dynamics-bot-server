@@ -98,6 +98,45 @@
       ]
     }
   },
+  "onsoy": {
+    "name": "Onsøy Trafikkskole",
+    "origins": [
+      "https://onsoytrafikkskole.no",
+      "https://www.onsoytrafikkskole.no",
+      "https://nova-dynamics.no",
+      "https://www.nova-dynamics.no",
+      "https://prismatic-taffy-e96ac7.netlify.app"
+    ],
+    "demo": {
+      "description": "Få raske svar om bil, MC, kurs, priser og veien videre hos Onsøy Trafikkskole.",
+      "greeting": "Hei! Jeg er elevassistenten for Onsøy Trafikkskole. Spør meg gjerne om bil, MC, kurs, priser eller hvordan du kommer i gang.",
+      "website": "https://onsoytrafikkskole.no",
+      "accent": "#35B8D4",
+      "accentSecondary": "#F0B94A",
+      "theme": "harbor",
+      "eyebrow": "BIL OG MC I FREDRIKSTAD",
+      "contextTitle": "Prøv den som en ny elev",
+      "contextDescription": "Still et spørsmål med dine egne ord. Demoen svarer fra skolens publiserte informasjon og sier tydelig fra når noe må bekreftes.",
+      "assistantLabel": "Elevassistent",
+      "assistantInitial": "O",
+      "statusLabel": "Klar til å hjelpe",
+      "logo": "https://onsoytrafikkskole.no/wp-content/uploads/2025/11/Logo-e1762162049676.jpg",
+      "locationLabel": "FRESKOVEIEN • FREDRIKSTAD",
+      "sourceTitle": "Bygget på skolens egne opplysninger",
+      "sourceDescription": "Onsøys offisielle nettside og TABS brukes for tilbud og priser; Statens vegvesen brukes for generelle førerkortregler.",
+      "highlights": [
+        "Manuell og automat",
+        "A1 • A2 • A",
+        "Freskoveien • FMV"
+      ],
+      "suggestedQuestions": [
+        "Hva koster en kjøretime for klasse B?",
+        "Hvilke MC-klasser tilbyr dere?",
+        "Hva koster trafikalt grunnkurs?",
+        "Hvor holder dere til?"
+      ]
+    }
+  },
   "fram": {
     "name": "Fram Trafikkskole",
     "origins": [
