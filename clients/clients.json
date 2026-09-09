@@ -176,6 +176,45 @@
       ]
     }
   },
+  "trafikk1": {
+    "name": "Trafikk1 Trafikkskole",
+    "origins": [
+      "https://trafikk1trafikkskole.no",
+      "https://www.trafikk1trafikkskole.no",
+      "https://nova-dynamics.no",
+      "https://www.nova-dynamics.no",
+      "https://prismatic-taffy-e96ac7.netlify.app"
+    ],
+    "demo": {
+      "description": "Få raske svar om klasse B, henting, kjøretimer, kurs, priser og veien videre hos Trafikk1 Trafikkskole.",
+      "greeting": "Hei! Jeg er elevassistenten for Trafikk1 Trafikkskole. Spør meg gjerne om klasse B, henteområder, kjøretimer, kurs, priser eller hvordan du kommer i gang.",
+      "website": "https://trafikk1trafikkskole.no/",
+      "accent": "#FBB831",
+      "accentSecondary": "#49B9ED",
+      "theme": "roadline",
+      "eyebrow": "DIN TRAFIKKSKOLE I RØYKEN, ASKER OG BÆRUM",
+      "contextTitle": "Prøv den som en ny elev",
+      "contextDescription": "Still et spørsmål med dine egne ord. Demoen svarer fra skolens publiserte informasjon og sier tydelig fra når pris, dato eller tilgjengelighet bør bekreftes.",
+      "assistantLabel": "Elevassistent",
+      "assistantInitial": "T1",
+      "statusLabel": "Klar til å hjelpe",
+      "logo": "https://assets.cdn.filesafe.space/EvdK0vjb8hV6CSGJCgIE/media/67a758614325e15a72551a02.png",
+      "locationLabel": "KLOPPEDALEN • HEGGEDAL",
+      "sourceTitle": "Bygget på skolens egne opplysninger",
+      "sourceDescription": "Trafikk1s offisielle nettside brukes for tilbud, priser og vilkår; dynamiske opplysninger merkes tydelig og bør bekreftes.",
+      "highlights": [
+        "Gratis henting",
+        "Kveld og helg",
+        "Klasse B • automat"
+      ],
+      "suggestedQuestions": [
+        "Hva koster en kjøretime?",
+        "Henter dere meg i Asker?",
+        "Hvilke pakketilbud har dere?",
+        "Når er neste trafikale grunnkurs?"
+      ]
+    }
+  },
   "fram": {
     "name": "Fram Trafikkskole",
     "origins": [
