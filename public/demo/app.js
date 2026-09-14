@@ -1,7 +1,7 @@
 const pathParts = window.location.pathname.split("/").filter(Boolean);
 const client = pathParts[0] === "demos" ? pathParts[1] : "";
 
-const POSTHOG_CAPTURE_URL = "https://us.i.posthog.com/i/v0/e/";
+const POSTHOG_CAPTURE_URL = "https://eu.i.posthog.com/i/v0/e/";
 const POSTHOG_PROJECT_TOKEN = "phc_pYeGcMEga5PbjhCqKHThphPCi4mdXFmnZMNov2NiZiRa";
 const analyticsDistinctId = `nova-demo-${globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`}`;
 
