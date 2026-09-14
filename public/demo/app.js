@@ -1,6 +1,50 @@
 const pathParts = window.location.pathname.split("/").filter(Boolean);
 const client = pathParts[0] === "demos" ? pathParts[1] : "";
 
+const POSTHOG_CAPTURE_URL = "https://us.i.posthog.com/i/v0/e/";
+const POSTHOG_PROJECT_TOKEN = "phc_pYeGcMEga5PbjhCqKHThphPCi4mdXFmnZMNov2NiZiRa";
+const analyticsDistinctId = `nova-demo-${globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`}`;
+
+function captureAnalytics(event, properties = {}) {
+  const payload = {
+    api_key: POSTHOG_PROJECT_TOKEN,
+    event,
+    distinct_id: analyticsDistinctId,
+    properties: {
+      $process_person_profile: false,
+      product: "nova-demo",
+      schema_version: 1,
+      client: client || "unknown",
+      ...properties
+    }
+  };
+
+  void fetch(POSTHOG_CAPTURE_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    keepalive: true
+  }).catch(() => {
+    // Analytics must never interrupt or alter the customer-facing demo.
+  });
+}
+
+function classifyQuestion(value) {
+  const text = String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+  if (/\b(koster|pris|priser|tilbud|pakke|rabatt|betale|betaling)\b/.test(text)) return "pricing";
+  if (/\b(apent|apningstid|stengt|nar har|opening|hours)\b/.test(text)) return "opening_hours";
+  if (/\b(hvor|adresse|lokasjon|location|parkering|finner jeg)\b/.test(text)) return "location";
+  if (/\b(bestill|booking|booke|timebestilling|melde meg pa|pamelding)\b/.test(text)) return "booking";
+  if (/\b(kontakt|telefon|epost|e-post|ringe|mail)\b/.test(text)) return "contact";
+  if (/\b(alder|gammel|krav|forerkort|klasse|kurs|automat|manuell)\b/.test(text)) return "eligibility_or_training";
+  if (/\b(syn|brille|kontaktlinse|linse|oye|torr|undersokelse|tjeneste)\b/.test(text)) return "eye_care_or_service";
+  return "other";
+}
+
 const businessName = document.getElementById("business-name");
 const businessDescription = document.getElementById("business-description");
 const eyebrow = document.getElementById("eyebrow");
@@ -82,9 +126,18 @@ function addTypingIndicator() {
   return message;
 }
 
-async function ask(question) {
+async function ask(question, source = "typed") {
   const text = String(question || "").trim();
   if (!text || sendButton.disabled) return;
+
+  const questionCategory = classifyQuestion(text);
+  const startedAt = performance.now();
+
+  captureAnalytics("question_submitted", {
+    source,
+    question_category: questionCategory,
+    question_length: text.length
+  });
 
   addMessage(text, "user");
   input.value = "";
@@ -101,14 +154,33 @@ async function ask(question) {
     const payload = await response.json();
 
     if (!response.ok) {
-      throw new Error(payload.reply || "Kunne ikke hente svar.");
+      const requestError = new Error(payload.reply || "Kunne ikke hente svar.");
+      requestError.httpStatus = response.status;
+      throw requestError;
     }
 
     typing.remove();
     addMessage(payload.reply || "Jeg fant dessverre ikke et svar akkurat nå.", "bot");
+
+    captureAnalytics(payload.unsure ? "answer_fallback" : "answer_success", {
+      source,
+      question_category: questionCategory,
+      question_length: text.length,
+      response_ms: Math.round(performance.now() - startedAt),
+      http_status: response.status
+    });
   } catch (error) {
     typing.remove();
     addMessage("Beklager – forbindelsen til demoen sviktet. Prøv igjen om et øyeblikk.", "bot");
+
+    captureAnalytics("answer_error", {
+      source,
+      question_category: questionCategory,
+      question_length: text.length,
+      response_ms: Math.round(performance.now() - startedAt),
+      http_status: Number(error?.httpStatus) || 0
+    });
+
     console.error(error);
   } finally {
     sendButton.disabled = false;
@@ -117,6 +189,7 @@ async function ask(question) {
 
 function renderConfig(payload) {
   config = payload;
+  captureAnalytics("demo_opened", { business_name: config.name || client });
   document.title = `${config.name} | Nova Dynamics demo`;
   document.documentElement.style.setProperty("--accent", config.accent || "#4f7cff");
   document.documentElement.style.setProperty("--accent-secondary", config.accentSecondary || "#7c5cff");
@@ -160,7 +233,10 @@ function renderConfig(payload) {
     button.className = "suggestion";
     button.textContent = question;
     button.addEventListener("click", () => {
-      ask(question);
+      captureAnalytics("suggested_question_clicked", {
+        suggestion_position: (config.suggestedQuestions || []).indexOf(question) + 1
+      });
+      ask(question, "suggestion");
 
       if (window.matchMedia("(max-width: 900px)").matches) {
         const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -195,13 +271,30 @@ async function initialize() {
     businessName.textContent = "Demoen ble ikke funnet";
     businessDescription.textContent = "Kontroller lenken eller be Nova Dynamics om en ny demo-adresse.";
     form.hidden = true;
+    captureAnalytics("demo_config_error");
     console.error(error);
   }
 }
 
+websiteLink.addEventListener("click", () => {
+  captureAnalytics("business_website_clicked");
+});
+
+messages.addEventListener("click", (event) => {
+  const link = event.target.closest("a");
+  if (!link) return;
+
+  let destinationHost = "unknown";
+  try {
+    destinationHost = new URL(link.href).hostname || "unknown";
+  } catch {}
+
+  captureAnalytics("answer_link_clicked", { destination_host: destinationHost });
+});
+
 form.addEventListener("submit", (event) => {
   event.preventDefault();
-  ask(input.value);
+  ask(input.value, "typed");
 });
 
 initialize();
