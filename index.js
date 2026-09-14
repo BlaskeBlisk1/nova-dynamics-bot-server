@@ -3511,6 +3511,358 @@ function directTrafikk1Answer(client, message) {
   return null;
 }
 
+function directFrankOlsenAnswer(client, message) {
+  const c = String(client || "").toLowerCase().trim();
+
+  if (c !== "frankolsen") return null;
+
+  const t = makeNorwegianSearchText(message);
+  const normalizedMessage = norm(message);
+  const rawMessage = String(message || "").toLowerCase();
+  const known = reply => ({ reply, unsure: false });
+  const uncertain = reply => ({ reply, unsure: true });
+  const unknown = detail => ({
+    reply: `Det står ikke spesifisert på Frank Olsens nettside.${detail ? ` ${detail}` : ""} Kontakt butikken på 922 26 784, post@frankolsen.no eller via https://www.frankolsen.no/kontakt.`,
+    unsure: true
+  });
+  const asksPrice = includesAny(t, [
+    "pris", "priser", "prisen", "prisene", "koster", "koste", "kostar", "kostnad", "hvor mye", "kor mye", "kva kostar", "price", "cost"
+  ]);
+  const hasOrderVerb = includesAny(t, [
+    "bestill", "bestille", "bestilling", "skaffe", "ta inn", "bestille inn"
+  ]);
+  const hasProductTerm = includesAny(t, [
+    "innfatning", "brille", "briller", "brillemodell", "modell", "vare", "produkt",
+    "solbrille", "solbriller", "ray-ban", "ray ban", "oakley", "prada", "persol",
+    "versace", "vogue", "armani", "hugo boss"
+  ]);
+  const hasAppointmentTerm = includesAny(t, [
+    "time", "timeavtale", "synstest", "synssjekk", "synsundersøkelse", "synsundersokelse",
+    "øyeundersøkelse", "oyeundersokelse", "kontaktlinsetime"
+  ]);
+  const asksProductOrder = hasOrderVerb && hasProductTerm && !hasAppointmentTerm;
+  const asksBooking = !asksProductOrder && includesAny(t, [
+    "bestill", "bestille", "bestilling", "book", "booking", "reservere", "ledig time", "ledige timer",
+    "timeavtale", "timebestilling", "timebok", "får jeg time", "far jeg time", "får eg time", "korleis får eg time"
+  ]);
+
+  // Medical safety must win over every action, booking and personal-data
+  // intent when a visitor combines them in the same message.
+  if (includesAny(t, [
+    "plutselig synstap", "plutselig mistet synet", "mistet synet plutselig", "mister synet",
+    "sterke øyesmerter", "sterk øyesmerte", "skade i øyet", "skadet øyet", "kjemikalie i øyet",
+    "akutt syn", "lysglimt og gardin", "gardin i synsfeltet", "gardin foran synet",
+    "nye flytere og lysglimt", "nye fluer og lysglimt", "svarte prikker og lysglimt"
+  ])) {
+    return uncertain("Jeg kan ikke vurdere akutte øyesymptomer. Ved plutselig synstap, sterke smerter, skade eller andre alvorlige symptomer må du kontakte legevakt eller annen akutt helsehjelp med en gang.");
+  }
+
+  if (
+    includesAny(t, ["kan du diagnostisere", "stille diagnose", "har jeg grønn stær", "har jeg gronn staer", "har jeg grå stær", "har jeg gra staer", "tror jeg har grønn stær", "tror jeg har gronn staer", "tror jeg har grå stær", "tror jeg har gra staer", "mistenker grønn stær", "mistenker gronn staer", "mistenker grå stær", "mistenker gra staer", "kan jeg ha grønn stær", "kan jeg ha gronn staer", "kan jeg ha grå stær", "kan jeg ha gra staer", "hvilken sykdom", "tolke symptom", "anbefale styrke", "hvilken styrke trenger", "hvilken brillestyrke", "brillestyrke trenger", "resept til meg"]) ||
+    (includesAny(t, ["symptom", "symptomer"]) && includesAny(t, ["jeg har", "jeg fikk", "øyet mitt", "oyet mitt"]))
+  ) {
+    return uncertain("Denne demoen kan ikke undersøke øynene, tolke symptomer, anbefale styrke eller stille diagnose. Bestill en faglig undersøkelse via https://www.frankolsen.no/kontakt, eller kontakt helsetjenesten ved akutte eller alvorlige symptomer.");
+  }
+
+  // The public demo answers questions only. It must never appear to collect a
+  // lead or repeat personal details entered by a visitor.
+  const enteredEmails = rawMessage.match(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi) || [];
+  const enteredEmail = enteredEmails.some(email => email.toLowerCase() !== "post@frankolsen.no");
+  const phoneScanText = rawMessage
+    .replace(/\b\d{1,2}[./-]\d{1,2}[./-]\d{2,4}\b/g, " ")
+    .replace(/\b\d{4}-\d{1,2}-\d{1,2}\b/g, " ");
+  const enteredNumberCandidates = phoneScanText.match(/(?:^|\D)(?:\+?\d[\s.-]*){8,11}(?!\d)/g) || [];
+  const enteredLongNumber = enteredNumberCandidates.some(candidate => {
+    const digits = candidate.replace(/\D/g, "");
+    return digits !== "92226784" && digits !== "4792226784";
+  });
+  const asksToStoreOrContact = includesAny(t, [
+    "lagre kontakt", "lagre navnet", "lagre e-post", "lagre epost", "lagre telefon",
+    "kontakt meg", "ring meg", "ringe meg", "ring meg tilbake", "kan dere ringe",
+    "navnet mitt", "jeg heter", "min e-post", "min epost", "mitt telefonnummer",
+    "telefonnummeret mitt", "send svaret til", "fødselsnummer", "fodselsnummer",
+    "personopplysning", "videresend meldingen", "adressen min"
+  ]);
+
+  if (includesAny(t, [
+    "ip-adresse", "ip adresse", "dataene mine", "behandles data", "personvern",
+    "lagres chat", "lagrer chat", "lagrer dere chat", "chatloggen", "chatlogg", "samtalen lagret"
+  ])) {
+    return known("Demoen lagrer ikke selve spørsmålet i bruksloggen. En teknisk nettverksadresse behandles midlertidig for å begrense misbruk. Ikke skriv sensitive personopplysninger i chatten; kontakt Nova Dynamics dersom du trenger flere detaljer om behandlingen.");
+  }
+
+  if (enteredEmail || enteredLongNumber || asksToStoreOrContact) {
+    return known("Denne demoen kan ikke lagre, videresende eller følge opp navn, telefonnummer, e-post eller andre personopplysninger. Ikke skriv sensitive opplysninger her. Kontakt Frank Olsen direkte via https://www.frankolsen.no/kontakt.");
+  }
+
+  if (includesAny(t, [
+    "kan du sende e-post", "kan du sende epost", "kan chatten sende e-post", "kan chatten sende epost",
+    "send e-post", "send epost", "videresend", "sende melding", "send melding"
+  ])) {
+    return known("Jeg kan ikke sende e-post eller videresende meldinger. Kontakt Frank Olsen direkte på post@frankolsen.no, 922 26 784 eller via https://www.frankolsen.no/kontakt.");
+  }
+
+  const directBookingRequest = asksBooking && (
+    includesAny(t, ["kan du", "kan chatten", "gjør det", "gjor det", "for meg", "til meg", "her i chatten"]) ||
+    /^(?:bestill|bestille|book|booke|reserver|reservere)\b/.test(normalizedMessage)
+  );
+
+  if (directBookingRequest) {
+    return known("Denne demoen kan ikke bestille eller endre en time. Bruk Frank Olsens eksisterende bestillingsside på https://www.frankolsen.no/kontakt, eller ring 922 26 784.");
+  }
+
+  if (asksBooking) {
+    return known("Du bestiller på Frank Olsens eksisterende bestillingsside: https://www.frankolsen.no/kontakt. Velg «Bestill» for å åpne timeboken, eller ring 922 26 784. Demoen gjennomfører ikke bestillingen selv.");
+  }
+
+  const asksExternalContactOrLocation = includesAny(t, [
+    "adresse", "adressen", "adressa", "telefon", "telefonnummer", "tlf", "hvor ligger",
+    "hvor holder", "kor ligger", "kor holder", "kvar finn", "hvor finner", "nærmeste", "naermeste"
+  ]);
+
+  if (asksExternalContactOrLocation && includesAny(t, ["legevakt", "akuttmottak", "sykehus"])) {
+    return uncertain("Denne demoen har ikke en verifisert adresse eller telefon til legevakt, akuttmottak eller sykehus. Bruk en offisiell helsetjeneste for oppdatert kontaktinformasjon; ring 113 ved fare for liv og helse.");
+  }
+
+  if (asksExternalContactOrLocation && includesAny(t, ["øyelege", "oyelege", "legekontor"])) {
+    return uncertain("Denne demoen har ikke verifisert kontaktinformasjon til en bestemt øyelege eller et legekontor. Frank Olsen opplyser at de henviser videre ved mistanke om behov for medisinsk oppfølging.");
+  }
+
+  if (asksExternalContactOrLocation && includesAny(t, ["parkering", "parkeringsplass", "parkeringshus"])) {
+    return unknown("Parkering i nærheten er ikke beskrevet på Frank Olsens nettside.");
+  }
+
+  if (includesAny(t, ["nettsiden deres", "nettside", "hjemmeside", "webside", "website"])) {
+    return known("Den offisielle nettsiden til Frank Olsen Brilleoptikk er https://www.frankolsen.no/.");
+  }
+
+  if (includesAny(t, ["adresse", "adressen", "adressa", "hvor holder", "kor holder", "hvor ligger", "ligger dere i bergen", "beliggenhet", "lokasjon", "kong oscars", "hvor finner", "kor finner", "kvar finn", "finn eg butikken", "finne butikken"])) {
+    return known("Frank Olsen Brilleoptikk holder til i Kong Oscars gate 22, 5017 Bergen.");
+  }
+
+  if (/\bligger dere (?:i|på)\b/.test(normalizedMessage)) {
+    return uncertain("Den publiserte adressen til Frank Olsen Brilleoptikk er Kong Oscars gate 22, 5017 Bergen. Jeg kan ikke bekrefte den andre adressen du nevner.");
+  }
+
+  if (includesAny(t, ["telefonnummer", "telefon", "tlf", "ringe", "phone", "sms", "tekstmelding"])) {
+    if (includesAny(t, ["sms", "tekstmelding"])) {
+      return unknown("Nettsiden oppgir 922 26 784 som telefonnummer, men sier ikke om nummeret tar imot SMS.");
+    }
+
+    return known("Telefonnummeret til Frank Olsen Brilleoptikk er 922 26 784.");
+  }
+
+  if (includesAny(t, ["e-postadresse", "epostadresse", "e-post", "epost", "email", "mailadresse", "mail"])) {
+    return known("Den publiserte e-postadressen er post@frankolsen.no.");
+  }
+
+  if (
+    includesAny(t, ["kontakt", "få tak i", "fa tak i"]) &&
+    !includesAny(t, ["kontaktlinse", "kontakt linse", "linser", "linse"])
+  ) {
+    return known("Du kan ringe Frank Olsen på 922 26 784, sende e-post til post@frankolsen.no eller bruke https://www.frankolsen.no/kontakt. Butikken ligger i Kong Oscars gate 22, 5017 Bergen.");
+  }
+
+  if (includesAny(t, ["åpningstid", "apningstid", "åpent", "apent", "åpne", "apne", "stengt", "stenger", "open", "hours"])) {
+    if (includesAny(t, ["mandag", "monday"])) return known("Mandag er publisert åpningstid kl. 09.30–16.00.");
+    if (includesAny(t, ["tirsdag", "tuesday"])) return known("Tirsdag er publisert åpningstid kl. 09.30–16.00.");
+    if (includesAny(t, ["onsdag", "wednesday"])) return known("Onsdag er publisert åpningstid kl. 09.30–16.00.");
+    if (includesAny(t, ["torsdag", "thursday"])) return known("Torsdag er publisert åpningstid kl. 09.30–18.00.");
+    if (includesAny(t, ["fredag", "friday"])) return known("Fredag er publisert åpningstid kl. 09.30–16.00.");
+    if (includesAny(t, ["lørdag", "lordag", "saturday"])) return known("Lørdag er publisert åpningstid kl. 10.00–14.30.");
+    if (includesAny(t, ["søndag", "sondag", "sunday"])) return uncertain("Nettsiden publiserer ingen åpningstid for søndag. Ring 922 26 784 hvis du trenger å bekrefte et avvik.");
+    if (includesAny(t, ["helligdag", "påske", "paske", "jul", "romjul", "17. mai", "17 mai", "nyttår", "nyttar"])) return unknown("Avvikende åpningstider for helligdager er ikke publisert; ring før du møter opp.");
+
+    return known("Publiserte åpningstider er mandag–onsdag og fredag kl. 09.30–16.00, torsdag kl. 09.30–18.00 og lørdag kl. 10.00–14.30. Bekreft gjerne avvik og helligdager direkte med butikken.");
+  }
+
+  const asksEyeExam = includesAny(t, [
+    "synsundersøkelse", "synsundersokelse", "synstest", "synssjekk", "øyeundersøkelse", "oyeundersokelse",
+    "sjekke synet", "sjekk av syn", "sjekke øynene", "sjekke oynene", "sjekka augene", "sjekke augene", "øyehelse", "oyehelse"
+  ]);
+
+  if (asksEyeExam && includesAny(t, ["barn", "barnesyn", "barnebrille", "aldersgrense"])) {
+    return unknown("Nettsiden gir ikke et tydelig svar om aldersgrenser for synsundersøkelser. Be butikken avklare hva de tilbyr for barnets alder og behov.");
+  }
+
+  if (asksEyeExam && includesAny(t, ["hvor lang tid", "varighet", "hvor lenge varer"])) {
+    return unknown("Varighet på synsundersøkelsen er ikke publisert; se tilgjengelige tidspunkt på bestillingssiden eller ring butikken.");
+  }
+
+  if (asksEyeExam && asksPrice) {
+    return known("Frank Olsen annonserer alle synsundersøkelser som gratis. Bestill via https://www.frankolsen.no/kontakt eller ring 922 26 784 hvis du vil bekrefte hva som gjelder for ditt besøk.");
+  }
+
+  if (asksEyeExam && includesAny(t, ["hva inngår", "hva inneholder", "inkludert", "undersøker dere", "undersoker dere", "grundig", "øyehelse", "oyehelse"])) {
+    return known("Frank Olsen beskriver en grundig syns- og øyehelseundersøkelse. Nettsiden opplyser at de tar fundusbilde av alle kunder og utfører trykkmåling som del av vurderingen.");
+  }
+
+  if (includesAny(t, ["fundus", "netthinnefoto", "netthinne foto", "bilde av netthinnen", "bilde av øyet", "bilde av oyet"])) {
+    if (includesAny(t, ["lagrer", "lagret", "oppbevart", "sammenligne", "personvern"])) {
+      return known("Frank Olsens nettside opplyser at fundusbilder lagres slik at optikeren kan sammenligne dem ved senere konsultasjoner. Spør butikken direkte dersom du vil vite mer om lagring og personvern.");
+    }
+
+    return known("Ja. Frank Olsen opplyser at de tar fundusbilde, altså bilde av innsiden av øyet, av alle kunder som del av øyehelsevurderingen. Bildet kan sammenlignes med senere undersøkelser.");
+  }
+
+  if (includesAny(t, ["trykkmåling", "trykkmaling", "øyetrykk", "oyetrykk", "trykket i øyet", "trykket i oyet"])) {
+    return known("Ja. Trykkmåling er oppført som en del av Frank Olsens øyehelsevurdering. Trykk er én av flere målinger og kan ikke alene gi en diagnose.");
+  }
+
+  if (includesAny(t, ["øyelege", "oyelege", "henvisning", "henviser", "grønn stær", "gronn staer"])) {
+    return known("Frank Olsen opplyser at kunden henvises videre til øyelege når undersøkelsen gir mistanke om noe som krever medisinsk oppfølging. Demoen kan ikke tolke funn eller stille diagnose.");
+  }
+
+  if (asksEyeExam) {
+    return known("Frank Olsen tilbyr en grundig, gratis synsundersøkelse med vurdering av syn og øyehelse. Nettsiden opplyser at fundusfoto og trykkmåling inngår. Bestill via https://www.frankolsen.no/kontakt.");
+  }
+
+  const asksContacts = includesAny(t, ["kontaktlinse", "kontakt linse", "linser", "linse"]);
+
+  if (asksContacts && asksPrice) {
+    return unknown("En generell pris for kontaktlinser er ikke publisert. Prisen avhenger av linsetype og tilpasning.");
+  }
+
+  if (asksContacts && includesAny(t, ["skjeve hornhinner", "astigmatisme", "astigmatism", "progressive briller", "progressiv styrke", "flerstyrke"])) {
+    return known("Frank Olsen opplyser at det finnes kontaktlinser både for personer med skjeve hornhinner og for personer som bruker progressive briller. Om de passer for deg må avgjøres gjennom en individuell undersøkelse.");
+  }
+
+  if (asksContacts && includesAny(t, ["sove", "sover", "natten", "nattlinse", "døgnlinse", "dognlinse"])) {
+    return known("Frank Olsen skriver at enkelte kontaktlinser kan være beregnet for bruk over natten. Du bør aldri gjøre dette uten at en optiker uttrykkelig har vurdert og godkjent en egnet linsetype for deg.");
+  }
+
+  if (asksContacts && includesAny(t, ["tilpasning", "tilpasse", "undersøkelse", "undersokelse", "måling", "maling", "hornhinne", "mikroskop", "prøve", "prove"])) {
+    return known("Ved kontaktlinsetilpasning beskriver Frank Olsen ekstra undersøkelser etter at styrken er funnet, blant annet måling av hornhinnens krumming og vurdering av øyet med mikroskop. Deretter finner kunden og optikeren en egnet løsning sammen.");
+  }
+
+  if (asksContacts && includesAny(t, ["av og til", "sporadisk", "bare én dag", "bare en dag", "daglig", "regelmessig"])) {
+    return known("Frank Olsen beskriver kontaktlinser både for sporadisk og mer regelmessig bruk. Riktig linsetype må tilpasses individuelt av optiker.");
+  }
+
+  if (asksContacts && includesAny(t, ["leverandør", "leverandor", "produsent", "alcon", "bausch", "coopervision", "johnson"])) {
+    return known("Nettsiden lister Alcon, Bausch & Lomb, CooperVision og Johnson & Johnson som kontaktlinseleverandører. Produkt og tilgjengelighet bør bekreftes med butikken.");
+  }
+
+  if (asksContacts) {
+    return known("Ja. Frank Olsen tilbyr kontaktlinsetilpasning og opplyser at de aller fleste synsfeil kan korrigeres med kontaktlinser. Egnet løsning avgjøres etter en individuell undersøkelse.");
+  }
+
+  if (includesAny(t, ["databrille", "skjermbrille", "eyezen", "eye protect", "blått lys", "blatt lys"])) {
+    if (asksPrice) return unknown("Pris på databriller er ikke publisert og avhenger av glass og tilpasning.");
+    if (includesAny(t, ["arbeidsgiver", "jobben betale", "dekker jobben", "refusjon"])) {
+      return uncertain("Frank Olsen tilbyr databriller, men nettsiden gir ikke et komplett, oppdatert svar for alle arbeidsforhold. Avklar dekning med arbeidsgiver og gjeldende offentlige regler før du bestiller.");
+    }
+    if (includesAny(t, ["eyezen", "eye protect"])) {
+      return known("Frank Olsen beskriver Eyezen som brilleglass utviklet for å avlaste øynene ved mye bruk av datamaskin og mobil. Optikeren må vurdere om dette eller en annen løsning passer deg.");
+    }
+
+    return known("Ja. Frank Olsen tilbyr briller tilpasset arbeid ved skjerm. En synsundersøkelse brukes for å finne en løsning som passer arbeidsavstandene og behovene dine.");
+  }
+
+  if (includesAny(t, ["brilleglass", "glassleverandør", "glassleverandor", "essilor", "zeiss", "rodenstock"])) {
+    return known("Frank Olsen opplyser at de bruker brilleglass fra Essilor, Carl Zeiss og Rodenstock. Hvilket glass som passer best, avhenger av behov og styrke.");
+  }
+
+  const asksBrands = includesAny(t, [
+    "brillemerke", "merker", "merke", "ray-ban", "ray ban", "oakley", "prada", "persol", "versace", "vogue", "armani", "hugo boss"
+  ]);
+
+  if (asksProductOrder) {
+    return known("Frank Olsen opplyser at de kan bestille en ønsket innfatning dersom den ikke finnes i butikken. Tilgjengelighet og leveringstid må bekreftes direkte.");
+  }
+
+  if (asksBrands) {
+    if (includesAny(t, ["oakley vanguard", "vanguard meta", "5190", "5 190", "kampanjepris"])) {
+      return uncertain("Nettsiden viser en eldre Oakley Vanguard Meta-kampanje med sluttdato 6. juni. Jeg kan derfor ikke bekrefte kampanjeprisen som gjeldende; kontakt butikken for dagens pris og lagerstatus.");
+    }
+
+    if (asksPrice) {
+      return unknown("En oppdatert pris for den aktuelle merkevaren eller modellen er ikke publisert; be butikken bekrefte pris og lagerstatus.");
+    }
+
+    if (includesAny(t, ["lagerstatus", "på lager", "pa lager", "har dere inne", "modell inne"])) {
+      return uncertain("Merket vises på Frank Olsens nettside, men en bestemt modell kan ikke bekreftes som på lager. Kontakt butikken for aktuell modell, farge og lagerstatus.");
+    }
+
+    return known("Nettsiden viser blant annet Ray-Ban, Oakley, Prada, Persol, Versace, Vogue, Armani og Hugo Boss. Utvalg og lagerstatus kan endres, så kontakt butikken for å bekrefte en bestemt modell.");
+  }
+
+  if (includesAny(t, ["bestille innfatning", "bestille en innfatning", "bestille brillen", "skaffe innfatning"])) {
+    return known("Frank Olsen opplyser at de kan bestille en ønsket innfatning dersom den ikke finnes i butikken. Tilgjengelighet og leveringstid må bekreftes direkte.");
+  }
+
+  if (includesAny(t, ["lagerstatus", "på lager", "pa lager", "har dere inne", "modell inne", "leveringstid"])) {
+    return unknown("Lagerstatus og leveringstid publiseres ikke som en oppdatert oversikt; be butikken bekrefte den aktuelle varen.");
+  }
+
+  if (includesAny(t, ["reparasjon", "reparere", "fikse brill", "ødelagt brill", "odelagt brill", "justere brill", "tilpasse brill"])) {
+    if (asksPrice) return unknown("Pris på reparasjoner er ikke publisert og avhenger av skaden og brillen.");
+    return known("Ja. Reparasjoner, veiledning og tilpasning er blant tjenestene Frank Olsen fremhever. Pris og tidsbruk må vurderes av butikken.");
+  }
+
+  if (includesAny(t, ["student", "studentrabatt", "studierabatt"])) {
+    return uncertain("Frank Olsen opplyser at studenter får rabatter og tilbud, men publiserer ikke en fast prosentsats eller fullstendige vilkår. Kontakt butikken for dagens betingelser.");
+  }
+
+  if (includesAny(t, ["tilbud", "kampanje", "rabatt", "salg", "50 prosent", "50%", "halv pris"])) {
+    return uncertain("Tilbud og kampanjer kan endres, og enkelte eldre kampanjer finnes fortsatt i nettsideinnholdet. Kontakt butikken på 922 26 784 for å få bekreftet hva som gjelder nå.");
+  }
+
+  if (asksPrice && includesAny(t, ["brille", "innfatning", "solbrille"])) {
+    return unknown("Nettsiden publiserer ikke en generell, oppdatert prisliste for komplette briller. Prisen avhenger blant annet av innfatning, glass og tilpasning.");
+  }
+
+  if (includesAny(t, ["hvor lenge", "historie", "70 år", "eldste", "frittstående", "frittstaende", "om frank olsen", "hvem er frank olsen"])) {
+    return known("Frank Olsen Brilleoptikk er en frittstående optikerforretning som har holdt til i Bergen i over 70 år. Butikken fremhever personlig veiledning, offentlig godkjente optikere og hjelp med briller, kontaktlinser og reparasjoner.");
+  }
+
+  if (includesAny(t, ["briller", "brille", "innfatning", "solbriller", "solbrille"])) {
+    return known("Frank Olsen tilbyr briller og solbriller fra en rekke designmerker, med veiledning, tilpasning og reparasjoner. Utvalg, pris og lagerstatus må bekreftes med butikken.");
+  }
+
+  if (includesAny(t, ["offentlig godkjent", "godkjent optiker", "autoriserte optiker", "optikerne deres"])) {
+    return known("Frank Olsen opplyser at optikerne deres er offentlig godkjent.");
+  }
+
+  if (includesAny(t, ["parkering", "parkeringsplass"])) {
+    return unknown("Parkering er ikke beskrevet på nettsiden. Butikken ligger i Kong Oscars gate 22 i Bergen.");
+  }
+
+  if (includesAny(t, ["rullestol", "tilgjengelighet", "universell utforming", "trinnfri"])) {
+    return unknown("Tilgjengelighet og inngangsforhold er ikke beskrevet; ring før besøket for å avklare nødvendig tilrettelegging.");
+  }
+
+  if (includesAny(t, ["barn", "barnesyn", "barnebrille", "aldersgrense"])) {
+    return unknown("Nettsiden gir ikke et tydelig svar om aldersgrenser for synsundersøkelser. Be butikken avklare hva de tilbyr for barnets alder og behov.");
+  }
+
+  if (includesAny(t, ["hvor lang tid", "varighet", "hvor lenge varer"])) {
+    return unknown("Varighet på undersøkelse, levering eller reparasjon er ikke publisert; be butikken bekrefte et realistisk tidsrom.");
+  }
+
+  if (includesAny(t, ["hva kan du", "hva kan jeg spørre", "hva kan jeg sporre", "hjelpe med"])) {
+    return known("Jeg kan svare på vanlige spørsmål om gratis synsundersøkelse, kontaktlinser, databriller, brillemerker, reparasjoner, åpningstider, kontakt og timebestilling hos Frank Olsen.");
+  }
+
+  if (includesAny(t, ["hvordan kommer jeg i gang", "vil sjekke synet", "trenger nye briller"])) {
+    return known("Bestill via https://www.frankolsen.no/kontakt eller ring 922 26 784. Demoen kan forklare tjenestene og vise deg videre, men gjennomfører ikke bestillingen.");
+  }
+
+  if (includesAny(t, ["takk", "tusen takk", "supert", "flott"])) {
+    return known("Bare hyggelig! Spør gjerne hvis du vil vite mer om Frank Olsens tjenester eller hvordan du bestiller time.");
+  }
+
+  if (includesAny(t, ["ha det", "hadet", "adjø", "adjo", "snakkes"])) {
+    return known("Ha det bra! Du finner timebestillingen på https://www.frankolsen.no/kontakt.");
+  }
+
+  if (includesAny(t, ["hei", "hallo", "god dag", "heisann"])) {
+    return known("Hei! Hva vil du vite om synsundersøkelse, kontaktlinser, briller, åpningstider eller timebestilling hos Frank Olsen?");
+  }
+
+  return null;
+}
+
 // -------------------- Chat --------------------
 const CHAT_RATE_WINDOW_MS = 60_000;
 const CHAT_RATE_LIMIT = 120;
@@ -3587,6 +3939,47 @@ app.post("/chat", async (req, res) => {
   });
 
   if (!withinRateLimit) return;
+
+  // Frank Olsen's demo uses only verified, client-specific information and a
+  // safe fallback. This keeps medical, pricing and stock questions from being
+  // guessed by the generic retrieval or language-model path.
+  const frankOlsenAnswer = directFrankOlsenAnswer(client, message);
+
+  if (frankOlsenAnswer) {
+    logUsage({
+      ts: new Date().toISOString(),
+      client,
+      origin,
+      kind: frankOlsenAnswer.unsure ? "safe_frankolsen_answer" : "direct_frankolsen",
+      in: message.length,
+      out: frankOlsenAnswer.reply.length
+    });
+
+    return res.json({
+      reply: frankOlsenAnswer.reply,
+      unsure: frankOlsenAnswer.unsure,
+      suggestions: []
+    });
+  }
+
+  if (client === "frankolsen") {
+    const reply = "Jeg finner ikke et sikkert svar på det i de verifiserte kildene demoen bruker. Du kan kontakte Frank Olsen Brilleoptikk på 922 26 784, post@frankolsen.no eller via https://www.frankolsen.no/kontakt. Ikke skriv sensitive personopplysninger i chatten.";
+
+    logUsage({
+      ts: new Date().toISOString(),
+      client,
+      origin,
+      kind: "safe_frankolsen_fallback",
+      in: message.length,
+      out: reply.length
+    });
+
+    return res.json({
+      reply,
+      unsure: true,
+      suggestions: []
+    });
+  }
 
   // Trafikk1's demo is deliberately isolated from every other client. It
   // answers from verified school information and uses a safe client-specific

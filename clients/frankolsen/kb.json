@@ -1,0 +1,274 @@
+[
+  {
+    "q": "Hvem er Frank Olsen Brilleoptikk?",
+    "a": "Frank Olsen Brilleoptikk er en frittstående optikerforretning som har holdt til i Bergen i over 70 år. Butikken fremhever personlig veiledning, offentlig godkjente optikere, briller, kontaktlinser og reparasjoner."
+  },
+  {
+    "q": "Hvor lenge har Frank Olsen vært i Bergen?",
+    "a": "Frank Olsen Brilleoptikk opplyser at de har holdt til i Bergen i over 70 år og er blant byens eldre optikerforretninger."
+  },
+  {
+    "q": "Er Frank Olsen en frittstående optiker?",
+    "a": "Ja. Frank Olsen beskriver seg som en av de få frittstående brilleforretningene i Bergen."
+  },
+  {
+    "q": "Hvor holder dere til?",
+    "a": "Frank Olsen Brilleoptikk holder til i Kong Oscars gate 22, 5017 Bergen."
+  },
+  {
+    "q": "Hva er adressen deres?",
+    "a": "Adressen er Kong Oscars gate 22, 5017 Bergen."
+  },
+  {
+    "q": "Hva er telefonnummeret deres?",
+    "a": "Telefonnummeret til Frank Olsen Brilleoptikk er 922 26 784."
+  },
+  {
+    "q": "Hva er e-postadressen deres?",
+    "a": "Den publiserte e-postadressen er post@frankolsen.no."
+  },
+  {
+    "q": "Hvordan kontakter jeg dere?",
+    "a": "Du kan ringe 922 26 784, sende e-post til post@frankolsen.no eller bruke kontaktsiden: https://www.frankolsen.no/kontakt."
+  },
+  {
+    "q": "Når har dere åpent?",
+    "a": "Publiserte åpningstider er mandag–onsdag og fredag kl. 09.30–16.00, torsdag kl. 09.30–18.00 og lørdag kl. 10.00–14.30. Bekreft gjerne avvik og helligdager direkte med butikken."
+  },
+  {
+    "q": "Når har dere åpent på mandag?",
+    "a": "Mandag er publisert åpningstid kl. 09.30–16.00."
+  },
+  {
+    "q": "Når har dere åpent på tirsdag?",
+    "a": "Tirsdag er publisert åpningstid kl. 09.30–16.00."
+  },
+  {
+    "q": "Når har dere åpent på onsdag?",
+    "a": "Onsdag er publisert åpningstid kl. 09.30–16.00."
+  },
+  {
+    "q": "Når har dere åpent på torsdag?",
+    "a": "Torsdag er publisert åpningstid kl. 09.30–18.00."
+  },
+  {
+    "q": "Når har dere åpent på fredag?",
+    "a": "Fredag er publisert åpningstid kl. 09.30–16.00."
+  },
+  {
+    "q": "Når har dere åpent på lørdag?",
+    "a": "Lørdag er publisert åpningstid kl. 10.00–14.30."
+  },
+  {
+    "q": "Har dere åpent på søndag?",
+    "a": "Nettsiden publiserer ingen åpningstid for søndag. Ring 922 26 784 hvis du trenger å bekrefte et avvik."
+  },
+  {
+    "q": "Hvordan bestiller jeg time?",
+    "a": "Bruk Frank Olsens eksisterende bestillingsside på https://www.frankolsen.no/kontakt. Derfra åpnes butikkens timebok. Du kan også ringe 922 26 784."
+  },
+  {
+    "q": "Kan jeg bestille synsundersøkelse på nett?",
+    "a": "Ja. Gå til https://www.frankolsen.no/kontakt og velg «Bestill». Selve bestillingen skjer i butikkens eksisterende timebok, ikke i denne demo-chatten."
+  },
+  {
+    "q": "Kan chatten bestille en time for meg?",
+    "a": "Nei. Denne demoen kan svare på spørsmål og vise deg til Frank Olsens eksisterende bestillingsside, men den kan ikke gjennomføre eller endre en timebestilling."
+  },
+  {
+    "q": "Hva koster en synsundersøkelse?",
+    "a": "Frank Olsen annonserer alle synsundersøkelser som gratis. Bestill via https://www.frankolsen.no/kontakt eller ring 922 26 784 hvis du vil bekrefte hva som gjelder for ditt besøk."
+  },
+  {
+    "q": "Er synstesten gratis?",
+    "a": "Ja. På den offisielle nettsiden står det at alle synsundersøkelser er helt gratis."
+  },
+  {
+    "q": "Hva inngår i synsundersøkelsen?",
+    "a": "Frank Olsen beskriver en grundig syns- og øyehelseundersøkelse. Nettsiden opplyser at de tar fundusbilde av alle kunder og utfører trykkmåling som del av vurderingen."
+  },
+  {
+    "q": "Undersøker dere øyehelsen?",
+    "a": "Ja. Frank Olsen beskriver synsundersøkelsen som mer enn en kontroll av brillestyrke, med vurdering av øyehelsen, fundusfoto og trykkmåling."
+  },
+  {
+    "q": "Tar dere bilde av netthinnen?",
+    "a": "Ja. Nettsiden opplyser at de tar fundusbilde, altså bilde av innsiden av øyet, av alle kunder som del av øyehelsevurderingen."
+  },
+  {
+    "q": "Hva er et fundusbilde?",
+    "a": "Frank Olsen omtaler fundusfoto som et bilde av innsiden av øyet som brukes til å vurdere netthinnen og øyets helsetilstand. Bildet kan sammenlignes med senere undersøkelser."
+  },
+  {
+    "q": "Lagrer dere fundusbildet?",
+    "a": "Frank Olsens nettside opplyser at fundusbilder lagres slik at optikeren kan sammenligne dem ved senere konsultasjoner. Spør butikken direkte dersom du vil vite mer om lagring og personvern."
+  },
+  {
+    "q": "Måler dere trykket i øynene?",
+    "a": "Ja. Trykkmåling er oppført som en del av Frank Olsens øyehelsevurdering. Et enkelt mål kan ikke alene gi en diagnose."
+  },
+  {
+    "q": "Henviser dere til øyelege?",
+    "a": "Nettsiden opplyser at kunden henvises videre til øyelege når undersøkelsen gir mistanke om noe som krever medisinsk oppfølging. Denne chatten kan ikke vurdere symptomer eller stille diagnose."
+  },
+  {
+    "q": "Er optikerne offentlig godkjent?",
+    "a": "Ja. Frank Olsen opplyser at optikerne deres er offentlig godkjent."
+  },
+  {
+    "q": "Tilbyr dere kontaktlinser?",
+    "a": "Ja. Frank Olsen tilbyr kontaktlinsetilpasning og opplyser at de aller fleste synsfeil i dag kan korrigeres med kontaktlinser. Egnet løsning avgjøres etter en individuell undersøkelse."
+  },
+  {
+    "q": "Hvordan foregår en kontaktlinsetilpasning?",
+    "a": "Etter at styrken er funnet, beskriver Frank Olsen ekstra undersøkelser som måling av hornhinnens krumming og vurdering av øyet med mikroskop. Deretter finner kunden og optikeren en egnet løsning sammen."
+  },
+  {
+    "q": "Kan jeg bruke kontaktlinser med skjeve hornhinner?",
+    "a": "Frank Olsen opplyser at det finnes kontaktlinser for personer med skjeve hornhinner. Om de passer for deg må avgjøres gjennom en individuell undersøkelse."
+  },
+  {
+    "q": "Kan jeg bruke linser hvis jeg har progressive briller?",
+    "a": "Frank Olsen opplyser at det finnes kontaktlinser også for personer som bruker progressive briller. Riktig løsning må tilpasses individuelt av optiker."
+  },
+  {
+    "q": "Kan jeg bruke kontaktlinser bare av og til?",
+    "a": "Ja. Nettsiden beskriver alternativer både for sporadisk bruk og mer regelmessig bruk. Optikeren må vurdere hvilke linser som passer øynene dine."
+  },
+  {
+    "q": "Kan jeg sove med kontaktlinser?",
+    "a": "Frank Olsen skriver at enkelte kontaktlinser kan være beregnet for bruk over natten. Du bør aldri gjøre dette uten at en optiker uttrykkelig har vurdert og godkjent en egnet linsetype for deg."
+  },
+  {
+    "q": "Hvilke kontaktlinseleverandører har dere?",
+    "a": "Nettsiden lister Alcon, Bausch & Lomb, CooperVision og Johnson & Johnson som kontaktlinseleverandører. Produkt og tilgjengelighet bør bekreftes med butikken."
+  },
+  {
+    "q": "Hvilke brilleglass bruker dere?",
+    "a": "Frank Olsen opplyser at de bruker brilleglass fra Essilor, Carl Zeiss og Rodenstock. Hvilket glass som passer best, avhenger av behov og styrke."
+  },
+  {
+    "q": "Hvilke brillemerker fører dere?",
+    "a": "Nettsiden viser blant annet Ray-Ban, Oakley, Prada, Persol, Versace, Vogue, Armani, Hugo Boss og flere andre merker. Utvalg og lagerstatus kan endres, så bekreft en bestemt modell med butikken."
+  },
+  {
+    "q": "Har dere Ray-Ban?",
+    "a": "Ray-Ban er blant merkene som vises på Frank Olsens nettside. Kontakt butikken for å bekrefte aktuell modell, farge og lagerstatus."
+  },
+  {
+    "q": "Har dere Oakley?",
+    "a": "Oakley er blant merkene som vises på Frank Olsens nettside. Kontakt butikken for å bekrefte aktuell modell og lagerstatus; demoen lover ikke at en bestemt vare er inne."
+  },
+  {
+    "q": "Kan dere bestille en innfatning dere ikke har?",
+    "a": "Frank Olsen opplyser at de kan bestille en ønsket innfatning dersom den ikke finnes i butikken. Tilgjengelighet og leveringstid må bekreftes direkte."
+  },
+  {
+    "q": "Reparerer dere briller?",
+    "a": "Ja. Reparasjoner er oppført blant tjenestene Frank Olsen tilbyr. Pris og hvor lang tid reparasjonen tar må vurderes av butikken."
+  },
+  {
+    "q": "Kan dere justere brillene mine?",
+    "a": "Frank Olsen fremhever veiledning, tilpasning og reparasjoner. Kontakt butikken på 922 26 784 for å avklare hva de kan gjøre med akkurat brillen din."
+  },
+  {
+    "q": "Selger dere solbriller?",
+    "a": "Ja. Frank Olsen viser et bredt utvalg av brille- og solbrilleinnfatninger. Merker, modeller, priser og lagerstatus kan endres."
+  },
+  {
+    "q": "Tilbyr dere databriller?",
+    "a": "Ja. Frank Olsen tilbyr briller tilpasset arbeid ved skjerm. En synsundersøkelse brukes for å finne en løsning som passer arbeidsavstandene og behovene dine."
+  },
+  {
+    "q": "Hva er Eyezen?",
+    "a": "Frank Olsen beskriver Eyezen som brilleglass utviklet for å avlaste øynene ved mye bruk av datamaskin og mobil. Optikeren må vurdere om dette eller en annen løsning passer deg."
+  },
+  {
+    "q": "Betaler arbeidsgiver for databriller?",
+    "a": "Frank Olsen tilbyr databriller, men nettsiden gir ikke et komplett, oppdatert svar for alle arbeidsforhold. Avklar dekning med arbeidsgiver og gjeldende offentlige regler før du bestiller."
+  },
+  {
+    "q": "Har dere studentrabatt?",
+    "a": "Frank Olsen opplyser at studenter får rabatter og tilbud, men publiserer ikke en fast prosentsats eller fullstendige vilkår. Kontakt butikken for dagens betingelser."
+  },
+  {
+    "q": "Har dere tilbud akkurat nå?",
+    "a": "Tilbud og kampanjer kan endres, og enkelte eldre kampanjer ligger fortsatt i nettsideinnholdet. Kontakt butikken på 922 26 784 for å få bekreftet hva som gjelder nå."
+  },
+  {
+    "q": "Hva koster briller?",
+    "a": "Nettsiden publiserer ikke en generell, oppdatert prisliste for komplette briller. Prisen avhenger blant annet av innfatning, glass og tilpasning; be butikken om et konkret tilbud."
+  },
+  {
+    "q": "Hva koster kontaktlinser?",
+    "a": "En generell kontaktlinsepris er ikke publisert. Pris avhenger av linsetype og tilpasning, så kontakt butikken etter at behovet ditt er vurdert."
+  },
+  {
+    "q": "Hva koster en reparasjon?",
+    "a": "Pris på reparasjoner er ikke publisert og avhenger av skaden og brillen. Ta med brillen eller kontakt butikken for en vurdering."
+  },
+  {
+    "q": "Hvor lang tid tar synsundersøkelsen?",
+    "a": "Varigheten er ikke oppgitt på Frank Olsens nettside. Se tilgjengelige tidspunkt på https://www.frankolsen.no/kontakt eller ring 922 26 784."
+  },
+  {
+    "q": "Hvor lang leveringstid er det på briller?",
+    "a": "Nettsiden oppgir ingen fast leveringstid. Den avhenger av innfatning, glass og bestilling; be butikken bekrefte et realistisk tidspunkt."
+  },
+  {
+    "q": "Har dere parkering?",
+    "a": "Parkering er ikke beskrevet på den offisielle nettsiden. Butikken ligger i Kong Oscars gate 22 i Bergen; kontakt dem dersom du trenger praktisk veiledning før besøket."
+  },
+  {
+    "q": "Er butikken tilgjengelig for rullestol?",
+    "a": "Tilgjengelighet er ikke beskrevet på nettsiden. Ring 922 26 784 før besøket, så kan butikken bekrefte inngang og nødvendig tilrettelegging."
+  },
+  {
+    "q": "Tilbyr dere synsundersøkelse for barn?",
+    "a": "Nettsiden gir ikke et tydelig svar om aldersgrenser for synsundersøkelser. Kontakt butikken på 922 26 784 for å avklare hva de tilbyr for barnets alder og behov."
+  },
+  {
+    "q": "Kan dere stille en øyediagnose i chatten?",
+    "a": "Nei. Denne demoen kan bare formidle publisert praktisk informasjon og kan ikke undersøke øynene, tolke symptomer eller stille diagnose. Kontakt optiker eller helsetjenesten for en faglig vurdering."
+  },
+  {
+    "q": "Jeg har plutselig synstap eller sterke øyesmerter, hva gjør jeg?",
+    "a": "Denne demoen kan ikke vurdere akutte symptomer. Ved plutselig synstap, sterke smerter, skade eller andre alvorlige symptomer må du kontakte legevakt eller annen akutt helsehjelp med en gang."
+  },
+  {
+    "q": "Kan dere anbefale en bestemt styrke eller linse i chatten?",
+    "a": "Nei. Brille- og kontaktlinsestyrke må fastsettes gjennom en faglig undersøkelse. Bestill time via https://www.frankolsen.no/kontakt."
+  },
+  {
+    "q": "Lagrer chatten navn, telefon eller e-post?",
+    "a": "Nei. Denne demoen kan ikke lagre, videresende eller følge opp navn, telefonnummer, e-post eller andre personopplysninger. Ikke skriv sensitive opplysninger her."
+  },
+  {
+    "q": "Hvordan behandles data i demoen?",
+    "a": "Demoen lagrer ikke selve spørsmålet i bruksloggen. En teknisk nettverksadresse behandles midlertidig for å begrense misbruk. Ikke skriv sensitive personopplysninger i chatten."
+  },
+  {
+    "q": "Kan chatten sende e-post til butikken?",
+    "a": "Nei. Demoen kan ikke sende eller videresende meldinger. Kontakt Frank Olsen direkte på post@frankolsen.no eller 922 26 784."
+  },
+  {
+    "q": "Hva kan du hjelpe meg med?",
+    "a": "Jeg kan svare på vanlige spørsmål om gratis synsundersøkelse, kontaktlinser, databriller, brillemerker, reparasjoner, åpningstider, kontakt og timebestilling hos Frank Olsen."
+  },
+  {
+    "q": "Hvordan kommer jeg i gang?",
+    "a": "Bestill via https://www.frankolsen.no/kontakt eller ring 922 26 784. Demoen kan forklare tjenestene og vise deg videre, men kan ikke gjennomføre bestillingen."
+  },
+  {
+    "q": "Hva er nettsiden deres?",
+    "a": "Den offisielle nettsiden er https://www.frankolsen.no/."
+  },
+  {
+    "q": "Hei",
+    "a": "Hei! Hva vil du vite om synsundersøkelse, kontaktlinser, briller, åpningstider eller timebestilling hos Frank Olsen?"
+  },
+  {
+    "q": "Takk for hjelpen",
+    "a": "Bare hyggelig! Spør gjerne hvis du vil vite mer om Frank Olsens tjenester eller hvordan du bestiller time."
+  }
+]
