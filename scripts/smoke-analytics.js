@@ -9,6 +9,8 @@ function assert(condition, message) {
 }
 
 assert(source.includes('$process_person_profile: false'), "PostHog events must not create person profiles.");
+assert(source.includes('https://eu.i.posthog.com/i/v0/e/'), "PostHog events must use the connected EU Cloud ingestion endpoint.");
+assert(!source.includes('https://us.i.posthog.com/i/v0/e/'), "US ingestion endpoint must not be used for the EU Cloud project.");
 assert(source.includes('const analyticsDistinctId'), "Anonymous per-page analytics ID is missing.");
 assert(source.includes('"demo_opened"'), "demo_opened event is missing.");
 assert(source.includes('"question_submitted"'), "question_submitted event is missing.");
