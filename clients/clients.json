@@ -215,6 +215,46 @@
       ]
     }
   },
+  "frankolsen": {
+    "name": "Frank Olsen Brilleoptikk",
+    "origins": [
+      "https://frankolsen.no",
+      "https://www.frankolsen.no",
+      "https://nova-dynamics.no",
+      "https://www.nova-dynamics.no",
+      "https://prismatic-taffy-e96ac7.netlify.app"
+    ],
+    "demo": {
+      "description": "Få raske svar om synsundersøkelse, kontaktlinser, briller, åpningstider og timebestilling hos Frank Olsen Brilleoptikk.",
+      "greeting": "Hei! Jeg er synsassistenten for Frank Olsen Brilleoptikk. Spør meg gjerne om synsundersøkelse, kontaktlinser, briller, åpningstider eller hvordan du bestiller time.",
+      "website": "https://www.frankolsen.no/",
+      "accent": "#F1B401",
+      "accentSecondary": "#28B7AE",
+      "theme": "optical",
+      "eyebrow": "FRITTSTÅENDE OPTIKER I BERGEN",
+      "contextTitle": "Prøv den som en ekte kunde",
+      "contextDescription": "Still et vanlig spørsmål med dine egne ord. Demoen svarer fra opplysningene Frank Olsen selv har publisert og sier tydelig fra når noe må bekreftes.",
+      "assistantLabel": "Synsassistent",
+      "assistantInitial": "FO",
+      "statusLabel": "Klar til å hjelpe",
+      "locationLabel": "KONG OSCARS GATE • BERGEN",
+      "sourceTitle": "Bygget på Frank Olsens egne opplysninger",
+      "sourceDescription": "Den offisielle nettsiden brukes for tjenester, åpningstider og kontakt. Priser, lagerstatus og tilbud som kan endres, må bekreftes med butikken.",
+      "highlights": [
+        "Gratis synsundersøkelse",
+        "Over 70 år i Bergen",
+        "Briller • kontaktlinser"
+      ],
+      "suggestedQuestions": [
+        "Hva inngår i synsundersøkelsen?",
+        "Kan jeg bruke kontaktlinser med skjeve hornhinner?",
+        "Når har dere åpent på torsdag?",
+        "Hvordan bestiller jeg time?",
+        "Tilbyr dere databriller?",
+        "Hvilke brilleglass bruker dere?"
+      ]
+    }
+  },
   "fram": {
     "name": "Fram Trafikkskole",
     "origins": [
