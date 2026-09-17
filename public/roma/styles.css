@@ -1,0 +1,115 @@
+/* Served only by the Roma page. Existing demo assets remain unchanged. */
+:root { --accent:#e7bf75; --accent-secondary:#93bdc2; --text:#f4f0e7; --muted:#a7afb6; --line:#ffffff16; --bg:#11191f; --panel:#182229; }
+html { background:#11191f; }
+body[data-theme="roma"] { background:linear-gradient(135deg,#162127,#11191f 65%); }
+.page-shell { width:min(1240px,calc(100% - 72px)); padding:26px 0 24px; }
+.topbar { padding-bottom:22px; border-bottom:1px solid var(--line); }
+.roma-brand { display:flex; align-items:center; gap:15px; color:var(--text); text-decoration:none; }
+.wordmark { font-size:34px; font-weight:850; letter-spacing:-2px; }
+.wordmark-dot { color:var(--accent); }
+.brand-caption { border-left:1px solid #ffffff40; padding-left:15px; color:#c8cdd0; font-size:8px; font-weight:650; line-height:1.6; letter-spacing:.15em; }
+.header-right { display:flex; align-items:center; gap:13px; }
+.demo-pill { border-radius:5px; color:var(--accent); border-color:#e7bf7530; padding:8px 10px; font-size:9px; }
+.nova-credit { font-size:11px; color:var(--muted); }
+.intro { display:grid; grid-template-columns:1fr 270px; gap:42px; align-items:center; max-width:none; padding:37px 0 32px; }
+h1 { font-size:clamp(36px,4.1vw,56px); line-height:1.04; font-weight:650; letter-spacing:-.045em; }
+h1 span { color:var(--accent); }
+.eyebrow { font-size:9px; letter-spacing:.19em; }
+.location-label { color:#a7b4b8; font-size:9px; }
+.description { font-size:14px; max-width:500px; line-height:1.7; margin-top:17px; }
+.highlights { margin-top:17px; gap:17px; }
+.highlights span { padding:0; border:0; border-radius:0; background:none; color:#c5cdd0; font-size:10px; font-weight:500; }
+.highlights span::before { content:"/"; color:var(--accent); margin-right:8px; }
+.road-card { height:203px; border:1px solid #ffffff18; border-radius:12px; padding:21px; position:relative; overflow:hidden; background:#1c2b32; transform:rotate(2deg); }
+.road-label,.road-bottom { display:block; color:#bacacc; font-size:8px; letter-spacing:.16em; }
+.road-card strong { display:block; margin-top:12px; font-size:23px; line-height:1.13; letter-spacing:-.025em; font-weight:550; position:relative; z-index:1; }
+.road-bottom { position:absolute; bottom:18px; }
+.road-graphic { position:absolute; width:130px; height:300px; right:-50px; top:40px; border:1px solid #e7bf7580; border-radius:80px; transform:rotate(30deg); }
+.road-graphic::before { content:""; position:absolute; inset:15px; border:1px dashed #e7bf7570; border-radius:80px; }
+.road-graphic::after { content:""; position:absolute; inset:30px; border:1px solid #e7bf7580; border-radius:80px; }
+.demo-grid { grid-template-columns:minmax(0,.78fr) minmax(0,1.22fr); gap:24px; }
+.context-card,.chat-card { border-radius:15px; box-shadow:0 20px 40px #00000018; backdrop-filter:none; }
+.context-card { padding:27px; min-height:520px; background:#172128; }
+.context-label { font-size:9px; color:var(--accent) !important; margin-bottom:13px !important; letter-spacing:.16em; }
+.context-card h2 { font-size:25px; max-width:none; font-weight:550; }
+.context-card p { font-size:12px; }
+.suggestions { gap:0; margin:16px 0 20px; border-top:1px solid var(--line); }
+.suggestion { border:0; border-bottom:1px solid var(--line); border-radius:0; padding:13px 22px 13px 0; position:relative; background:transparent; font-size:12px; font-weight:450; line-height:1.5; color:#e4e5df; }
+.suggestion::after { content:"↗"; position:absolute; right:1px; color:var(--accent); }
+.suggestion:hover { border-color:#e7bf7570; background:#e7bf7508; transform:none; color:var(--accent); }
+.source-note { padding-top:0; border:0; gap:10px; }
+.source-icon { width:23px; height:23px; border-radius:50%; background:#93bdc218; color:#b9d7d9; font-size:12px; }
+.source-note strong { font-size:11px; color:#dde7e6; }
+.source-note span { font-size:10px; line-height:1.65; }
+.source-details { margin-top:14px; border-top:1px solid var(--line); padding-top:10px; }
+.source-details summary { font-size:10px; color:var(--muted); cursor:pointer; }
+.source-details p { margin-top:10px; font-size:11px; }
+.source-details a { color:var(--accent); }
+.chat-card { background:#f5f3ed; --text:#253236; --muted:#59676b; color:var(--text); }
+.chat-header { padding:18px 22px; background:#fffdf8; border-bottom:1px solid #20303312; }
+.assistant-avatar { width:39px; height:39px; border-radius:11px; background:#253c43; color:#f5dfb2; box-shadow:none; }
+.chat-header strong { color:#223439; font-size:13px; }
+.chat-header span { color:#5b7478; font-size:10px; }
+.chat-header i { background:#377c63; }
+.reset-chat { margin-left:auto; width:34px; height:34px; border:1px solid #20303320; border-radius:8px; color:#3b5459; background:none; font-size:23px; cursor:pointer; }
+.reset-chat:disabled { opacity:.4; cursor:wait; }
+.chat-info { display:flex; justify-content:space-between; gap:10px; padding:15px 22px 0; font-size:8px; font-weight:600; letter-spacing:.08em; color:#687b7f; }
+.chat-info span { font-size:9px; font-weight:400; letter-spacing:0; }
+.messages { height:310px; max-height:400px; min-height:260px; padding:22px; gap:13px; flex:1 0 310px; }
+.message { flex-shrink:0; white-space:pre-wrap; border-radius:12px; font-size:12px; line-height:1.75; max-width:94%; overflow-wrap:anywhere; }
+.message.bot { background:#ffffff; color:#293f45; border:1px solid #20303313; border-bottom-left-radius:3px; }
+.message.user { background:#29434b; border:1px solid #29434b; color:#f7f5ef; border-bottom-right-radius:3px; }
+.message a { color:#235e70; text-decoration:underline; text-underline-offset:3px; word-break:break-word; }
+.chat-form { margin:0 18px; padding:8px; border:1px solid #243b4328; background:white; border-radius:11px; gap:6px; }
+.chat-form input { color:#23363c; background:white; padding:9px 8px; font-size:12px; min-width:0; }
+.chat-form input::placeholder { color:#74878c; }
+.chat-form button { min-width:76px; color:#f6f1e4; background:#29434b; border-radius:7px; padding:11px 15px; font-size:12px; }
+.chat-form button:hover { background:#385b65; }
+.privacy-note { color:#657579; margin:10px 18px; font-size:9px; line-height:1.6; }
+.next-steps { display:flex; justify-content:space-between; gap:10px; padding:15px 22px; border-top:1px solid #20303317; background:#eeede5; }
+.next-steps a { font-size:11px; font-weight:550; color:#36525b; text-decoration:none; }
+.next-steps a:hover { text-decoration:underline; }
+footer { gap:20px; font-size:9px; color:#8a999f; margin-top:23px; }
+footer strong { font-weight:500; color:#c1cccf; }
+footer>span:last-child { font-size:8px; letter-spacing:.09em; }
+.footer-separator { color:var(--accent); margin:0 8px; }
+.skip-link { position:absolute; top:-100px; left:20px; z-index:20; background:#f5f3ed; color:#253236; padding:12px; }
+.skip-link:focus { top:10px; }
+button:focus-visible,a:focus-visible,input:focus-visible,summary:focus-visible { outline:3px solid #b38b3e; outline-offset:3px; }
+.typing span { background:#5d7f86; }
+@media (max-width:900px) {
+  .page-shell { width:calc(100% - 36px); padding-top:20px; }
+  .intro { grid-template-columns:1fr; padding-top:28px; gap:0; }
+  .road-card { display:none; }
+  .demo-grid { grid-template-columns:1fr; gap:16px; }
+  .chat-card { order:-1; }
+  .context-card { min-height:0; }
+  .messages { height:320px; }
+  .header-right { flex-direction:column; align-items:flex-end; gap:4px; }
+  .nova-credit { font-size:9px; }
+  h1 { font-size:43px; }
+  .description { max-width:540px; }
+  footer { flex-direction:column; align-items:flex-start; gap:8px; }
+}
+@media (max-width:440px) {
+  .page-shell { width:calc(100% - 26px); }
+  .brand-caption { display:none; }
+  .topbar { padding-bottom:14px; }
+  .wordmark { font-size:29px; }
+  .intro { padding:24px 0; }
+  h1 { font-size:37px; }
+  .identity-row { flex-wrap:wrap; gap:4px 10px; }
+  .location-label { padding-left:10px; }
+  .description { font-size:13px; }
+  .highlights { gap:9px 12px; }
+  .highlights span { font-size:9px; }
+  .chat-header { padding:15px; }
+  .messages { padding:16px; height:310px; }
+  .chat-form { margin:0 12px; }
+  .chat-form button { padding:10px; }
+  .chat-info { padding:13px 16px 0; }
+  .chat-info span { display:none; }
+  .context-card { padding:23px; }
+  .next-steps { padding:14px 16px; }
+}
+@media (prefers-reduced-motion:reduce) { *,*::before,*::after { scroll-behavior:auto !important; animation:none !important; transition:none !important; } }

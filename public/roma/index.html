@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="nb">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="description" content="En skreddersydd RoMa-demo fra Nova Dynamics. Prøv spørsmål om bil, MC, kurs og priser.">
+  <title>RoMa Trafikkskole · Elevassistent | Nova Dynamics</title>
+  <link rel="stylesheet" href="/demo/styles.css">
+  <link rel="stylesheet" href="/roma/styles.css">
+  <script src="/demo/app.js" defer></script>
+  <script src="/roma/ui.js" defer></script>
+</head>
+<body data-theme="roma">
+  <a class="skip-link" href="#message-input">Hopp til chatten</a>
+  <main class="page-shell">
+    <header class="topbar">
+      <a class="roma-brand" href="https://romatrafikkskole.no/" target="_blank" rel="noreferrer" aria-label="RoMa Trafikkskole – offisiell nettside">
+        <span class="wordmark">RoMa<span class="wordmark-dot">.</span></span>
+        <span class="brand-caption">TRAFIKKSKOLE<br>TOLVSRØD</span>
+      </a>
+      <div class="header-right"><span class="demo-pill">SKREDDERSYDD DEMO</span><span class="nova-credit">av Nova Dynamics</span></div>
+    </header>
+
+    <section class="intro">
+      <div class="intro-copy">
+        <div class="identity-row"><p id="eyebrow" class="eyebrow">DIN VEI VIDERE</p><span id="location-label" class="location-label">TOLVSRØD · TØNSBERG</span></div>
+        <h1>Et spørsmål nærmere<br><span>førerkortet.</span></h1>
+        <p id="business-description" class="description">Fra første kjøretime til neste MC-klasse. Finn svar om kurs, priser og veien videre på Tolvsrød.</p>
+        <div id="highlights" class="highlights" aria-label="Førerkortklasser"></div>
+      </div>
+      <div class="road-card" aria-hidden="true"><span class="road-label">NESTE STOPP</span><strong>Din frihet<br>på veien.</strong><div class="road-graphic"><i></i><i></i><i></i></div><span class="road-bottom">BIL / MC / TILHENGER</span></div>
+    </section>
+
+    <section class="demo-grid">
+      <aside class="context-card">
+        <div>
+          <p class="context-label">01 / UTFORSK</p>
+          <h2 id="context-title">Hva vil du ta lappen på?</h2>
+          <p id="context-description">Start med et forslag, eller spør med dine egne ord.</p>
+        </div>
+        <div id="suggestions" class="suggestions" aria-label="Forslag til spørsmål"></div>
+        <div class="source-note"><span class="source-icon">✓</span><div><strong id="source-title">Skolens informasjon. Tydelige svar.</strong><span id="source-description">Kontrollert 17. september 2026.</span></div></div>
+        <details class="source-details"><summary>Kilder og begrensninger</summary><p>Demoen bruker en kontrollert versjon av <a href="https://romatrafikkskole.no/klasser" target="_blank" rel="noreferrer">RoMas prisliste</a>, <a href="https://romatrafikkskole.no/kontakt" target="_blank" rel="noreferrer">kontaktinformasjon</a> og enkelte regler fra <a href="https://www.vegvesen.no/forerkort/ta-forerkort/" target="_blank" rel="noreferrer">Statens vegvesen</a>. Den er ikke koblet til timeboken og kan ikke bestille eller lagre kundeopplysninger. Prisavvik og ukjente detaljer må bekreftes med skolen.</p></details>
+      </aside>
+
+      <section class="chat-card" aria-label="Chatdemo">
+        <div class="chat-header"><div id="assistant-avatar" class="assistant-avatar">R</div><div><strong id="assistant-label">RoMa elevassistent</strong><span><i></i> <span id="status-label" class="status-label">Kobler til demoen…</span></span></div><button id="reset-chat" class="reset-chat" type="button" aria-label="Start en ny samtale" title="Start på nytt">↺</button></div>
+        <div class="chat-info">02 / SPØR ASSISTENTEN <span>Informasjon, ikke bestilling</span></div>
+        <div id="messages" class="messages" role="log" aria-live="polite" aria-relevant="additions"></div>
+        <form id="chat-form" class="chat-form"><label class="sr-only" for="message-input">Skriv et spørsmål</label><input id="message-input" name="message" placeholder="F.eks. Hva koster A2 til A?" autocomplete="off" maxlength="2000" required><button id="send-button" type="submit" aria-label="Send spørsmål"><span>Send</span><span aria-hidden="true">↗</span></button></form>
+        <p class="privacy-note">Ikke skriv personopplysninger. Nevn klassen når du spør om priser.</p>
+        <nav class="next-steps" aria-label="Gå videre hos RoMa"><a href="https://romatrafikkskole.no/kursoversikt" target="_blank" rel="noreferrer">Se kurs og påmelding ↗</a><a href="https://romatrafikkskole.no/kontakt" target="_blank" rel="noreferrer">Kontakt RoMa ↗</a></nav>
+      </section>
+    </section>
+    <footer><span>En personlig demo for <strong id="business-name">RoMa Trafikkskole</strong></span><span>NOVA DYNAMICS <span class="footer-separator">/</span> FRA SPØRSMÅL TIL NESTE STEG</span></footer>
+    <div hidden><div id="client-logo-wrap" hidden><img id="client-logo" alt=""></div><a id="website-link" href="https://romatrafikkskole.no/" hidden>Besøk nettsiden</a></div>
+    <noscript><p>Aktiver JavaScript for å teste chatten. Du kan alltid kontakte RoMa på 33 99 40 50 eller post@romatrafikkskole.no.</p></noscript>
+  </main>
+</body>
+</html>
