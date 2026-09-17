@@ -1,4 +1,35 @@
 {
+  "roma": {
+    "name": "RoMa Trafikkskole",
+    "origins": ["https://romatrafikkskole.no", "https://www.romatrafikkskole.no", "https://nova-dynamics.no", "https://www.nova-dynamics.no"],
+    "demo": {
+      "description": "Fra første kjøretime til neste MC-klasse. Finn svar om kurs, priser og veien videre på Tolvsrød.",
+      "greeting": "Hei, og velkommen til RoMa-demoen! Hva vil du vite om bil, MC, tilhenger eller moped? Spør gjerne om en konkret klasse, et kurs eller en pris.",
+      "website": "https://romatrafikkskole.no/",
+      "accent": "#e7bf75",
+      "accentSecondary": "#93bdc2",
+      "theme": "roma",
+      "eyebrow": "DIN VEI VIDERE",
+      "contextTitle": "Hva vil du ta lappen på?",
+      "contextDescription": "Start med et forslag, eller still et spørsmål med dine egne ord. Prisene holdes adskilt etter førerkortklasse.",
+      "assistantLabel": "RoMa elevassistent",
+      "assistantInitial": "R",
+      "statusLabel": "Klar for spørsmål",
+      "logo": "https://s3cdn.tabs.no/skole/465/img/logo-d041ac9026c660f7c6f404ba9124f9e5.png?v=4.7.0",
+      "locationLabel": "TOLVSRØD · TØNSBERG",
+      "sourceTitle": "Skolens informasjon. Tydelige svar.",
+      "sourceDescription": "Kontrollert 17. september 2026. Priser kan endres; dato og ledig plass bekreftes alltid hos RoMa.",
+      "highlights": ["Manuell & automat", "A1 · A2 · A", "BE · B96 · AM146"],
+      "suggestedQuestions": [
+        "Hva koster en kjøretime for bil?",
+        "Hva koster grunnkurs MC?",
+        "Kan jeg konvertere A1 til A2?",
+        "Hva koster mørkekjøring?",
+        "Hvilke A1-pakker har dere?",
+        "Hvordan melder jeg meg på kurs?"
+      ]
+    }
+  },
   "demo": {
     "name": "Nordic Nibbles (demo)",
     "origins": [

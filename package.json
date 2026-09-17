@@ -5,14 +5,16 @@
   "scripts": {
     "start": "node index.js",
     "new-client": "node new-client.js",
-    "test": "node scripts/smoke-demo.js && node scripts/smoke-fram.js && node scripts/smoke-fyllingsdalen.js && node scripts/smoke-onsoy.js && node scripts/smoke-tiller.js && node scripts/smoke-trafikk1.js && node scripts/smoke-frankolsen.js && node scripts/smoke-analytics.js",
+    "test": "node scripts/smoke-demo.js && node scripts/smoke-fram.js && node scripts/smoke-fyllingsdalen.js && node scripts/smoke-onsoy.js && node scripts/smoke-tiller.js && node scripts/smoke-trafikk1.js && node scripts/smoke-frankolsen.js && node scripts/smoke-analytics.js && node scripts/smoke-roma.js",
     "test:fram": "node scripts/smoke-fram.js",
     "test:fyllingsdalen": "node scripts/smoke-fyllingsdalen.js",
     "test:onsoy": "node scripts/smoke-onsoy.js",
     "test:tiller": "node scripts/smoke-tiller.js",
     "test:trafikk1": "node scripts/smoke-trafikk1.js",
     "test:frankolsen": "node scripts/smoke-frankolsen.js",
-    "test:analytics": "node scripts/smoke-analytics.js"
+    "test:analytics": "node scripts/smoke-analytics.js",
+    "test:roma": "node scripts/smoke-roma.js",
+    "preview:roma": "node scripts/preview-roma.js"
   },
   "dependencies": {
     "express": "^4.18.2",

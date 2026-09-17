@@ -152,7 +152,7 @@ app.get(["/demos/:client", "/demos/:client/"], (req, res) => {
     return res.status(404).send("Demo not found.");
   }
 
-  return res.sendFile(path.join(publicDir, "demo", "index.html"));
+  return res.sendFile(path.join(publicDir, client === "roma" ? "roma" : "demo", "index.html"));
 });
 
 app.get("/api/demo-config/:client", (req, res) => {
@@ -3939,6 +3939,15 @@ app.post("/chat", async (req, res) => {
   });
 
   if (!withinRateLimit) return;
+
+  // Isolated Roma module: do not change existing clients' routing or answers.
+  if (client === "roma") {
+    const result = require("./clients/roma/answer").answer(message);
+    logUsage({ ts: new Date().toISOString(), client, origin,
+      kind: result.unsure ? "safe_roma_answer" : "direct_roma",
+      in: message.length, out: result.reply.length });
+    return res.json(result);
+  }
 
   // Frank Olsen's demo uses only verified, client-specific information and a
   // safe fallback. This keeps medical, pricing and stock questions from being
