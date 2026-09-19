@@ -14,6 +14,7 @@
     "test:frankolsen": "node scripts/smoke-frankolsen.js",
     "test:analytics": "node scripts/smoke-analytics.js",
     "test:roma": "node scripts/smoke-roma.js",
+    "test:brand": "node scripts/test-brand-config.js",
     "preview:roma": "node scripts/preview-roma.js"
   },
   "dependencies": {

@@ -41,7 +41,7 @@
     "demo": {
       "description": "Spør om åpningstider, bestilling, levering og allergener.",
       "greeting": "Hei! Jeg er den digitale assistenten for Nordic Nibbles. Hva kan jeg hjelpe deg med?",
-      "website": "https://nova-dynamics.no",
+      "website": "/jemlio/",
       "accent": "#7c5cff",
       "suggestedQuestions": [
         "Når har dere åpent?",
@@ -307,6 +307,93 @@
         "Når er kontoret åpent?",
         "Hvordan melder jeg meg på?",
         "Hvilke MC-klasser tilbyr dere?"
+      ]
+    }
+  },
+  "jemlio-driving-demo": {
+    "name": "Eksempel: trafikkskole",
+    "origins": [],
+    "demo": {
+      "fictional": true,
+      "description": "Et fiktivt eksempel som viser hvordan Jemlio kan svare med bedriftens informasjon. Alle priser, tjenester og åpningstider er illustrasjoner, ikke et virkelig tilbud.",
+      "greeting": "Hei! Dette er en fiktiv trafikkskole-demo fra Jemlio. Spør gjerne om kjøretimer, automatgir eller hvordan en elev finner frem til bestilling. Alle priser og tider er eksempler.",
+      "website": "/jemlio/#demo",
+      "accent": "#458dff",
+      "accentSecondary": "#3cbcff",
+      "theme": "nova",
+      "eyebrow": "FIKTIVT EKSEMPEL",
+      "contextTitle": "Prøv et spørsmål til en trafikkskole",
+      "contextDescription": "Dette er en eksempelbedrift, ikke en kunde eller en virksomhet du kan bestille hos. I en tilpasset demo bruker vi din bedrifts egne opplysninger.",
+      "assistantLabel": "Jemlio eksempelassistent",
+      "assistantInitial": "J",
+      "statusLabel": "Eksempeldemo",
+      "sourceTitle": "Illustrasjoner, ikke kundeopplysninger",
+      "sourceDescription": "Priser og tider er laget for denne demoen. Ingen bestilling eller kontaktforespørsel blir sendt.",
+      "highlights": [
+        "Fiktiv eksempelbedrift",
+        "Vanlige spørsmål",
+        "Ingen bestilling"
+      ],
+      "suggestedQuestions": [
+        "Hva koster en kjøretime?",
+        "Tilbyr dere automatgir?",
+        "Hvordan bestiller jeg time?"
+      ]
+    }
+  },
+  "jemlio-optician-demo": {
+    "name": "Eksempel: optiker",
+    "origins": [],
+    "demo": {
+      "fictional": true,
+      "description": "Et fiktivt eksempel som viser hvordan Jemlio kan svare med bedriftens informasjon. Alle priser, tjenester og åpningstider er illustrasjoner, ikke et virkelig tilbud.",
+      "greeting": "Hei! Dette er en fiktiv optiker-demo fra Jemlio. Prøv et spørsmål om synsundersøkelse, kontaktlinser eller timebestilling. Alle priser og tider er eksempler. Jeg vurderer ikke symptomer eller gir medisinske råd.",
+      "website": "/jemlio/#demo",
+      "accent": "#458dff",
+      "accentSecondary": "#3cbcff",
+      "theme": "nova",
+      "eyebrow": "FIKTIVT EKSEMPEL",
+      "contextTitle": "Prøv et spørsmål til en optiker",
+      "contextDescription": "Dette er en eksempelbedrift, ikke en kunde eller en virksomhet du kan bestille hos. I en tilpasset demo bruker vi din bedrifts egne opplysninger.",
+      "assistantLabel": "Jemlio eksempelassistent",
+      "assistantInitial": "J",
+      "statusLabel": "Eksempeldemo",
+      "sourceTitle": "Illustrasjoner, ikke kundeopplysninger",
+      "sourceDescription": "Priser og tider er laget for denne demoen. Ingen bestilling eller kontaktforespørsel blir sendt.",
+      "highlights": [
+        "Fiktiv eksempelbedrift",
+        "Vanlige spørsmål",
+        "Ingen bestilling"
+      ],
+      "suggestedQuestions": [
+        "Hva koster en synsundersøkelse?",
+        "Kan jeg få hjelp med kontaktlinser?",
+        "Hvordan bestiller jeg en synstest?"
+      ]
+    }
+  },
+  "jemlio": {
+    "name": "Jemlio",
+    "origins": [],
+    "demo": {
+      "description": "Spør om Jemlios nettsideassistent eller hvordan du får en gratis, tilpasset mini-demo.",
+      "greeting": "Hei! Jeg kan forklare hva Jemlios nettsideassistent gjør og hvordan du får en gratis mini-demo. Hva lurer du på?",
+      "website": "/jemlio/",
+      "accent": "#458dff",
+      "accentSecondary": "#3cbcff",
+      "theme": "nova",
+      "eyebrow": "JEMLIO NETTSIDEASSISTENT",
+      "contextTitle": "Hva vil du vite om Jemlio?",
+      "contextDescription": "Assistenten svarer fra Jemlios produktinformasjon og viser deg videre til kontakt når du trenger mer hjelp.",
+      "assistantLabel": "Jemlio assistent",
+      "assistantInitial": "J",
+      "statusLabel": "Spør om Jemlio",
+      "sourceTitle": "Jemlios produktinformasjon",
+      "sourceDescription": "Chatten svarer på spørsmål. Den bestiller ikke møter eller sender kontaktopplysninger.",
+      "suggestedQuestions": [
+        "Hva kan Jemlio hjelpe med?",
+        "Hvordan får jeg en gratis demo?",
+        "Kan chatten bestille timer?"
       ]
     }
   }

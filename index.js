@@ -1,7 +1,8 @@
-// ================== Nova Dynamics Bot Server (multi-tenant) ==================
+// ================== Jemlio Bot Server (multi-tenant) ==================
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
+const { companyOrigins } = require("./lib/brand-config");
 
 // Use Node 18+ global fetch or lazy-load node-fetch if needed
 const fetchFn = global.fetch || ((...args) =>
@@ -19,6 +20,9 @@ app.use((_, res, next) => {
 const publicDir = path.join(__dirname, "public");
 
 if (fs.existsSync(publicDir)) {
+  // A separate marketing entry point preserves the existing root and demo URLs.
+  app.get(/^\/jemlio$/, (_req, res) => res.redirect(302, "/jemlio/"));
+  app.use("/jemlio", express.static(path.join(publicDir, "marketing")));
   app.use(express.static(publicDir));
   app.get("/", (req, res) => {
     res.sendFile(path.join(publicDir, "index.html"));
@@ -67,6 +71,7 @@ function publicDemoConfig(client) {
   return {
     client,
     name: cfg.name || client,
+    fictional: demo.fictional === true,
     description: demo.description || "Spør assistenten om tjenester, priser og praktisk informasjon.",
     greeting: demo.greeting || `Hei! Jeg er den digitale assistenten for ${cfg.name || client}. Hva kan jeg hjelpe deg med?`,
     website: demo.website || "",
@@ -77,7 +82,7 @@ function publicDemoConfig(client) {
     contextTitle: demo.contextTitle || "Still et vanlig kundespørsmål",
     contextDescription: demo.contextDescription || "Prøv et forslag eller skriv spørsmålet slik en ekte kunde ville formulert det.",
     assistantLabel: demo.assistantLabel || "Digital assistent",
-    assistantInitial: String(demo.assistantInitial || "N").slice(0, 2),
+    assistantInitial: String(demo.assistantInitial || "J").slice(0, 2),
     statusLabel: demo.statusLabel || "Tilgjengelig nå",
     logo: demo.logo || "",
     locationLabel: demo.locationLabel || "",
@@ -91,15 +96,7 @@ function publicDemoConfig(client) {
 }
 
 // ---- HOTFIX fallback allowlist ----
-const FALLBACK_ALLOWED = new Set([
-  "https://nova-dynamics-bot-server.onrender.com",
-  "https://prismatic-taffy-e96ac7.netlify.app",
-  "https://nova-dynamics.no",
-  "https://www.nova-dynamics.no",
-  "http://localhost:8888",
-  "http://localhost:3000",
-  "http://localhost:5173"
-]);
+const FALLBACK_ALLOWED = new Set(companyOrigins());
 
 function isAllowedOrigin(client, origin) {
   if (!origin) return true;
@@ -809,7 +806,7 @@ function directOnsoyAnswer(client, message) {
   ]);
 
   if (includesAny(t, ["ip-adresse", "ip adresse", "ip-adressen", "dataene mine", "behandles data", "personvern"])) {
-    return known("Demoen lagrer ikke selve spørsmålet i bruksloggen. En teknisk nettverksadresse behandles midlertidig for å begrense misbruk. Ikke skriv sensitive personopplysninger i chatten; kontakt Nova Dynamics dersom du trenger flere detaljer om behandlingen.");
+    return known("Demoen lagrer ikke selve spørsmålet i bruksloggen. En teknisk nettverksadresse behandles midlertidig for å begrense misbruk. Ikke skriv sensitive personopplysninger i chatten; kontakt Jemlio dersom du trenger flere detaljer om behandlingen.");
   }
 
   if (enteredEmail || enteredLongNumber || asksToStoreOrContact) {
@@ -2505,7 +2502,7 @@ function directTillerAnswer(client, message) {
     "ip-adresse", "ip adresse", "ip-adressen", "dataene mine", "behandles data", "personvern",
     "lagres chat", "lagrer chat", "lagrer dere chat", "chatloggen", "chatlogg", "samtalen lagret"
   ])) {
-    return known("Demoen lagrer ikke selve spørsmålet i bruksloggen. En teknisk nettverksadresse behandles midlertidig for å begrense misbruk. Ikke skriv sensitive personopplysninger i chatten; kontakt Nova Dynamics dersom du trenger flere detaljer om behandlingen.");
+    return known("Demoen lagrer ikke selve spørsmålet i bruksloggen. En teknisk nettverksadresse behandles midlertidig for å begrense misbruk. Ikke skriv sensitive personopplysninger i chatten; kontakt Jemlio dersom du trenger flere detaljer om behandlingen.");
   }
 
   if (enteredEmail || enteredLongNumber || asksToStoreOrContact) {
@@ -3057,7 +3054,7 @@ function directTrafikk1Answer(client, message) {
     "ip-adresse", "ip adresse", "dataene mine", "behandles data", "personvern", "lagres chat", "lagrer chat",
     "lagrer dere chat", "chatloggen", "chatlogg", "samtalen lagret"
   ])) {
-    return known("Demoen lagrer ikke selve spørsmålet i bruksloggen. En teknisk nettverksadresse behandles midlertidig for å begrense misbruk. Ikke skriv sensitive personopplysninger i chatten; kontakt Nova Dynamics hvis du trenger flere detaljer.");
+    return known("Demoen lagrer ikke selve spørsmålet i bruksloggen. En teknisk nettverksadresse behandles midlertidig for å begrense misbruk. Ikke skriv sensitive personopplysninger i chatten; kontakt Jemlio hvis du trenger flere detaljer.");
   }
 
   if (enteredPrivateEmail || asksToStoreOrContact) {
@@ -3588,7 +3585,7 @@ function directFrankOlsenAnswer(client, message) {
     "ip-adresse", "ip adresse", "dataene mine", "behandles data", "personvern",
     "lagres chat", "lagrer chat", "lagrer dere chat", "chatloggen", "chatlogg", "samtalen lagret"
   ])) {
-    return known("Demoen lagrer ikke selve spørsmålet i bruksloggen. En teknisk nettverksadresse behandles midlertidig for å begrense misbruk. Ikke skriv sensitive personopplysninger i chatten; kontakt Nova Dynamics dersom du trenger flere detaljer om behandlingen.");
+    return known("Demoen lagrer ikke selve spørsmålet i bruksloggen. En teknisk nettverksadresse behandles midlertidig for å begrense misbruk. Ikke skriv sensitive personopplysninger i chatten; kontakt Jemlio dersom du trenger flere detaljer om behandlingen.");
   }
 
   if (enteredEmail || enteredLongNumber || asksToStoreOrContact) {
@@ -3939,6 +3936,17 @@ app.post("/chat", async (req, res) => {
   });
 
   if (!withinRateLimit) return;
+
+  // Public examples and Jemlio product questions have an isolated, deterministic
+  // answer path. Fictional prices must never pass through generic client ranking
+  // or an unconstrained model fallback, or be presented as real customer facts.
+  if (["jemlio", "jemlio-driving-demo", "jemlio-optician-demo"].includes(client)) {
+    const result = require("./clients/jemlio/answer").answer(client, message);
+    logUsage({ ts: new Date().toISOString(), client, origin,
+      kind: result.unsure ? "safe_jemlio_answer" : "direct_jemlio",
+      in: message.length, out: result.reply.length });
+    return res.json(result);
+  }
 
   // Isolated Roma module: do not change existing clients' routing or answers.
   if (client === "roma") {

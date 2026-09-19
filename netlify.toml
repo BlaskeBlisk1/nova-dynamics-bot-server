@@ -1,0 +1,4 @@
+[build]
+  publish = "public/marketing"
+
+# No client secrets or build-time dependencies. Keep the existing site ID.

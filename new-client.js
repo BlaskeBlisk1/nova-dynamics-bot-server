@@ -1,6 +1,7 @@
 // server/new-client.js
 const fs = require("fs");
 const path = require("path");
+const { companyOrigins } = require("./lib/brand-config");
 
 const slugRaw = process.argv[2] || "";
 const origin  = process.argv[3] || ""; // e.g. https://www.acme.com
@@ -13,11 +14,7 @@ if(!slug || !origin){
 }
 
 // Default origins so your iframe can call the API
-const defaultOrigins = [
-  "https://nova-dynamics.no",
-  "https://www.nova-dynamics.no",
-  "https://prismatic-taffy-e96ac7.netlify.app"
-];
+const defaultOrigins = companyOrigins();
 
 const clientsDir = path.join(__dirname, "clients");
 const base = path.join(clientsDir, slug);

@@ -189,8 +189,14 @@ async function ask(question, source = "typed") {
 
 function renderConfig(payload) {
   config = payload;
+  if (config.fictional === true) {
+    const pill = document.querySelector(".demo-pill");
+    const label = document.querySelector(".context-label");
+    if (pill) pill.textContent = "FIKTIVT EKSEMPEL";
+    if (label) label.textContent = "EKSEMPELDEMO";
+  }
   captureAnalytics("demo_opened", { business_name: config.name || client });
-  document.title = `${config.name} | Nova Dynamics demo`;
+  document.title = `${config.name} | Jemlio demo`;
   document.documentElement.style.setProperty("--accent", config.accent || "#4f7cff");
   document.documentElement.style.setProperty("--accent-secondary", config.accentSecondary || "#7c5cff");
   document.body.dataset.theme = config.theme || "nova";
@@ -200,7 +206,7 @@ function renderConfig(payload) {
   contextTitle.textContent = config.contextTitle || "Still et vanlig kundespørsmål";
   contextDescription.textContent = config.contextDescription || "Prøv et forslag eller skriv spørsmålet slik en ekte kunde ville formulert det.";
   assistantLabel.textContent = config.assistantLabel || "Digital assistent";
-  assistantAvatar.textContent = config.assistantInitial || "N";
+  assistantAvatar.textContent = config.assistantInitial || "J";
   statusLabel.textContent = config.statusLabel || "Tilgjengelig nå";
   sourceTitle.textContent = config.sourceTitle || "Bygget fra virksomhetens informasjon";
   sourceDescription.textContent = config.sourceDescription || "Dette er en uforpliktende demonstrasjon.";
@@ -269,7 +275,7 @@ async function initialize() {
     renderConfig(await response.json());
   } catch (error) {
     businessName.textContent = "Demoen ble ikke funnet";
-    businessDescription.textContent = "Kontroller lenken eller be Nova Dynamics om en ny demo-adresse.";
+    businessDescription.textContent = "Kontroller lenken eller be Jemlio om en ny demo-adresse.";
     form.hidden = true;
     captureAnalytics("demo_config_error");
     console.error(error);

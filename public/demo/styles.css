@@ -76,6 +76,15 @@ footer {
   text-decoration: none;
 }
 
+.jemlio-wordmark {
+  display: block;
+  width: 174px;
+  max-width: 38vw;
+  height: 44px;
+  object-fit: cover;
+  mix-blend-mode: screen;
+}
+
 .brand-mark,
 .assistant-avatar {
   display: grid;
