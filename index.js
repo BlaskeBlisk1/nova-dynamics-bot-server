@@ -51,6 +51,11 @@ function loadRegistry() {
 loadRegistry();
 fs.watchFile(REGISTRY_FILE, { interval: 1500, persistent: false }, loadRegistry);
 
+// All new capabilities are off by default. The old routes remain available.
+const upgrades = require("./lib/upgrade-runtime").createUpgradeRuntime({
+  getRegistry: () => REGISTRY
+});
+
 function safeSlug(s) {
   return String(s || "").toLowerCase().replace(/[^a-z0-9\-]/g, "");
 }
@@ -130,16 +135,21 @@ function allowCORS(res, origin) {
 
 // ---- Dynamic CORS middleware ----
 app.use((req, res, next) => {
+  // Capture owns its CORS policy; legacy preflights must not intercept it.
+  if (req.path === "/api/capture" || req.path.startsWith("/api/capture/")) return next();
   const origin = req.headers.origin || "";
   const rawClient = (req.body && req.body.client) || (req.query && req.query.client) || "";
   const client = safeSlug(rawClient);
+  const previewOrigin = req.path === "/chat" && upgrades.config.previewOrigins.includes(origin) &&
+    Object.keys(REGISTRY).some(slug => upgrades.config.canPreview(slug));
 
   if (req.method === "OPTIONS") {
-    if (isKnownOrigin(origin)) allowCORS(res, origin);
+    if (isKnownOrigin(origin) || previewOrigin) allowCORS(res, origin);
     return res.sendStatus(204);
   }
 
-  if (origin && isAllowedOrigin(client, origin)) allowCORS(res, origin);
+  if (origin && (isAllowedOrigin(client, origin) ||
+      (previewOrigin && req.body?.preview === true && upgrades.config.canPreview(client)))) allowCORS(res, origin);
 
   return next();
 });
@@ -155,7 +165,18 @@ app.get(["/demos/:client", "/demos/:client/"], (req, res) => {
   return res.sendFile(path.join(publicDir, client === "roma" ? "roma" : "demo", "index.html"));
 });
 
-app.get("/api/demo-config/:client", (req, res) => {
+app.get(["/previews/:client", "/previews/:client/"], (req, res) => {
+  const client = safeSlug(req.params.client);
+  if (req.params.client !== client || !upgrades.config.canPreview(client)) {
+    return res.status(404).send("Preview not found.");
+  }
+  res.setHeader("Cache-Control", "no-store");
+  return res.sendFile(path.join(publicDir, "demo", "index.html"));
+});
+
+app.use("/api/capture", upgrades.router);
+
+app.get("/api/demo-config/:client", async (req, res) => {
   const client = safeSlug(req.params.client);
 
   if (!client || (!REGISTRY[client] && !clientHasKB(client))) {
@@ -163,7 +184,14 @@ app.get("/api/demo-config/:client", (req, res) => {
   }
 
   res.setHeader("Cache-Control", "no-store");
-  return res.json(publicDemoConfig(client));
+  try {
+    const preview = req.query.preview === "1";
+    if (preview && !upgrades.config.canPreview(client)) return res.status(404).json({ error: "Preview not found." });
+    return res.json({ ...publicDemoConfig(client), features: await upgrades.features(client, { preview }) });
+  } catch {
+    // A capture integration problem must never take the existing FAQ offline.
+    return res.json({ ...publicDemoConfig(client), features: { conversation: false, capture: { enabled: false, mode: "off", services: [] } } });
+  }
 });
 
 // -------------------- KB cache & helpers --------------------
@@ -3908,7 +3936,8 @@ function enforceChatRateLimit(req, res, next) {
 app.post("/chat", async (req, res) => {
   const origin = req.headers.origin || "";
   const client = safeSlug(req.body?.client || "demo");
-  const message = String(req.body?.message || "").slice(0, 2000).trim();
+  const isUpgradePreview = req.body?.preview === true;
+  let message = String(req.body?.message || "").slice(0, 2000).trim();
 
   res.setHeader("Cache-Control", "no-store");
 
@@ -3926,7 +3955,9 @@ app.post("/chat", async (req, res) => {
     });
   }
 
-  if (origin && !isAllowedOrigin(client, origin)) {
+  const allowedPreview = isUpgradePreview && upgrades.config.canPreview(client) &&
+    upgrades.config.previewOrigins.includes(origin);
+  if (origin && !isAllowedOrigin(client, origin) && !allowedPreview) {
     return res.status(403).json({
       reply: "Origin not allowed for this client.",
       unsure: true
@@ -3939,6 +3970,32 @@ app.post("/chat", async (req, res) => {
   });
 
   if (!withinRateLimit) return;
+
+  if (upgrades.config.conversationEnabled(client, { preview: isUpgradePreview, origin })) {
+    const context = upgrades.conversations.prepare({
+      client, origin, message, conversationId: req.body?.conversationId
+    });
+    const sendJson = res.json.bind(res);
+    res.json = body => sendJson({ ...body, conversationId: context.conversationId,
+      contextApplied: context.contextApplied, contextExpired: context.contextExpired });
+    if (context.clarification) return res.json({ reply: context.clarification, unsure: true, suggestions: [] });
+    message = context.message;
+  }
+
+  // Only an explicitly enabled form can offer a handoff. Never claim that
+  // details typed into ordinary chat have been saved or sent to the business.
+  if (!/\b(ikke|never|don't|do not)\b/i.test(message) &&
+      /\b(ring meg|ringe meg|kontakt meg|bli kontaktet|kontaktforespørsel|call me|contact me)\b/i.test(message)) {
+    const capture = (await upgrades.features(client, { preview: isUpgradePreview })).capture;
+    if (capture.enabled) {
+      return res.json({
+        reply: capture.mode === "preview"
+          ? "Du kan prøve kontaktskjemaet nedenfor med oppdiktede opplysninger. Dette er en test: ingen forespørsel sendes til virksomheten."
+          : "Du kan be virksomheten kontakte deg ved å bruke skjemaet nedenfor. Du får se opplysningene før du sender. Dette er en kontaktforespørsel, ikke en bekreftet time.",
+        unsure: false, suggestions: [], captureIntent: true
+      });
+    }
+  }
 
   // Isolated Roma module: do not change existing clients' routing or answers.
   if (client === "roma") {
@@ -4343,13 +4400,20 @@ You are a concise, friendly customer-service assistant.
 
 // -------------------- Start --------------------
 if (require.main === module) {
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     console.log(`✅ Server live on port ${PORT}`);
+    upgrades.startWorker();
   });
+  for (const signal of ["SIGTERM", "SIGINT"]) {
+    process.once(signal, () => {
+      server.close(() => { void upgrades.close().then(() => process.exit(0)); });
+    });
+  }
 }
 
 module.exports = {
   app,
   publicDemoConfig,
-  safeSlug
+  safeSlug,
+  upgrades
 };
