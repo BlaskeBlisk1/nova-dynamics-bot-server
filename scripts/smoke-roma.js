@@ -129,7 +129,7 @@ const checks = [
   ["Hvordan melder jeg meg på MC-grunnkurset?", ["https://romatrafikkskole.no/kursoversikt", "kan ikke"]],
   ["A2", ["A2", "Vil du vite"]],
   ["Hva med A2?", ["A2", "hele spørsmålet"]],
-  ["Kan jeg få slettet mine data?", ["kan ikke behandle", "Nova Dynamics"], true]
+  ["Kan jeg få slettet mine data?", ["kan ikke behandle", "Jemlio"], true]
 ];
 
 function inspect(check, result) {

@@ -1,0 +1,47 @@
+[
+  {
+    "id": "identity",
+    "q": "Hva tilbyr optikeren?",
+    "a": "Dette er en fiktiv optiker laget for å vise Jemlio. Eksemplet handler om praktisk informasjon før en synsundersøkelse: eksempelpris, avsatt tid, åpningstider og hvordan en kunde vanligvis finner kontakt eller timebestilling. Det er ingen virkelig klinikk."
+  },
+  {
+    "id": "examination",
+    "q": "Hva koster en synsundersøkelse?",
+    "a": "Eksempelpris: Synsundersøkelse 790 kr, med 60 minutter avsatt. Både pris og varighet er oppdiktet for demonstrasjonen. Det er ikke et tilbud fra en virkelig optiker."
+  },
+  {
+    "id": "duration",
+    "q": "Hvor lang tid tar en synsundersøkelse?",
+    "a": "Eksempel på varighet: Det er satt av 60 minutter til en synsundersøkelse. Dette er en oppdiktet tidsramme for demonstrasjonen, ikke en bekreftet time eller et medisinsk råd."
+  },
+  {
+    "id": "hours",
+    "q": "Når har dere åpent?",
+    "a": "Eksempel på åpningstider: mandag–fredag kl. 09.00–17.00 og lørdag kl. 10.00–14.00. Tidene er oppdiktet for demonstrasjonen og kan ikke brukes til å planlegge et ekte butikkbesøk."
+  },
+  {
+    "id": "booking",
+    "q": "Hvordan bestiller jeg en synsundersøkelse?",
+    "a": "Dette er en fiktiv demonstrasjon uten timebok eller bestilling. På en virkelig optikers nettside kan Jemlio vise videre til bedriftens eksisterende bestillings- eller kontaktside. Chatten bestiller, endrer eller avbestiller ingen timer."
+  },
+  {
+    "id": "contact",
+    "q": "Hvordan kontakter jeg optikeren?",
+    "a": "Denne optikeren er et eksempel og har ingen ekte adresse, telefon eller kontaktperson. I en tilpasset løsning kan svaret vise bedriftens egne kontaktopplysninger og lenke til dens kontaktside. Vil du se et eksempel tilpasset din bedrift? Skriv til novadynamics7@gmail.com."
+  },
+  {
+    "id": "contact_lenses",
+    "q": "Kan jeg få hjelp med kontaktlinser?",
+    "a": "Dette eksemplet viser hvordan chatten kan vise videre til optikerens kontaktpunkt ved spørsmål om kontaktlinser. Jeg kan ikke anbefale linser, vurdere om de passer deg eller gi en pris som ikke finnes i eksemplet. Hos en virkelig optiker må slik hjelp avtales direkte med optikeren."
+  },
+  {
+    "id": "health",
+    "q": "Kan dere vurdere synet mitt eller symptomer?",
+    "a": "Jeg kan ikke vurdere symptomer, syn, behandling eller hva slags undersøkelse du trenger. Ikke skriv helseopplysninger i demonstrasjonen. Kontakt en virkelig optiker eller lege for individuell vurdering; ikke bruk denne demoen til helsehjelp."
+  },
+  {
+    "id": "limits",
+    "q": "Hva kan denne demoen gjøre?",
+    "a": "Demoen viser praktiske svar om en fiktiv synsundersøkelse, eksempelpris, varighet og åpningstider. Den gir ikke helseråd eller symptomvurderinger, og kan ikke registrere kundeopplysninger eller gjennomføre bestillinger."
+  }
+]

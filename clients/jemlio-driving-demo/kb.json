@@ -1,0 +1,37 @@
+[
+  {
+    "id": "identity",
+    "q": "Hva tilbyr trafikkskolen?",
+    "a": "Dette er en fiktiv trafikkskole laget for å vise Jemlio. I eksemplet tilbys opplæring i klasse B med både automatgir og manuelt gir. Opplysningene er eksempler, ikke et tilbud fra en virkelig skole."
+  },
+  {
+    "id": "lesson",
+    "q": "Hva koster en kjøretime?",
+    "a": "Eksempelpris: En kjøretime i klasse B varer 45 minutter og koster 850 kr, både med automatgir og manuelt gir. Dette er en oppdiktet pris for demonstrasjonen, ikke en bestillbar kjøretime eller totalpris for førerkortet."
+  },
+  {
+    "id": "transmission",
+    "q": "Har dere automat og manuell?",
+    "a": "I dette fiktive eksemplet finnes klasse B med både automatgir og manuelt gir. Hos en virkelig skole kan chatten vise videre til skolens informasjon om girvalg og opplæring."
+  },
+  {
+    "id": "hours",
+    "q": "Når er kontoret åpent?",
+    "a": "Eksempel på kontortider: mandag–fredag kl. 09.00–16.00. Tidene er oppdiktet for demonstrasjonen og sier ikke noe om faktiske kjøretimer eller ledige plasser."
+  },
+  {
+    "id": "booking",
+    "q": "Hvordan bestiller jeg en kjøretime?",
+    "a": "Dette er en fiktiv demonstrasjon uten timebok eller bestilling. På en virkelig skoles nettside kan Jemlio vise videre til skolens eksisterende booking- eller kontaktside. Chatten bestiller, endrer eller avbestiller ingen timer."
+  },
+  {
+    "id": "contact",
+    "q": "Hvordan kontakter jeg skolen?",
+    "a": "Denne skolen er et eksempel og har ingen ekte adresse, telefon eller kontaktperson. I en tilpasset løsning kan svaret vise skolens egne kontaktopplysninger og lenke til dens kontaktside. Vil du se et eksempel tilpasset din bedrift? Skriv til novadynamics7@gmail.com."
+  },
+  {
+    "id": "limits",
+    "q": "Hva kan denne demoen gjøre?",
+    "a": "Demoen viser svar på spørsmål om klasse B, girvalg, eksempelpris, varighet og fiktive kontortider. Den kan ikke bekrefte førerrett, kursdatoer eller ledige timer, og kan ikke registrere kundeopplysninger eller gjennomføre bestillinger."
+  }
+]

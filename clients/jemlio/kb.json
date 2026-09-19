@@ -1,0 +1,52 @@
+[
+  {
+    "id": "identity",
+    "q": "Hva er Jemlio?",
+    "a": "Jemlio lager en nettside-chat tilpasset bedriftens egen informasjon. Besøkende kan stille vanlige spørsmål og få hjelp til å finne riktig side, kontaktpunkt eller eksisterende bestillingsside."
+  },
+  {
+    "id": "features",
+    "q": "Hva kan chatten hjelpe med?",
+    "a": "Chatten kan svare på spørsmål om for eksempel tjenester, publiserte priser og åpningstider ut fra informasjonen bedriften har gitt. Den kan vise kunden videre til bedriftens riktige side, kontaktpunkt eller eksisterende booking. Den utfører ikke bestillingen."
+  },
+  {
+    "id": "tailoring",
+    "q": "Kan chatten tilpasses bedriften min?",
+    "a": "Ja. Jemlio kan tilpasse innhold, farger og uttrykk til bedriften. En gratis mini-demo kan vise hvordan svar på vanlige kundespørsmål ser ut med bedriftens egen informasjon. Skriv til novadynamics7@gmail.com for å be om en mini-demo."
+  },
+  {
+    "id": "demo",
+    "q": "Kan jeg få en gratis mini-demo?",
+    "a": "Ja. Be om en gratis mini-demo tilpasset bedriften ved å skrive til novadynamics7@gmail.com. Send ønsket og nettsideadressen på e-post. Denne chatten sender ingen forespørsel automatisk."
+  },
+  {
+    "id": "pricing",
+    "q": "Hva koster Jemlio?",
+    "a": "En tilpasset mini-demo er gratis. Jeg har ingen bekreftet offentlig pris for en videre leveranse å oppgi her. Skriv til novadynamics7@gmail.com for å avklare behov og få et konkret tilbud."
+  },
+  {
+    "id": "contact",
+    "q": "Hvordan kontakter jeg Jemlio?",
+    "a": "Send e-post til novadynamics7@gmail.com. Det er kontaktadressen som brukes mens Jemlio tar i bruk det nye navnet. Jeg kan vise adressen, men ikke sende meldingen for deg."
+  },
+  {
+    "id": "examples",
+    "q": "Er eksemplene ekte kunder?",
+    "a": "Nei. «Eksempel: trafikkskole» og «Eksempel: optiker» er fiktive demonstrasjoner. Navn, priser, tider og tilbud i disse eksemplene dokumenterer ingen kunder, resultater eller samarbeid. En mini-demo for din bedrift tilpasses opplysninger du selv ønsker å bruke."
+  },
+  {
+    "id": "results",
+    "q": "Garanterer Jemlio flere kunder eller salg?",
+    "a": "Nei, Jemlio gir ingen garanti for flere kunder eller økt omsetning. En gratis mini-demo lar deg vurdere om svarene og veien videre er nyttige for dine besøkende før du tar stilling til en videre leveranse."
+  },
+  {
+    "id": "limits",
+    "q": "Kan chatten booke eller registrere kunder?",
+    "a": "Den tilgjengelige chatten svarer på spørsmål og viser videre til riktig informasjon eller eksisterende bestilling. Den gjennomfører ikke booking, registrerer ikke en kundehenvendelse, sender ikke meldinger og tar ikke betaling. Ikke legg inn personopplysninger her."
+  },
+  {
+    "id": "setup",
+    "q": "Hvordan kommer jeg i gang?",
+    "a": "Start med å be om en gratis mini-demo på novadynamics7@gmail.com. Send bedriftens nettsideadresse på e-post. Da kan vi avklare hvilke spørsmål chatten skal svare på, hvilke sider den skal vise videre til, og hvordan den skal se ut."
+  }
+]

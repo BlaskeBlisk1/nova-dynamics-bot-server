@@ -1,0 +1,43 @@
+# Jemlio website and domain rollout
+
+The marketing site lives in `public/marketing/`. It uses the approved white Jemlio wordmark and blue orbital O. On the existing Render service, visit `/jemlio/`; the root harness and all previously shared `/demos/:client` links remain available.
+
+## Publish the existing Netlify site
+
+Keep the existing Netlify site (`prismatic-taffy-e96ac7`). Connect this repository with main as the production branch and `public/marketing` as the publish directory; no build command is needed. `netlify.toml` includes the publish path. Alternatively deploy the contents of that folder, including `_redirects` and `_headers`, to the existing site.
+
+The `/chat` proxy targets the stable Render service. `/jemlio/*` redirects to the corresponding marketing path. No customer demos are moved to Netlify.
+
+The contact fields open a filled email draft in the visitor's mail application. They do not submit personal data to the API or claim delivery. The existing `novadynamics7@gmail.com` address remains until a replacement mailbox is verified. New lead-capture functionality in PR14 stays separate and disabled.
+
+## New domain (after ownership and DNS are confirmed)
+
+1. Add the exact owned apex and/or www name to the existing Netlify site's custom domains. Apply the DNS values Netlify provides and wait for HTTPS to be valid. Do not change the Render hostname or repository name.
+2. Set `JEMLIO_MARKETING_ORIGINS` on Render to a comma-separated list of the new exact HTTPS origins, for example `https://your-owned-domain.example,https://www.your-owned-domain.example`. These are placeholders, not real domains to use. Keep existing origins: the code retains them automatically.
+3. Verify a real browser can load the site and ask one question in each of the three new chats. Verify rejected unrelated origins still receive HTTP403. If routing through the same-origin Netlify proxy, confirm forwarded browser origins are accepted.
+4. Select the new domain as Netlify's primary domain, with the old marketing domain retained as a redirect. Keep the old Netlify URL and Render `/demos/` URLs reachable for previously emailed links.
+5. Once the new mailbox and registered business details exist, update visible contact information and privacy information. Configure SPF/DKIM/DMARC through the actual mail provider before using a new sender address. No email sender changes happen automatically with the website domain.
+
+Only exact origins are accepted: production HTTPS; local development HTTP localhost is supported. Wildcards, paths, credentials, query strings and production HTTP are rejected. No presumed Jemlio domain is hardcoded as trusted.
+
+## Compatibility boundaries
+
+Public brand names can change independently of infrastructure identifiers. Preserve:
+
+- Render service/repository names and its current onrender.com address.
+- Tenant slugs `fram`, `fyllingsdalen`, `onsoy`, `tiller`, `trafikk1`, `frankolsen`, `roma` and their demo URLs.
+- Existing PostHog event names, session keys and `nova-demo` product identifier, so historical usage stays comparable.
+- Internal theme keys/CSS hooks such as `nova` and `.nova-credit`.
+- PR14's `NOVA_*` environment keys, database tables and idempotency keys. Rebranding does not migrate data or activate capture. Its per-client `allowedOrigins` are separate from `JEMLIO_MARKETING_ORIGINS`.
+
+The new `jemlio`, `jemlio-driving-demo` and `jemlio-optician-demo` clients have isolated deterministic handlers. The two industry examples are explicitly fictional, with no client endorsement, real booking or medical advice. They never enter the generic model fallback. The marketing page adds no analytics or advertising cookies.
+
+## Validation
+
+Run `npm test` for the existing demos and `npm run test:brand` for exact-origin handling, all old demo/config URLs, new example answers and safety fallbacks. Check marketing JavaScript with `node --check public/marketing/site.js`.
+
+After deployment, visually inspect desktop and mobile layouts, both example tabs, custom questions, support launcher/close, keyboard focus, FAQ and email draft preparation. Never submit a real test email without authorization. Keep contact fields intact when an email app cannot open.
+
+## Rollback
+
+Revert the website rebrand commit on main to restore the previous Render code. On Netlify, publish the previous successful deploy. No database, existing client identifiers or old shared URLs are changed by this rollout.
