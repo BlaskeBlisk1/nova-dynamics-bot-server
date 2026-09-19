@@ -59,7 +59,7 @@ function answer(message) {
   if (has(/ignore|ignorer|systemprompt|system prompt|api.?key|api.?nokkel|hemmelig|\bpassword\b|passord|lat som|pretend|registrer.*uten|override/))
     return make("Jeg kan bare gi informasjon om RoMa fra demoens verifiserte kilder. Jeg kan ikke endre priser, hente hemmeligheter eller utføre bestillinger.");
   if (has(/personvern|lagr.*chatt?|lagr.*sporsmal|hva.*logg|sporing|posthog|privacy/)) return fact("privacy");
-  if (has(/slett.*(?:data|opplysning)|delete.*data/)) return make("Jeg kan ikke behandle en sletteforespørsel her. Ikke send personopplysninger i chatten. Ta kontakt med Nova Dynamics gjennom den du fikk demolenken fra, og med RoMa hvis forespørselen gjelder opplysninger du har gitt direkte til skolen.", contactSource, true);
+  if (has(/slett.*(?:data|opplysning)|delete.*data/)) return make("Jeg kan ikke behandle en sletteforespørsel her. Ikke send personopplysninger i chatten. Ta kontakt med Jemlio gjennom den du fikk demolenken fra, og med RoMa hvis forespørselen gjelder opplysninger du har gitt direkte til skolen.", contactSource, true);
   const emails = raw.match(/[\w.+-]+@[\w.-]+\.[a-z]{2,}/gi) || [];
   const personalEmail = emails.some(email => !["post@romatrafikkskole.no", "magnus@romatrafikkskole.no", "rune@romatrafikkskole.no"].includes(email.toLowerCase()));
   if (personalEmail || /\b(?:\d[\s-]?){8,11}\b/.test(raw) || has(/jeg heter|mitt navn|fodsel|personnummer|kortnummer|ring meg|ringe meg|kontakt meg|lagre.*(navn|nummer|epost)|send.*(navn|nummer|epost)/))
