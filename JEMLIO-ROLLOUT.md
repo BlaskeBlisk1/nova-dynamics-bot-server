@@ -10,15 +10,17 @@ The `/chat` proxy targets the stable Render service. `/jemlio/*` redirects to th
 
 The contact fields open a filled email draft in the visitor's mail application. They do not submit personal data to the API or claim delivery. The existing `novadynamics7@gmail.com` address remains until a replacement mailbox is verified. New lead-capture functionality in PR14 stays separate and disabled.
 
-## New domain (after ownership and DNS are confirmed)
+## Jemlio domain
 
-1. Add the exact owned apex and/or www name to the existing Netlify site's custom domains. Apply the DNS values Netlify provides and wait for HTTPS to be valid. Do not change the Render hostname or repository name.
-2. Set `JEMLIO_MARKETING_ORIGINS` on Render to a comma-separated list of the new exact HTTPS origins, for example `https://your-owned-domain.example,https://www.your-owned-domain.example`. These are placeholders, not real domains to use. Keep existing origins: the code retains them automatically.
+The owned domain is `jemlio.com`, registered with Domeneshop. The canonical marketing URL is `https://www.jemlio.com/`. Homepage canonical and Open Graph metadata use that URL; the privacy page canonical is `https://www.jemlio.com/privacy`.
+
+1. Add `jemlio.com` and `www.jemlio.com` to the existing Netlify site's custom domains and select `www.jemlio.com` as primary. Keep DNS at Domeneshop: point `www` by CNAME to `prismatic-taffy-e96ac7.netlify.app` and the apex by ANAME/ALIAS to `apex-loadbalancer.netlify.com` if supported, otherwise by A record to `75.2.60.5`. Confirm the site's own DNS instructions before applying values. Preserve existing mail and verification records; resolve only conflicting web records or forwarding. Wait for HTTPS to be valid. Do not change the Render hostname or repository name.
+2. Set `JEMLIO_MARKETING_ORIGINS` on Render to `https://jemlio.com,https://www.jemlio.com` and deploy the environment change. Keep existing origins: the code retains them automatically.
 3. Verify a real browser can load the site and ask one question in each of the three new chats. Verify rejected unrelated origins still receive HTTP403. If routing through the same-origin Netlify proxy, confirm forwarded browser origins are accepted.
-4. Select the new domain as Netlify's primary domain, with the old marketing domain retained as a redirect. Keep the old Netlify URL and Render `/demos/` URLs reachable for previously emailed links.
+4. Keep `nova-dynamics.no` and `www.nova-dynamics.no` assigned to the same Netlify site with working DNS and certificates. The deployed `_redirects` sends these aliases, the old Netlify hostname and the Jemlio apex to `https://www.jemlio.com`, preserving paths and query parameters. Existing `/solutions`, `/demo` and `/contact` links resolve to their matching homepage sections. Ordinary fragment links remain browser-side across host redirects. The `/chat` proxy stays first, so existing POST clients continue working without a method-changing redirect. Verify every public host and old path after publication. Keep Render `/demos/` URLs unchanged for previously emailed links.
 5. Once the new mailbox and registered business details exist, update visible contact information and privacy information. Configure SPF/DKIM/DMARC through the actual mail provider before using a new sender address. No email sender changes happen automatically with the website domain.
 
-Only exact origins are accepted: production HTTPS; local development HTTP localhost is supported. Wildcards, paths, credentials, query strings and production HTTP are rejected. No presumed Jemlio domain is hardcoded as trusted.
+Only exact origins are accepted: production HTTPS; local development HTTP localhost is supported. Wildcards, paths, credentials, query strings and production HTTP are rejected. The owned Jemlio origins are configured through the environment rather than hardcoded into the compatibility allowlist.
 
 ## Compatibility boundaries
 

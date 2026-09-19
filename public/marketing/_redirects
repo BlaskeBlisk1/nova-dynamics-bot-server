@@ -1,4 +1,16 @@
 /chat https://nova-dynamics-bot-server.onrender.com/chat 200
+# Keep the API proxy first so existing POST clients do not follow a 301.
+# All public marketing hosts converge on the verified Jemlio www domain.
+http://jemlio.com/* https://www.jemlio.com/:splat 301!
+https://jemlio.com/* https://www.jemlio.com/:splat 301!
+http://www.jemlio.com/* https://www.jemlio.com/:splat 301!
+http://nova-dynamics.no/* https://www.jemlio.com/:splat 301!
+https://nova-dynamics.no/* https://www.jemlio.com/:splat 301!
+http://www.nova-dynamics.no/* https://www.jemlio.com/:splat 301!
+https://www.nova-dynamics.no/* https://www.jemlio.com/:splat 301!
+http://prismatic-taffy-e96ac7.netlify.app/* https://www.jemlio.com/:splat 301!
+https://prismatic-taffy-e96ac7.netlify.app/* https://www.jemlio.com/:splat 301!
+# Preserve shared marketing paths and their corresponding homepage sections.
 /solutions /#losningen 301
 /solutions/ /#losningen 301
 /demo /#demo 301
