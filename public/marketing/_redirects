@@ -1,2 +1,9 @@
 /chat https://nova-dynamics-bot-server.onrender.com/chat 200
+/solutions /#losningen 301
+/solutions/ /#losningen 301
+/demo /#demo 301
+/demo/ /#demo 301
+/contact /#contact 301
+/contact/ /#contact 301
+/jemlio / 301
 /jemlio/* /:splat 301
