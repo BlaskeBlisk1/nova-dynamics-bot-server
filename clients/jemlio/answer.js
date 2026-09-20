@@ -35,7 +35,7 @@ function answer(client, message) {
   });
   const fact = (...ids) => make(ids.map(id => knowledge[client].find(row => row.id === id).a).join("\n\n"));
   const fallback = () => make(client === "jemlio"
-    ? "Det har jeg ikke bekreftede opplysninger om. Jeg kan forklare den tilgjengelige chatten eller vise hvordan du ber om en gratis mini-demo. For andre spørsmål: novadynamics7@gmail.com."
+    ? "Det har jeg ikke bekreftede opplysninger om. Jeg kan forklare den tilgjengelige chatten eller vise hvordan du ber om en gratis mini-demo. For andre spørsmål: hei@jemlio.com."
     : "Det er ikke beskrevet i dette fiktive eksemplet, så jeg vil ikke gjette. Prøv et av spørsmålene under. Hos en virkelig bedrift må slike detaljer bekreftes direkte med bedriften.", true);
 
   // Safety and action limits take precedence over informational topics.
@@ -43,11 +43,11 @@ function answer(client, message) {
   if (has(/ignore|ignorer|system.?prompt|api.?key|api.?nokkel|passord|password|hemmelig|override|lat som|pretend|instruksjon|vis.*(?:annen|andre).*kunde/))
     return make("Jeg svarer bare ut fra informasjonen som hører til denne demonstrasjonen. Jeg kan ikke hente hemmeligheter, andre kunders opplysninger, endre tilbud eller utføre handlinger.", true);
   if (/[\w.+-]+@[\w.-]+\.[a-z]{2,}/i.test(raw) || /\b(?:\d[\s-]?){8,11}\b/.test(raw) || has(/jeg heter|mitt navn|min adresse|mitt (?:nummer|telefon|mobil)|fodsel|personnummer|kortnummer|ring meg|ringe meg|kontakt meg|lagre.*(?:navn|nummer|epost)|send.*(?:navn|nummer|epost)/))
-    return make("Ikke legg inn navn, telefonnummer, e-postadresse eller andre personopplysninger her. Chatten oppretter ingen kundehenvendelse, videresender ingen opplysninger og avtaler ingen tilbakeringing. Bruk bedriftens vanlige kontaktkanal. For Jemlio: novadynamics7@gmail.com.", true);
+    return make("Ikke legg inn navn, telefonnummer, e-postadresse eller andre personopplysninger her. Chatten oppretter ingen kundehenvendelse, videresender ingen opplysninger og avtaler ingen tilbakeringing. Bruk bedriftens vanlige kontaktkanal. For Jemlio: hei@jemlio.com.", true);
   if (has(/personvern|privacy|gdpr|lagr|logg|sporing|posthog|slett.*(?:data|opplysning)|delete.*data|opptak/))
-    return make("Spørsmålet sendes til serveren for å gi deg et svar. Denne chatten er ikke et skjema for kundeopplysninger eller en kanal for sletteforespørsler. Ikke del personopplysninger. For spørsmål om personvern, kontakt Jemlio på novadynamics7@gmail.com.");
+    return make("Spørsmålet sendes til serveren for å gi deg et svar. Denne chatten er ikke et skjema for kundeopplysninger eller en kanal for sletteforespørsler. Ikke del personopplysninger. For spørsmål om personvern, kontakt Jemlio på hei@jemlio.com.");
   if (has(/send.*(?:mail|e-post|epost|melding)|videresend|betaling|betal.*(?:her|chat)|kortbetaling/))
-    return make("Chatten sender ikke meldinger, videresender ikke opplysninger og tar ikke betaling. Den gir informasjon og kan vise videre til riktig kontaktpunkt. For Jemlio: novadynamics7@gmail.com.");
+    return make("Chatten sender ikke meldinger, videresender ikke opplysninger og tar ikke betaling. Den gir informasjon og kan vise videre til riktig kontaktpunkt. For Jemlio: hei@jemlio.com.");
   if (has(/hva kan du|hvem er du|hva.*demo.*(?:gjore|kan)|er du.*(?:bot|robot)/)) return fact("limits");
 
   if (client === "jemlio") {
@@ -66,7 +66,7 @@ function answer(client, message) {
     if (has(/hva.*(?:er|gjor).*jemlio|hvem.*jemlio|nova dynamics|navnebytte/)) return fact("identity");
     if (has(/hva.*(?:chat|hjelp|funksjon)|hvordan.*(?:virker|fungerer)|tjeneste|apningstid|sporsmal|egen informasjon/)) return fact("features");
     if (/^(?:hei|heisann|hallo|hello|hi)[!. ]*$/.test(t)) return fact("identity");
-    if (/^(?:takk|tusen takk|ha det)[!. ]*$/.test(t)) return make("Bare hyggelig! Vil du se chatten med bedriftens egen informasjon, kan du be om en gratis mini-demo på novadynamics7@gmail.com.");
+    if (/^(?:takk|tusen takk|ha det)[!. ]*$/.test(t)) return make("Bare hyggelig! Vil du se chatten med bedriftens egen informasjon, kan du be om en gratis mini-demo på hei@jemlio.com.");
     return fallback();
   }
 
