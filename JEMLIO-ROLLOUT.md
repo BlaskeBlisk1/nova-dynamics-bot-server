@@ -8,7 +8,7 @@ Keep the existing Netlify site (`prismatic-taffy-e96ac7`). Connect this reposito
 
 The `/chat` proxy targets the stable Render service. `/jemlio/*` redirects to the corresponding marketing path. No customer demos are moved to Netlify.
 
-The contact fields open a filled email draft in the visitor's mail application. They do not submit personal data to the API or claim delivery. The existing `novadynamics7@gmail.com` address remains until a replacement mailbox is verified. New lead-capture functionality in PR14 stays separate and disabled.
+The contact fields open a filled email draft in the visitor's mail application. They do not submit personal data to the API or claim delivery. The public contact address is `hei@jemlio.com`; Domeneshop account administration confirmed it routes to an existing hosted mailbox on 20 September 2026. New lead-capture functionality in PR14 stays separate and disabled.
 
 ## Current cutover status — 19 September 2026
 
@@ -31,7 +31,7 @@ The owned domain is `jemlio.com`, registered with Domeneshop. The canonical mark
 2. Set `JEMLIO_MARKETING_ORIGINS` on Render to `https://www.jemlio.com,https://jemlio.com` and deploy the environment change. Keep existing origins: the code retains them automatically.
 3. Verify a real browser can load the site and ask one question in each of the three new chats. Verify rejected unrelated origins still receive HTTP403. If routing through the same-origin Netlify proxy, confirm forwarded browser origins are accepted.
 4. Keep the existing Domeneshop forwarding for `nova-dynamics.no` and `www.nova-dynamics.no` directed to `https://www.jemlio.com`. This verified route preserves paths and query parameters without replacing the old web records. The deployed `_redirects` also handles legacy aliases that reach Netlify, the old Netlify hostname and the Jemlio apex. Existing `/solutions`, `/demo` and `/contact` links resolve to their matching homepage sections. Ordinary fragment links remain browser-side across host redirects. The `/chat` proxy stays first, so existing POST clients continue working without a method-changing redirect. Verify every public host and old path after publication. Keep Render `/demos/` URLs unchanged for previously emailed links.
-5. Once the new mailbox and registered business details exist, update visible contact information and privacy information. Configure SPF/DKIM/DMARC through the actual mail provider before using a new sender address. No email sender changes happen automatically with the website domain.
+5. The new mailbox `hei@jemlio.com` is verified and used by visible contact links, email composition, privacy contact details, and the three Jemlio assistant paths. Update registered business details when confirmed. Configure SPF/DKIM/DMARC through the actual mail provider before using a new sender address. No email sender changes happen automatically with the website domain.
 
 Only exact origins are accepted: production HTTPS; local development HTTP localhost is supported. Wildcards, paths, credentials, query strings and production HTTP are rejected. The owned Jemlio origins are configured through the environment rather than hardcoded into the compatibility allowlist.
 

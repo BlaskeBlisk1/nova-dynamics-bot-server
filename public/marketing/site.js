@@ -74,7 +74,7 @@
       } catch (error) {
         if (current !== generation) return;
         waiting.remove();
-        message('Jeg fikk ikke hentet svaret akkurat nå. Prøv igjen om litt, eller kontakt Jemlio på novadynamics7@gmail.com.', 'assistant error');
+        message('Jeg fikk ikke hentet svaret akkurat nå. Prøv igjen om litt, eller kontakt Jemlio på hei@jemlio.com.', 'assistant error');
       } finally {
         clearTimeout(timer);
         if (current === generation) { controller = null; pending(false); }
@@ -129,11 +129,11 @@
     const details = $('contact-message').value.trim();
     if (!name || !email || !company) { $('contact-status').textContent = 'Fyll inn navn, e-post og bedrift før du fortsetter.'; return; }
     const body = `Hei Matteus,\n\nJeg ønsker en gratis, tilpasset Jemlio-demo.\n\nBedrift eller nettside: ${company}\nNavn: ${name}\nE-post: ${email}\n\nVanlige kundespørsmål:\n${details || 'Vi kan avklare dette sammen.'}\n\nMed vennlig hilsen\n${name}`;
-    const href = 'mailto:novadynamics7@gmail.com?subject=' + encodeURIComponent('Gratis Jemlio-demo — ' + company.slice(0, 100)) + '&body=' + encodeURIComponent(body);
-    $('contact-status').textContent = 'Ingen forespørsel er sendt ennå. Hvis e-postprogrammet åpner seg, se over meldingen og trykk Send der. Ellers kan du skrive til novadynamics7@gmail.com.';
+    const href = 'mailto:hei@jemlio.com?subject=' + encodeURIComponent('Gratis Jemlio-demo — ' + company.slice(0, 100)) + '&body=' + encodeURIComponent(body);
+    $('contact-status').textContent = 'Ingen forespørsel er sendt ennå. Hvis e-postprogrammet åpner seg, se over meldingen og trykk Send der. Ellers kan du skrive til hei@jemlio.com.';
     try { window.location.href = href; }
     catch {
-      $('contact-status').textContent = 'Vi fikk ikke åpnet e-postprogrammet. Ingen forespørsel er sendt. Feltene dine er beholdt; skriv til novadynamics7@gmail.com for å be om demoen.';
+      $('contact-status').textContent = 'Vi fikk ikke åpnet e-postprogrammet. Ingen forespørsel er sendt. Feltene dine er beholdt; skriv til hei@jemlio.com for å be om demoen.';
     }
   });
   $('year').textContent = String(new Date().getFullYear());

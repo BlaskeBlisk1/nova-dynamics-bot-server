@@ -27,7 +27,7 @@ const { answer } = require("../clients/jemlio/answer");
 // Mixed intents and unsupported variants must never inherit a nearby service's
 // price, medical answer or booking action merely because a keyword matched.
 const adversarial = [
-  ["jemlio", "Hvordan bestiller jeg en gratis demo?", false, /gratis mini-demo.*novadynamics7@gmail.com/s],
+  ["jemlio", "Hvordan bestiller jeg en gratis demo?", false, /gratis mini-demo.*hei@jemlio.com/s],
   ["jemlio", "Kan jeg booke en demo?", false, /sender ingen foresporsel|sender ingen forespørsel/],
   ["jemlio", "Kan dere garantere mer salg?", false, /ingen garanti/],
   ["jemlio", "Har dere åpningstider?", true, /ikke bekreftede/],
