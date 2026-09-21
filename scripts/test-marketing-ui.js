@@ -1,8 +1,8 @@
 'use strict';
 
-// Execute the shipped HTML + browser code without contacting external services,
-// sending mail, or using real customer data. These DOM checks verify that the
-// browser uses the same-origin enquiry gateway and retains the manual fallback.
+// Execute the shipped HTML + browser code without contacting Netlify, sending
+// mail, or using real customer data. These DOM checks deliberately do not claim
+// that a Netlify form is enabled; production must verify form detection + POST.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -64,14 +64,14 @@ function harness({ url = 'https://www.jemlio.com/', online = true, clipboard = '
 }
 
 (async () => {
-  await test('native form posts to the enquiry gateway with honeypot and accessible inputs', () => {
+  await test('native form has canonical POST, Netlify registration, honeypot and accessible inputs', () => {
     const dom = new JSDOM(html);
     const form = dom.window.document.querySelector('#contact-form');
     assert.equal(form.method, 'post');
-    assert.equal(form.getAttribute('action'), 'https://www.jemlio.com/enquiry');
-    assert.equal(form.hasAttribute('data-netlify'), false);
-    assert.equal(form.elements['form-name'], undefined);
-    assert.equal(form.hasAttribute('netlify-honeypot'), false);
+    assert.equal(form.getAttribute('action'), 'https://www.jemlio.com/demo-requested');
+    assert.equal(form.getAttribute('data-netlify'), 'true');
+    assert.equal(form.elements['form-name'].value, form.name);
+    assert.equal(form.getAttribute('netlify-honeypot'), 'bot-field');
     assert.ok(form.elements['bot-field'].closest('[hidden]'));
     for (const field of [...form.elements].filter(el => el.matches('input:not([type=hidden]),textarea,select') && !el.closest('[hidden]'))) {
       assert.ok(field.labels.length, `${field.id} has an associated visible label`);
@@ -158,7 +158,7 @@ function harness({ url = 'https://www.jemlio.com/', online = true, clipboard = '
   await test('Render and localhost mirrors retain a canonical native action rather than POSTing to themselves', () => {
     for (const url of ['https://nova-dynamics-bot-server.onrender.com/jemlio', 'http://localhost:3000/jemlio']) {
       const h = harness({ url }); h.fill();
-      assert.equal(h.get('#contact-form').action, 'https://www.jemlio.com/enquiry');
+      assert.equal(h.get('#contact-form').action, 'https://www.jemlio.com/demo-requested');
       assert.equal(h.submit().defaultPrevented, false);
       assert.deepEqual(h.calls, []);
       h.finish();
@@ -232,5 +232,5 @@ function harness({ url = 'https://www.jemlio.com/', online = true, clipboard = '
     dom.window.close();
   });
 
-  console.log(`Marketing UI: ${checks} checks passed. Enquiry delivery is verified separately through the backend gateway.`);
+  console.log(`Marketing UI: ${checks} checks passed. Native Netlify processing must be verified separately on the deployed site.`);
 })().catch(error => { console.error(error); process.exitCode = 1; });
