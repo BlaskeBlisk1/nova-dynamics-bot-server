@@ -7,8 +7,9 @@
   <title>Skjemadefinisjon | Jemlio</title>
 </head>
 <body>
-  <!-- Build-time definition only. Keep every field name synchronized with the visible contact form. -->
-  <form name="jemlio-demo-request" method="POST" action="https://www.jemlio.com/demo-requested" data-netlify="true" netlify-honeypot="bot-field" hidden>
+  <!-- Netlify's build scanner requires a relative action. The visible form uses the equivalent canonical URL for safe marketing mirrors. -->
+  <!-- Keep every field name synchronized with the visible contact form. -->
+  <form name="jemlio-demo-request" method="POST" action="/demo-requested" data-netlify="true" netlify-honeypot="bot-field" hidden>
     <input type="hidden" name="form-name" value="jemlio-demo-request">
     <input name="bot-field" autocomplete="off" tabindex="-1">
     <input name="name" maxlength="120" required>
