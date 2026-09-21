@@ -6,6 +6,9 @@ const { randomUUID } = require("node:crypto");
 
 if (process.env.NOVA_TEST_CHILD === "true") {
   const { app, upgrades } = require("../index");
+  if (process.env.NOVA_TEST_FEATURE_FAILURE === "true") {
+    upgrades.features = async () => { throw new Error("synthetic optional-service failure"); };
+  }
   const server = app.listen(0, "127.0.0.1", () => process.send({ port: server.address().port }));
   process.on("message", message => {
     if (message === "close") server.close(() => upgrades.close().then(() => process.exit(0)));
@@ -48,6 +51,21 @@ if (process.env.NOVA_TEST_CHILD === "true") {
   }
   function check(name, run) { run(); console.log(`ok ${++checks} - ${name}`); }
   (async () => {
+    const { createUpgradeConfig } = require("../lib/upgrade-config");
+    const unsupported = createUpgradeConfig({
+      env: { NOVA_CAPTURE_ENABLED: "true", NOVA_CONVERSATION_CLIENTS: "roma,jemlio,tiller",
+        NOVA_CAPTURE_CONFIG: JSON.stringify(Object.fromEntries(["roma", "jemlio", "tiller"].map(client =>
+          [client, { enabled: true, mode: "live" }]))) },
+      getRegistry: () => ({ roma: { name: "RoMa" }, jemlio: { name: "Jemlio" }, tiller: { name: "Tiller" } })
+    });
+    check("configuration cannot promise controls absent from a tenant's template", () => {
+      for (const client of ["roma", "jemlio"]) {
+        assert.equal(unsupported.captureTenant(client), null);
+        assert.equal(unsupported.conversationEnabled(client), false);
+      }
+      assert.equal(unsupported.captureTenant("tiller").mode, "live");
+      assert.equal(unsupported.conversationEnabled("tiller"), true);
+    });
     await withServer({}, async request => {
       for (const client of ["fram", "fyllingsdalen", "onsoy", "tiller", "trafikk1", "frankolsen", "roma"]) {
         const page = await request(`/demos/${client}`);
@@ -145,6 +163,18 @@ if (process.env.NOVA_TEST_CHILD === "true") {
         assert.equal(config.status, 200);
         assert.equal(config.data.features.capture.enabled, false);
         assert.equal(capture.status, 503);
+      });
+    });
+    await withServer({ NOVA_TEST_FEATURE_FAILURE: "true" }, async request => {
+      const contact = await request("/chat", { client: "tiller", message: "Kan dere ringe meg?" },
+        "https://nova-dynamics-bot-server.onrender.com");
+      const config = await request("/api/demo-config/tiller");
+      check("optional enquiry failures leave the existing chat and configuration available", () => {
+        assert.equal(contact.status, 200);
+        assert.equal(typeof contact.data.reply, "string");
+        assert.notEqual(contact.data.captureIntent, true);
+        assert.equal(config.status, 200);
+        assert.equal(config.data.features.capture.enabled, false);
       });
     });
     console.log(`Upgrade integration: ${checks} grouped checks passed.`);

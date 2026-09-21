@@ -71,3 +71,54 @@ failure leaves the claim intact for the same safe retry. Unexpected errors never
 
 Tests inject a fake email adapter and use local PGlite for actual schema/transaction/claim behavior.
 No email or external database connection is used by `scripts/test-capture.js`.
+
+## Restricted business-outcome operations
+
+`node scripts/capture-operations.js` is an operator-only database tool, with no
+public route and no sending capability. Use the dedicated database environment;
+reapply the explicit schema migration to add the outcome tables before using it.
+
+```sh
+# Counts only, scoped to one business. Dates select the request-created cohort.
+node scripts/capture-operations.js report --client tiller --since 2026-09-01 --before 2026-10-01
+
+# Preview an actual, independently verified outcome before recording it.
+node scripts/capture-operations.js outcome --client tiller --receipt UUID --status qualified
+node scripts/capture-operations.js outcome --client tiller --receipt UUID --status qualified --apply
+
+# Preview the agreed retention cutoff. No retention duration is assumed.
+node scripts/capture-operations.js delete --client tiller --before 2026-01-01
+node scripts/capture-operations.js delete --client tiller --before 2026-01-01 --limit 100 --apply
+```
+
+Replace `UUID` with the existing receipt for the same business. Outcomes are
+`new`, `contacted`, `qualified`, `won` and `lost`. They never change email-dispatch
+status. Current outcomes and distinct explicitly recorded historical outcomes
+are counted separately; historical counts may overlap. Recording a win does not
+invent a prior contact or qualification. Provider acceptance does not imply a
+delivered email, confirmed booking, paying customer or business outcome.
+
+Mutation commands are dry runs unless `--apply` is present. Deletion requires an
+exact client and either an explicit cutoff or receipt, and removes at most 100
+requests by default (maximum 1,000). It locks eligible request/outbox rows before
+cascading deletion of stored contacts, frozen notification data and outcome
+history. A tombstone containing only the client, opaque submission ID and deletion
+time prevents delayed retries from recreating a deleted enquiry or email. The
+store checks it after the insert/unique-key conflict wait, within the same
+transaction, to cover a simultaneous delete. An old pending or uncertain email is never made safe to delete merely
+by its age. Pending, sending, needs-review, missing-outbox, unknown failure and
+payload-conflict records remain protected. Only provider-accepted items with a
+stored provider ID, or a fixed set of definite permanent provider rejections,
+are eligible. There is no force flag and no automatic retry or rerouting.
+
+Deletion does not erase copies already held by the email provider or business
+mailbox; their agreed process must cover those copies. Reports exclude deleted
+enquiries, so they are operational views rather than permanent historical totals.
+Contact details, notification text and provider credentials are absent from CLI
+output. `scripts/test-capture-operations.js` verifies tenant boundaries, truthful
+counts, dry-run behavior and protected dispatch states using local synthetic data.
+
+New notifications set `reply_to` to the validated visitor email when supplied,
+so the business can reply directly; phone-only enquiries omit it. The verified
+sender and approved recipient remain server-configured. Existing queued payloads
+and idempotency keys are unchanged. See the [Resend send-email API](https://resend.com/docs/api-reference/emails/send-email).

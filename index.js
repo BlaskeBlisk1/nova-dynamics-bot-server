@@ -168,6 +168,7 @@ app.get(["/previews/:client", "/previews/:client/"], (req, res) => {
     return res.status(404).send("Preview not found.");
   }
   res.setHeader("Cache-Control", "no-store");
+  res.setHeader("X-Robots-Tag", "noindex, nofollow");
   return res.sendFile(path.join(publicDir, "demo", "index.html"));
 });
 
@@ -3984,8 +3985,14 @@ app.post("/chat", async (req, res) => {
       client, origin, message, conversationId: req.body?.conversationId
     });
     const sendJson = res.json.bind(res);
-    res.json = body => sendJson({ ...body, conversationId: context.conversationId,
-      contextApplied: context.contextApplied, contextExpired: context.contextExpired });
+    res.json = body => {
+      // Only our bounded class/service clarification deliberately retains
+      // context after an uncertain answer. A tenant's medical warning or
+      // unsupported/unknown answer cannot seed a routine price or booking.
+      if (body.unsure === true && !context.clarification) context.discardContext();
+      return sendJson({ ...body, conversationId: context.conversationId,
+        contextApplied: context.contextApplied, contextExpired: context.contextExpired });
+    };
     if (context.clarification) return res.json({ reply: context.clarification, unsure: true, suggestions: [] });
     message = context.message;
   }
@@ -3994,8 +4001,15 @@ app.post("/chat", async (req, res) => {
   // details typed into ordinary chat have been saved or sent to the business.
   if (!/\b(ikke|never|don't|do not)\b/i.test(message) &&
       /\b(ring meg|ringe meg|kontakt meg|bli kontaktet|kontaktforespørsel|call me|contact me)\b/i.test(message)) {
-    const capture = (await upgrades.features(client, { preview: isUpgradePreview })).capture;
-    if (capture.enabled) {
+    let capture;
+    try {
+      capture = (await upgrades.features(client, { preview: isUpgradePreview })).capture;
+    } catch {
+      // An unavailable optional enquiry service must not interrupt answers or
+      // claim a handoff occurred. Continue to the existing contact answer.
+      capture = { enabled: false };
+    }
+    if (capture?.enabled) {
       return res.json({
         reply: capture.mode === "preview"
           ? "Du kan prøve kontaktskjemaet nedenfor med oppdiktede opplysninger. Dette er en test: ingen forespørsel sendes til virksomheten."

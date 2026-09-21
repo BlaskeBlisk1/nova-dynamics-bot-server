@@ -25,7 +25,7 @@
     }
     parent.append(document.createTextNode(text.slice(end)));
   }
-  function chat(prefix, getClient) {
+  function chat(prefix, getClient, onAnswer = () => {}) {
     const log = $(prefix + '-messages');
     const form = $(prefix + '-form');
     const input = $(prefix + '-input');
@@ -71,6 +71,7 @@
         if (current !== generation) return;
         waiting.remove(); message(data.reply, 'assistant');
         if (Array.isArray(data.suggestions)) suggestions(data.suggestions);
+        onAnswer();
       } catch (error) {
         if (current !== generation) return;
         waiting.remove();
@@ -90,11 +91,12 @@
     };
   }
   let selected = 'driving';
-  const demo = chat('demo', () => examples[selected].client);
+  const demo = chat('demo', () => examples[selected].client, () => { $('demo-next').hidden = false; });
   const tabs = [...document.querySelectorAll('[data-demo]')];
   function select(kind, focus = false) {
     if (!examples[kind]) return;
     selected = kind;
+    $('demo-next').hidden = true;
     tabs.forEach(tab => { const active = tab.dataset.demo === kind; tab.setAttribute('aria-selected', String(active)); tab.tabIndex = active ? 0 : -1; if (active && focus) tab.focus(); });
     $('demo-title').textContent = examples[kind].title;
     $('demo-panel').setAttribute('aria-labelledby', 'tab-' + kind);
@@ -110,6 +112,13 @@
     });
   });
   $('demo-reset').addEventListener('click', () => { select(selected); $('demo-input').focus(); });
+  $('demo-tailor').addEventListener('click', () => {
+    // Only the explicitly chosen example category crosses into the contact form.
+    // No question, answer or conversation content is copied or stored.
+    $('contact-industry').value = selected === 'optician' ? 'Optiker' : 'Trafikkskole';
+    $('contact-company').focus({ preventScroll: true });
+    updateEmailDraft();
+  });
   document.querySelectorAll('[data-try]').forEach(button => button.addEventListener('click', () => { select(button.dataset.try); $('demo').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' }); $('demo-input').focus({ preventScroll: true }); }));
   chat('support', () => 'jemlio');
   const launcher = $('chat-launcher');
@@ -119,22 +128,86 @@
   $('chat-close').addEventListener('click', () => toggle(false));
   document.addEventListener('keydown', event => { if (event.key === 'Escape' && !panel.hidden) { event.preventDefault(); toggle(false); } });
 
-  // Compose in the visitor's mail client. No invisible submission or false success.
-  $('contact-form').addEventListener('submit', event => {
-    event.preventDefault();
-    if (!$('contact-form').reportValidity()) return;
+  // Native POST lets Netlify own form processing and the success navigation.
+  // The absolute action is intentional: mirrors on Render and localhost must
+  // navigate to the actual form host instead of posting to a different backend.
+  // We never infer delivery from an arbitrary fetch() 200 or retry a POST.
+  const contactForm = $('contact-form');
+  const contactSubmit = $('contact-submit');
+  const contactStatus = $('contact-status');
+  let contactPending = false;
+  let contactTimer = null;
+  function requestDetails() {
     const name = $('contact-name').value.trim();
     const email = $('contact-email').value.trim();
     const company = $('contact-company').value.trim();
+    const industry = $('contact-industry').value;
     const details = $('contact-message').value.trim();
-    if (!name || !email || !company) { $('contact-status').textContent = 'Fyll inn navn, e-post og bedrift før du fortsetter.'; return; }
-    const body = `Hei Matteus,\n\nJeg ønsker en gratis, tilpasset Jemlio-demo.\n\nBedrift eller nettside: ${company}\nNavn: ${name}\nE-post: ${email}\n\nVanlige kundespørsmål:\n${details || 'Vi kan avklare dette sammen.'}\n\nMed vennlig hilsen\n${name}`;
-    const href = 'mailto:hei@jemlio.com?subject=' + encodeURIComponent('Gratis Jemlio-demo — ' + company.slice(0, 100)) + '&body=' + encodeURIComponent(body);
-    $('contact-status').textContent = 'Ingen forespørsel er sendt ennå. Hvis e-postprogrammet åpner seg, se over meldingen og trykk Send der. Ellers kan du skrive til hei@jemlio.com.';
-    try { window.location.href = href; }
-    catch {
-      $('contact-status').textContent = 'Vi fikk ikke åpnet e-postprogrammet. Ingen forespørsel er sendt. Feltene dine er beholdt; skriv til hei@jemlio.com for å be om demoen.';
+    const subject = 'Gratis Jemlio-demo' + (company ? ' — ' + company.slice(0, 100) : '');
+    const body = `Hei Matteus,\n\nJeg ønsker en gratis, tilpasset Jemlio-demo og ber dere kontakte meg om denne.\n\nBedrift eller nettside: ${company}\nNavn: ${name}\nE-post: ${email}\nBransje: ${industry || 'Ikke oppgitt'}\n\nDette ønsker jeg hjelp med:\n${details || 'Vi kan avklare dette sammen.'}\n\nMed vennlig hilsen\n${name}`;
+    return { subject, body };
+  }
+  function updateEmailDraft() {
+    const { subject, body } = requestDetails();
+    $('contact-email-draft').href = 'mailto:hei@jemlio.com?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+    if (!$('contact-copy-manual').hidden) $('contact-copy-text').value = `Til: hei@jemlio.com\nEmne: ${subject}\n\n${body}`;
+  }
+  contactForm.addEventListener('input', updateEmailDraft);
+  contactForm.addEventListener('change', updateEmailDraft);
+  $('contact-email-draft').addEventListener('click', () => {
+    updateEmailDraft();
+    $('contact-copy-status').textContent = 'E-postutkastet må sendes fra e-postprogrammet ditt. Hvis det ikke åpnes, bruk «Kopier forespørselen».';
+  });
+  $('contact-copy').addEventListener('click', async () => {
+    const { subject, body } = requestDetails();
+    const text = `Til: hei@jemlio.com\nEmne: ${subject}\n\n${body}`;
+    try {
+      if (!navigator.clipboard || !navigator.clipboard.writeText) throw new Error('Clipboard unavailable');
+      await navigator.clipboard.writeText(text);
+      $('contact-copy-status').textContent = 'Kopiert. Lim inn i en e-post til hei@jemlio.com og send den selv. Kopieringen sender ingenting.';
+    } catch {
+      $('contact-copy-manual').hidden = false;
+      $('contact-copy-text').value = text;
+      $('contact-copy-text').focus();
+      $('contact-copy-text').select();
+      $('contact-copy-status').textContent = 'Automatisk kopiering er ikke tilgjengelig. Kopier den markerte teksten og send den i ditt eget e-postprogram.';
     }
   });
+  contactForm.addEventListener('submit', event => {
+    if (contactPending) { event.preventDefault(); return; }
+    for (const id of ['contact-name', 'contact-email', 'contact-company']) $(id).value = $(id).value.trim();
+    if (!contactForm.reportValidity()) { event.preventDefault(); return; }
+    if (navigator.onLine === false) {
+      event.preventDefault();
+      contactStatus.textContent = 'Du ser ut til å være frakoblet. Ingen innsending er startet. Feltene er beholdt; koble til nettet eller kopier forespørselen til en e-post.';
+      $('contact-fallback').open = true;
+      return;
+    }
+    updateEmailDraft();
+    contactPending = true;
+    contactSubmit.disabled = true;
+    contactForm.setAttribute('aria-busy', 'true');
+    contactStatus.textContent = 'Sender forespørselen … Vent på bekreftelsessiden før du lukker siden.';
+    contactTimer = setTimeout(() => {
+      // The request may have arrived even if the navigation did not finish.
+      // Keep the send guard until the browser restores the page, preserving all
+      // fields and offering a different way to ask about the same request.
+      contactForm.setAttribute('aria-busy', 'false');
+      contactStatus.textContent = 'Vi kan ikke bekrefte om forespørselen kom frem. Ikke send skjemaet på nytt nå. Feltene er beholdt; kontakt hei@jemlio.com og nevn at du allerede forsøkte skjemaet.';
+      $('contact-fallback').open = true;
+    }, 20000);
+    // Intentionally do not preventDefault(): the browser performs exactly one
+    // standard form POST, including when JavaScript is unavailable.
+  });
+  window.addEventListener('pagehide', () => { clearTimeout(contactTimer); });
+  window.addEventListener('pageshow', event => {
+    if (!event.persisted) return;
+    clearTimeout(contactTimer);
+    contactPending = false;
+    contactSubmit.disabled = false;
+    contactForm.setAttribute('aria-busy', 'false');
+    contactStatus.textContent = 'Feltene er beholdt. Hvis du allerede fikk bekreftelsessiden, trenger du ikke sende på nytt.';
+  });
+  updateEmailDraft();
   $('year').textContent = String(new Date().getFullYear());
 })();

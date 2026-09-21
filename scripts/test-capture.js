@@ -3,6 +3,7 @@ const crypto = require('node:crypto');
 const express = require('express');
 const { PGlite } = require('@electric-sql/pglite');
 const { createCaptureRouter, createMemoryStore, PgStore, createResendNotifier, flushNotifications } = require('../lib/capture');
+const { CaptureOperations } = require('../lib/capture/operations');
 
 async function main() {
   let passed = 0;
@@ -170,8 +171,21 @@ async function main() {
           const response=await call('/requests',submission);assert.equal(response.status,201);assert.equal(response.body.status,'received');assert.match(response.body.message,/lagret/);
           const row=(await db.query('SELECT r.data,o.notification,o.status FROM nova_capture_requests r JOIN nova_capture_outbox o ON o.request_id=r.id WHERE r.id=$1',[response.body.receipt])).rows[0];
           assert.deepEqual(row.notification.to,['office@example.no']);assert.equal(row.notification.from,'nova@example.no');assert.equal(row.status,'pending');assert.equal(row.data.consent,true);
+          assert.equal(row.notification.reply_to, submission.email.toLowerCase());
           assert.ok(!JSON.stringify(response.body).includes(submission.email));
           const retry=await call('/requests',submission);assert.equal(retry.status,200);assert.equal(retry.body.receipt,response.body.receipt);
+          const phoneOnly=await call('/requests',{...submission,submissionId:crypto.randomUUID(),email:'',phone:'+47 999 99 999'});
+          assert.equal(phoneOnly.status,201);
+          const phoneMessage=(await db.query('SELECT notification FROM nova_capture_outbox WHERE request_id=$1',[phoneOnly.body.receipt])).rows[0].notification;
+          assert.equal(Object.hasOwn(phoneMessage,'reply_to'),false);
+          for (const injected of ['visitor@example.no\r\nBcc:attacker@example.no','visitor@example.no,attacker@example.no']) {
+            assert.equal((await call('/requests',{...submission,submissionId:crypto.randomUUID(),email:injected})).status,400);
+          }
+          await db.query("UPDATE nova_capture_outbox SET status='accepted',provider_id='synthetic' WHERE request_id=$1",[response.body.receipt]);
+          await new CaptureOperations({pool,now:()=>clock}).deleteRequests({client:'example',receipt:response.body.receipt,apply:true});
+          const removedRetry=await call('/requests',submission);
+          assert.equal(removedRetry.status,410);assert.equal(removedRetry.body.error,'submission_removed');
+          assert.equal(removedRetry.body.receipt,undefined);
         }finally{await new Promise(resolve=>s.close(resolve));}
       });
     } finally {await db.close();}

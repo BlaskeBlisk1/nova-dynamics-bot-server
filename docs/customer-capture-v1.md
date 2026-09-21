@@ -1,8 +1,9 @@
 # Customer enquiry upgrade, first implementation
 
 This release adds a path from a visitor's question to a reviewed contact request.
-It is implemented on a separate branch and defaults off. Existing `/demos/:client`
-links continue to answer questions without displaying contact collection.
+Contact collection defaults off. The first production configuration enables
+conversation context only for Tiller and Frank Olsen; every existing `/demos/:client`
+link continues to answer questions without displaying contact collection.
 
 ## What is implemented
 
@@ -22,13 +23,17 @@ links continue to answer questions without displaying contact collection.
   database worker leases and a current-recipient check before dispatch. A receipt
   means saved, and provider acceptance means accepted; neither means delivered,
   a confirmed booking, or a sale.
+- Operator commands record contacted, qualified, won or lost outcomes by tenant
+  and receipt. Aggregate reports separate recorded outcomes from notification
+  acceptance. Scoped deletion defaults to a dry run, protects uncertain dispatch,
+  and retains opaque submission tombstones so old retries cannot recreate mail.
 - Form contact details stay out of PostHog, application logs and browser storage.
   Preview, owner/test query flags and localhost suppress the demo's analytics.
 
 This slice does not include an owner dashboard, delivery/bounce webhook handling,
 calendar booking, SMS, automatic follow-up, new website crawling, or a self-service
-onboarding portal. The new contact flow has no conversion analytics yet. It does
-not copy business enquiries into Nova's outreach Airtable base.
+onboarding portal. The contact flow has operator-recorded outcome reports, but no public conversion
+dashboard. It does not copy business enquiries into Jemlio's outreach Airtable base.
 
 ## Local review
 
@@ -115,10 +120,22 @@ email delivery. Secrets are not read from `.env` automatically by these scripts.
    operator attention. Establish monitoring and a recovery owner before accepting
    real enquiries; a console warning alone is not an alerting system.
 
-No managed database, real sending credential, pilot routing or public privacy page
-was provisioned by this implementation. Real collection remains off pending setup
-and verification. Subscription purchase or production deployment is not part of
-the code changes.
+No managed database, transactional sending credential or agreed pilot routing was
+provisioned by this implementation. Real in-chat collection and its worker remain
+off pending setup and verification; public synthetic preview routes also remain
+off. A connected Google Workspace mailbox does not supply a Resend API credential.
+Jemlio's own marketing form uses Netlify Forms independently, with an email fallback.
+
+The release configuration is `NOVA_CONVERSATION_CLIENTS=tiller,frankolsen`,
+`NOVA_CAPTURE_ENABLED=false`, `NOVA_CAPTURE_WORKER_ENABLED=false`, and
+`NOVA_PREVIEW_ENABLED=false`. The seven existing demo URLs and internal
+Nova identifiers remain stable. Shared chat controls have bounded timeouts and
+reset protection; personal medical details cannot seed routine price followups.
+
+See `lib/capture/README.md` for the outcome/report/delete operator commands.
+Synthetic local PGlite tests verify the schema and retry behavior, but the
+concurrent deletion/insert case still needs multi-connection PostgreSQL staging
+verification before real capture is enabled.
 
 ## Rollback and reconciliation
 

@@ -291,4 +291,19 @@ test("invalid bounds and inputs fail before allocating sessions", () => {
   assert.equal(manager.size, 0);
 });
 
+test("discarding an unsupported answer clears only that turn's context", () => {
+  const manager = createConversationManager();
+  const scope = { client: "frankolsen", origin: "https://www.frankolsen.no" };
+  const unsupported = manager.prepare({ ...scope, message: "Hvor lang tid tar en synsundersøkelse?" });
+  unsupported.discardContext();
+  assert.ok(manager.prepare({ ...scope, conversationId: unsupported.conversationId, message: "Hva koster det?" }).clarification);
+
+  const earlier = manager.prepare({ ...scope, message: "Hvor lang tid tar en synsundersøkelse?" });
+  const later = manager.prepare({ ...scope, conversationId: earlier.conversationId, message: "Jeg vil vite mer om kontaktlinser" });
+  earlier.discardContext();
+  const followup = manager.prepare({ ...scope, conversationId: later.conversationId, message: "Hva koster det?" });
+  assert.equal(followup.message, "Hva koster kontaktlinser?");
+  assert.equal(followup.contextApplied, true, "a delayed old response cannot erase a newer turn");
+});
+
 console.log(`Conversation context: ${checks} behavior checks passed.`);

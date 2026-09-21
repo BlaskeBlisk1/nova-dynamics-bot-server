@@ -1577,6 +1577,20 @@ body[data-capture="enabled"] .chat-card { height: 740px; min-height: 540px; }
 }
 .text-action:last-child { margin-left: auto; }
 .text-action:disabled { opacity: 0.5; cursor: wait; }
+.chat-retry {
+  display: block;
+  min-height: 40px;
+  margin-top: 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.chat-retry:focus-visible { outline: 3px solid var(--accent-secondary); outline-offset: 3px; }
 .capture-offer p { margin: 0 0 12px; }
 .capture-panel {
   flex: 0 0 auto;

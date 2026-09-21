@@ -103,6 +103,9 @@ let reviewedPayload;
 let submissionId;
 let submissionUncertain = false;
 let suggestedService = "";
+let chatGeneration = 0;
+let activeChatRequest;
+const CHAT_TIMEOUT_MS = 25000;
 
 function captureEnabled() {
   // Tenant-specific legacy pages can reuse this script without upgrade controls.
@@ -172,7 +175,7 @@ function addMessage(text, type) {
 
 function addTypingIndicator() {
   const message = document.createElement("div");
-  message.className = "message bot";
+  message.className = "message bot pending";
   message.setAttribute("aria-label", "Assistenten skriver");
   message.innerHTML = '<span class="typing"><span></span><span></span><span></span></span>';
   messages.appendChild(message);
@@ -185,6 +188,30 @@ function element(tag, className, text) {
   if (className) node.className = className;
   if (text) node.textContent = text;
   return node;
+}
+
+function cancelChatRequest() {
+  chatGeneration++;
+  if (activeChatRequest) {
+    clearTimeout(activeChatRequest.timer);
+    activeChatRequest.controller.abort();
+    activeChatRequest = undefined;
+  }
+  messages.querySelectorAll(".message.pending").forEach(node => node.remove());
+  sendButton.disabled = false;
+  form.setAttribute("aria-busy", "false");
+}
+
+// A useful answer may invite a next step. Greetings, uncertain answers and
+// private/sensitive questions must not turn into unsolicited contact prompts.
+// Explicit callback intent and the visitor's own contact button stay available.
+function captureInterest(question, payload) {
+  const text = String(question).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ø/g, "o").replace(/æ/g, "ae");
+  if (payload.unsure) return false;
+  if (/[\w.+-]+@[\w.-]+\.[a-z]{2,}/i.test(text) || /\b(?:\d[\s()-]?){6,}\b/.test(text)) return false;
+  if (/\b(?:jeg heter|mitt navn|navnet mitt|min adresse|personnummer|kortnummer|personvern|fodsel\w*|passord|password|api.?key|system.?prompt|ignorer|ignore|overstyr|override|hemmelig\w*|diagnos\w*|symptom\w*|smerte\w*|vondt|uklart|takete|synstap|dobbeltsyn|lysblink|rode? oy(?:e|ne)\w*|rodt oye|torr\w* oy(?:e|ne)\w*|akutt\w*|sykdom\w*|medisin\w*|helse\w*|epilepsi|diabetes|adhd|promille|forerrett|fritak|fritatt|aldersgrense)\b/.test(text)) return false;
+  if (/^(?:takk|tusen takk|ha det)\b/.test(text)) return false;
+  return /\b(?:pris(?:er|en)?|koster|kostnad|tilbud|pakke(?:r)?|bestill(?:e|er|ing)?|book(?:e|ing)?|timebestilling|pamelding|melde meg pa|kjoretime(?:r)?|automat(?:gir)?|manuell|klasse|kurs(?:et)?|grunnkurs|moped|tilhenger|synsundersokelse(?:r)?|synstest|kontaktlinse(?:r)?|brille(?:r)?)\b/.test(text);
 }
 
 // Only match known service IDs against short class/service words. Never copy
@@ -475,31 +502,41 @@ async function ask(question, source = "typed") {
   input.value = "";
   input.focus();
   sendButton.disabled = true;
-  if (conversationReset) conversationReset.disabled = true;
+  form.setAttribute("aria-busy", "true");
+  if (conversationReset) conversationReset.disabled = captureBusy || submissionUncertain;
   const typing = addTypingIndicator();
+  const generation = ++chatGeneration;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), CHAT_TIMEOUT_MS);
+  activeChatRequest = { controller, timer, generation };
 
   try {
     const response = await fetch("/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      signal: controller.signal,
       body: JSON.stringify({ client, message: text,
         ...(config?.features?.conversation && conversationId ? { conversationId } : {}),
         ...(previewRoute ? { preview: true } : {}) })
     });
     const payload = await response.json();
+    if (generation !== chatGeneration) return;
 
     if (!response.ok) {
       const requestError = new Error(payload.reply || "Kunne ikke hente svar.");
       requestError.httpStatus = response.status;
       throw requestError;
     }
+    if (typeof payload.reply !== "string" || !payload.reply.trim()) throw new Error("Missing chat reply");
 
     typing.remove();
     if (config?.features?.conversation && typeof payload.conversationId === "string") conversationId = payload.conversationId;
-    addMessage(payload.reply || "Jeg fant dessverre ikke et svar akkurat nå.", "bot");
-    suggestCaptureService(text);
+    addMessage(payload.reply, "bot");
+    const interested = captureInterest(text, payload);
+    if (interested) suggestCaptureService(text);
+    else suggestedService = "";
     if (payload.captureIntent === true && captureEnabled()) openCapture();
-    else offerCapture();
+    else if (interested) offerCapture();
 
     captureAnalytics(payload.unsure ? "answer_fallback" : "answer_success", {
       source,
@@ -509,8 +546,15 @@ async function ask(question, source = "typed") {
       http_status: response.status
     });
   } catch (error) {
+    if (generation !== chatGeneration) return;
     typing.remove();
-    addMessage("Beklager – forbindelsen til demoen sviktet. Prøv igjen om et øyeblikk.", "bot");
+    const notice = addMessage(error.name === "AbortError"
+      ? "Svaret tok for lang tid. Du kan prøve spørsmålet igjen."
+      : "Beklager – forbindelsen til demoen sviktet. Du kan prøve spørsmålet igjen.", "bot");
+    const retry = element("button", "chat-retry", "Prøv spørsmålet igjen");
+    retry.type = "button";
+    retry.addEventListener("click", () => ask(text, source));
+    notice.append(retry);
 
     captureAnalytics("answer_error", {
       source,
@@ -521,8 +565,13 @@ async function ask(question, source = "typed") {
     });
 
   } finally {
-    sendButton.disabled = false;
-    if (conversationReset) conversationReset.disabled = captureBusy || submissionUncertain;
+    clearTimeout(timer);
+    if (generation === chatGeneration) {
+      activeChatRequest = undefined;
+      sendButton.disabled = false;
+      form.setAttribute("aria-busy", "false");
+      if (conversationReset) conversationReset.disabled = captureBusy || submissionUncertain;
+    }
   }
 }
 
@@ -650,9 +699,10 @@ form.addEventListener("submit", (event) => {
 captureOpen?.addEventListener("click", openCapture);
 
 conversationReset?.addEventListener("click", () => {
-  if (sendButton.disabled || captureBusy || submissionUncertain) return;
+  if (captureBusy || submissionUncertain) return;
   const hasUnsavedContact = captureForm && ["name", "email", "phone", "preferredTime"].some(name => captureForm.elements[name].value.trim());
   if (hasUnsavedContact && !window.confirm("Starte en ny samtale? Usendte kontaktopplysninger blir tømt.")) return;
+  cancelChatRequest();
   conversationId = undefined;
   capturePanel = undefined;
   captureForm = undefined;
@@ -671,7 +721,10 @@ conversationReset?.addEventListener("click", () => {
 // RoMa has its own existing reset control and presentation script. Clear the
 // shared conversational context alongside that script's visual reset.
 document.getElementById("reset-chat")?.addEventListener("click", () => {
-  if (!sendButton.disabled && config) conversationId = undefined;
+  if (config && !captureBusy && !submissionUncertain) {
+    cancelChatRequest();
+    conversationId = undefined;
+  }
 });
 
 initialize();

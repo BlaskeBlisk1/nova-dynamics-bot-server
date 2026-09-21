@@ -5,7 +5,7 @@
   "scripts": {
     "start": "node index.js",
     "new-client": "node new-client.js",
-    "test": "npm run test:legacy && npm run test:conversation && npm run test:capture && npm run test:upgrade && npm run test:capture-ui",
+    "test": "npm run test:legacy && npm run test:brand && npm run test:conversation && npm run test:capture && npm run test:capture-operations && npm run test:upgrade && npm run test:live-context && npm run test:capture-ui && npm run test:marketing-ui",
     "test:legacy": "node scripts/smoke-demo.js && node scripts/smoke-fram.js && node scripts/smoke-fyllingsdalen.js && node scripts/smoke-onsoy.js && node scripts/smoke-tiller.js && node scripts/smoke-trafikk1.js && node scripts/smoke-frankolsen.js && node scripts/smoke-analytics.js && node scripts/smoke-roma.js",
     "test:conversation": "node scripts/test-conversation.js",
     "test:capture": "node scripts/test-capture.js",
@@ -23,7 +23,11 @@
     "test:analytics": "node scripts/smoke-analytics.js",
     "test:roma": "node scripts/smoke-roma.js",
     "test:brand": "node scripts/test-brand-config.js",
-    "preview:roma": "node scripts/preview-roma.js"
+    "preview:roma": "node scripts/preview-roma.js",
+    "test:capture-operations": "node scripts/test-capture-operations.js",
+    "capture:operations": "node scripts/capture-operations.js",
+    "test:live-context": "node scripts/test-live-context.js",
+    "test:marketing-ui": "node scripts/test-marketing-ui.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

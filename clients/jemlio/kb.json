@@ -12,12 +12,12 @@
   {
     "id": "tailoring",
     "q": "Kan chatten tilpasses bedriften min?",
-    "a": "Ja. Jemlio kan tilpasse innhold, farger og uttrykk til bedriften. En gratis mini-demo kan vise hvordan svar på vanlige kundespørsmål ser ut med bedriftens egen informasjon. Skriv til hei@jemlio.com for å be om en mini-demo."
+    "a": "Ja. Jemlio kan tilpasse innhold, farger og uttrykk til bedriften. En gratis mini-demo viser hvordan vanlige kundespørsmål kan besvares med bedriftens egen informasjon. Be om en demo i [kontaktskjemaet](https://www.jemlio.com/#contact) eller skriv til hei@jemlio.com."
   },
   {
     "id": "demo",
     "q": "Kan jeg få en gratis mini-demo?",
-    "a": "Ja. Be om en gratis mini-demo tilpasset bedriften ved å skrive til hei@jemlio.com. Send ønsket og nettsideadressen på e-post. Denne chatten sender ingen forespørsel automatisk."
+    "a": "Ja. Be om en gratis mini-demo tilpasset bedriften i [kontaktskjemaet](https://www.jemlio.com/#contact) eller skriv til hei@jemlio.com. Send bedriftens nettsideadresse. Denne chatten sender ingen forespørsel automatisk."
   },
   {
     "id": "pricing",
@@ -27,7 +27,7 @@
   {
     "id": "contact",
     "q": "Hvordan kontakter jeg Jemlio?",
-    "a": "Send e-post til hei@jemlio.com. Jeg kan vise adressen, men ikke sende meldingen for deg."
+    "a": "Bruk [kontaktskjemaet](https://www.jemlio.com/#contact) for å be om en demo, eller send e-post til hei@jemlio.com. Denne chatten sender ikke meldingen for deg."
   },
   {
     "id": "examples",
@@ -47,6 +47,11 @@
   {
     "id": "setup",
     "q": "Hvordan kommer jeg i gang?",
-    "a": "Start med å be om en gratis mini-demo på hei@jemlio.com. Send bedriftens nettsideadresse på e-post. Da kan vi avklare hvilke spørsmål chatten skal svare på, hvilke sider den skal vise videre til, og hvordan den skal se ut."
+    "a": "Start med å be om en gratis mini-demo i [kontaktskjemaet](https://www.jemlio.com/#contact) eller på hei@jemlio.com. Send bedriftens nettsideadresse. Vi avklarer hvilke spørsmål chatten skal svare på, hvilke sider den skal vise videre til, og hvordan den skal se ut. Du vurderer demoen før vi avtaler videre bruk."
+  },
+  {
+    "id": "contact-pilot",
+    "q": "Kan kunder be om kontakt direkte i chatten?",
+    "a": "Et frivillig kontaktsteg er under utprøving for en avgrenset pilot. Kunden skal velge selv om hen ønsker kontakt og se opplysningene før innsending. Funksjonen er ikke aktivert i de offentlige eksemplene eller eksisterende kundedemoer. Mottaker og behandling av opplysninger må avklares før aktivering. Denne chatten registrerer ingen kundehenvendelse."
   }
 ]
