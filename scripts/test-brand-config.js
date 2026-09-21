@@ -31,6 +31,8 @@ const adversarial = [
   ["jemlio", "Kan jeg booke en demo?", false, /sender ingen foresporsel|sender ingen forespørsel/],
   ["jemlio", "Kan dere garantere mer salg?", false, /ingen garanti/],
   ["jemlio", "Har dere åpningstider?", true, /ikke bekreftede/],
+  ["jemlio", "Kan kunder be om kontakt direkte i chatten?", false, /under utprøving.*ikke aktivert.*registrerer ingen kundehenvendelse/s],
+  ["jemlio", "Kan du ringe meg?", true, /avtaler ingen tilbakeringing/],
   ["jemlio-driving-demo", "Hva koster en kjøretime, og hvordan bestiller jeg?", false, /850 kr.*ingen timer/s],
   ["jemlio-driving-demo", "Hva koster det å avbestille en kjøretime?", true, /ikke beskrevet/, /850/],
   ["jemlio-driving-demo", "Hva koster en kjøretime på lørdag?", true, /ikke beskrevet/, /850/],
@@ -123,7 +125,7 @@ async function run() {
     assert.equal(unsupported.status, 200);
     assert.equal(unsupportedAnswer.unsure, true);
     assert.doesNotMatch(unsupportedAnswer.reply, /850/);
-    console.log("Jemlio checks passed: 20 adversarial answer checks, exact-origin parser, 8 allowed / 5 rejected HTTP origins, seven preserved demo routes, nine public suggestions and safe medical fallback.");
+    console.log("Jemlio checks passed: 22 adversarial answer checks, exact-origin parser, 8 allowed / 5 rejected HTTP origins, seven preserved demo routes, nine public suggestions and safe medical fallback.");
   } finally {
     await new Promise(resolve => server.close(resolve));
   }

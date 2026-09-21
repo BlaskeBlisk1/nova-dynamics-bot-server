@@ -11,6 +11,7 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 
 html { min-height: 100%; background: var(--bg); }
 
@@ -1538,4 +1539,126 @@ body[data-theme="optical"] .chat-form button:focus-visible {
     color: CanvasText;
     background: none;
   }
+}
+
+/* Upgrade controls share each tenant's existing colours. A fixed transcript
+   viewport keeps long forms inside the chat without moving the composer. */
+.preview-notice {
+  margin: 24px 0 0;
+  padding: 15px 18px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent-secondary);
+  border-radius: 10px;
+  color: var(--muted);
+  background: var(--panel);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.preview-notice strong { display: block; color: var(--text); }
+body[data-capture="enabled"] .chat-card { height: 740px; min-height: 540px; }
+.chat-tools {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 18px 10px;
+}
+.text-action {
+  min-height: 36px;
+  padding: 7px 0;
+  border: 0;
+  color: var(--text);
+  background: transparent;
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.text-action:last-child { margin-left: auto; }
+.text-action:disabled { opacity: 0.5; cursor: wait; }
+.chat-retry {
+  display: block;
+  min-height: 40px;
+  margin-top: 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.chat-retry:focus-visible { outline: 3px solid var(--accent-secondary); outline-offset: 3px; }
+.capture-offer p { margin: 0 0 12px; }
+.capture-panel {
+  flex: 0 0 auto;
+  width: 100%;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--panel-strong);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.capture-panel h3 { margin: 0 0 8px; font-size: 18px; letter-spacing: -0.02em; }
+.capture-panel h4 { margin: 4px 0 14px; font-size: 15px; }
+.capture-description { margin: 0 0 20px; color: var(--muted); }
+.capture-form { display: grid; gap: 8px; }
+.capture-form > label:not(:first-child) { margin-top: 8px; }
+.capture-form label, .capture-contact legend { font-size: 12px; font-weight: 650; }
+.capture-optional { font-weight: 400; color: var(--muted); }
+.capture-form input:not([type="checkbox"]), .capture-form select {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  color: var(--text);
+  background: var(--bg);
+  font: inherit;
+  font-size: 16px;
+}
+.capture-form input::placeholder { color: var(--muted); opacity: 0.8; }
+.capture-form select option { background: var(--bg); color: var(--text); }
+.capture-contact { min-width: 0; margin: 10px 0 0; padding: 0; border: 0; }
+.capture-field-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.capture-field-pair > div { display: grid; min-width: 0; gap: 6px; }
+.capture-help { margin: 5px 0 10px; color: var(--muted); font-size: 11px; line-height: 1.6; overflow-wrap: anywhere; }
+.capture-consent { display: flex; align-items: flex-start; gap: 10px; font-weight: 400 !important; line-height: 1.65; }
+.capture-consent input { flex: 0 0 auto; width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--accent); }
+.capture-consent a { color: inherit; text-underline-offset: 3px; }
+.capture-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.capture-primary, .capture-secondary {
+  min-height: 42px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.4;
+  cursor: pointer;
+}
+.capture-primary { border-color: var(--text); color: var(--bg); background: var(--text); font-weight: 750; }
+.capture-secondary { color: var(--text); background: transparent; }
+.capture-primary:disabled, .capture-secondary:disabled { opacity: 0.5; cursor: wait; }
+.capture-summary { display: grid; grid-template-columns: minmax(90px, 0.7fr) minmax(0, 1.3fr); gap: 8px 12px; margin: 0 0 18px; }
+.capture-summary dt { color: var(--muted); }
+.capture-summary dd { margin: 0; overflow-wrap: anywhere; }
+.capture-status { min-height: 1em; margin: 12px 0; font-size: 12px; }
+.capture-status-error { color: var(--text); border-left: 3px solid #e2995f; padding-left: 10px; }
+.capture-honeypot { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.capture-panel :is(input, select, button, a):focus-visible, .text-action:focus-visible, .capture-offer button:focus-visible {
+  outline: 3px solid var(--accent-secondary);
+  outline-offset: 3px;
+}
+@media (max-width: 560px) {
+  body[data-capture="enabled"] .chat-card { height: 760px; }
+  .capture-panel { padding: 16px; }
+  .capture-field-pair { grid-template-columns: 1fr; }
+  .capture-actions > button { flex: 1 1 auto; }
+  .chat-tools { gap: 10px; padding-inline: 14px; }
 }

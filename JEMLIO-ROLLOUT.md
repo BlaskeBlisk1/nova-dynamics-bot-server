@@ -8,7 +8,9 @@ Keep the existing Netlify site (`prismatic-taffy-e96ac7`). Connect this reposito
 
 The `/chat` proxy targets the stable Render service. `/jemlio/*` redirects to the corresponding marketing path. No customer demos are moved to Netlify.
 
-The contact fields open a filled email draft in the visitor's mail application. They do not submit personal data to the API or claim delivery. The public contact address is `hei@jemlio.com`; Domeneshop account administration confirmed it routes to an existing hosted mailbox on 20 September 2026. New lead-capture functionality in PR14 stays separate and disabled.
+The contact form submits a visitor-requested mini-demo enquiry directly to Netlify Forms on the canonical Jemlio website. A honeypot, affirmative contact request, duplicate-submit guard and explicit uncertain state protect the submission path. Email composition and copy/manual fallback preserve the entered details. Form processing must be verified after each deployment; a connection to Google Workspace does not automatically configure Netlify email notifications. The public mailbox is `hei@jemlio.com`, now managed through Google Workspace according to the completed setup. Customer-demo contact collection is separate and remains disabled until its database, sender and pilot routing are verified.
+
+The 20 September product release adds clearer demo/pilot copy, a post-answer mini-demo call to action, a confirmation page and updated provider/privacy information. It enables conversation context only for Tiller and Frank Olsen while retaining all seven customer demo links. Run `npm test` for legacy, context, HTTP, capture, operator and DOM checks; deployment verification belongs in the release PR. The domain-cutover entries below are historical evidence.
 
 ## Current cutover status — 19 September 2026
 

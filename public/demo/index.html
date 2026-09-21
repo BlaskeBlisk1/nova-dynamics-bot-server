@@ -21,6 +21,8 @@
       <span class="demo-pill"><span class="live-dot"></span> PERSONLIG LIVE-DEMO</span>
     </header>
 
+    <p id="preview-notice" class="preview-notice" role="note" hidden><strong>Forhåndsvisning av oppgraderingen</strong> Bruk bare oppdiktede kontaktopplysninger. Testforespørsler sendes ikke til virksomheten.</p>
+
     <section class="intro">
       <div class="identity-row">
         <p id="eyebrow" class="eyebrow">NETTSIDEASSISTENT</p>
@@ -64,6 +66,11 @@
         </div>
 
         <div id="messages" class="messages" role="log" aria-live="polite" aria-relevant="additions"></div>
+
+        <div id="chat-tools" class="chat-tools" hidden>
+          <button id="capture-open" class="text-action" type="button" hidden>Be om å bli kontaktet</button>
+          <button id="conversation-reset" class="text-action" type="button" hidden title="Start på nytt og tøm samtalen">Ny samtale</button>
+        </div>
 
         <form id="chat-form" class="chat-form">
           <label class="sr-only" for="message-input">Skriv et spørsmål</label>
