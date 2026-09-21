@@ -1,0 +1,59 @@
+name: Jemlio one-time Netlify release
+
+on:
+  push:
+    branches: [codex/jemlio-release-verification]
+    paths: ['.github/workflows/jemlio-netlify-release.yml']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jemlio-one-time-netlify-release
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    env:
+      OPENAI_API_KEY: ''
+      NOVA_DATABASE_URL: ''
+      RESEND_API_KEY: ''
+      NOVA_CAPTURE_ENABLED: 'false'
+      NOVA_CAPTURE_WORKER_ENABLED: 'false'
+      NOVA_PREVIEW_ENABLED: 'false'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '>=24.15.0 <25'
+          package-manager-cache: false
+      - run: npm ci --ignore-scripts
+      - run: npm test
+      - name: Generate a one-run public encryption key
+        run: node scripts/netlify-release-session.cjs prepare
+      - name: Share only the public encryption key
+        uses: actions/upload-artifact@v7
+        with:
+          name: jemlio-public-deploy-session
+          path: ${{ runner.temp }}/jemlio-public-session.json
+          if-no-files-found: error
+          retention-days: 1
+      - name: Use the encrypted site-specific deployment capability
+        env:
+          GH_READ_TOKEN: ${{ github.token }}
+        run: node scripts/netlify-release-session.cjs deploy
+      - name: Keep the redacted deployment result
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: jemlio-netlify-release-result
+          path: ${{ runner.temp }}/jemlio-netlify-result.json
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Remove the ephemeral private key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/jemlio-private-session.pem"
