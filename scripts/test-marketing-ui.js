@@ -68,7 +68,7 @@ function harness({ url = 'https://www.jemlio.com/', online = true, clipboard = '
     const dom = new JSDOM(html);
     const form = dom.window.document.querySelector('#contact-form');
     assert.equal(form.method, 'post');
-    assert.equal(form.getAttribute('action'), '/enquiry');
+    assert.equal(form.getAttribute('action'), 'https://www.jemlio.com/enquiry');
     assert.equal(form.hasAttribute('data-netlify'), false);
     assert.equal(form.elements['form-name'], undefined);
     assert.equal(form.hasAttribute('netlify-honeypot'), false);
