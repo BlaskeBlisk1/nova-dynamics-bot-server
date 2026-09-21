@@ -48,7 +48,7 @@ if (require.main === module) {
   if (process.env.JEMLIO_STAGING_ONLY !== 'true') {
     console.error('Refusing to run outside isolated staging.'); process.exitCode = 1;
   } else {
-    let state = 'starting', siteTask = { state: 'starting' };
+    let state = 'starting', siteTask = { state: 'starting' }, mailState = 'starting';
     const server = http.createServer((req, res) => {
       res.setHeader('Cache-Control', 'no-store');
       res.setHeader('X-Robots-Tag', 'noindex, nofollow');
@@ -56,16 +56,21 @@ if (require.main === module) {
         res.writeHead(404); return res.end();
       }
       res.setHeader('Content-Type', 'application/json');
-      res.end(JSON.stringify({ mode: 'integration-staging', schemaSample: state, siteTask }));
+      res.end(JSON.stringify({ mode: 'integration-staging', schemaSample: state, siteTask, mailState }));
     });
     server.listen(Number(process.env.PORT || 10000), '0.0.0.0', async () => {
       try {
         state = await seed(); console.log(`Schema setup: ${state}. No customer data or mail.`);
         siteTask = await require('./staging-site-task.cjs').runSiteTask();
         console.log(`Site task: ${siteTask.task}; state: ${siteTask.state}; exit: ${siteTask.exitCode ?? 'none'}. Verify provider state separately.`);
+        const mail = await require('./staging-resend-check.cjs').runResendCheck();
+        mailState = mail.state;
+        // The report contains only whitelisted status metadata and Jemlio's
+        // public DNS records. No key, raw provider error or email body is logged.
+        console.log('Resend verification: ' + JSON.stringify(mail));
       } catch {
         if (state === 'starting') state = 'failed';
-        siteTask = { state: 'failed' };
+        siteTask = { state: 'failed' }; mailState = 'unconfirmed';
         console.error('Staging task failed; no configuration, request body or subprocess output logged.');
       }
     });
