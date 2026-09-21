@@ -44,3 +44,41 @@ jobs:
         run: npm ci --ignore-scripts
       - name: Run all existing demo, capture and marketing regressions
         run: npm test
+
+  postgres-concurrency:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: jemlio_ci
+          POSTGRES_PASSWORD: throwaway-ci-only
+          POSTGRES_DB: jemlio_capture_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U jemlio_ci -d jemlio_capture_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      NODE_ENV: test
+      JEMLIO_TEST_DATABASE_URL: postgresql://jemlio_ci:throwaway-ci-only@127.0.0.1:5432/jemlio_capture_ci
+      JEMLIO_THROWAWAY_DATABASE: 'true'
+      NOVA_DATABASE_URL: ''
+      OPENAI_API_KEY: ''
+      RESEND_API_KEY: ''
+      NOVA_CAPTURE_ENABLED: 'false'
+      NOVA_CAPTURE_WORKER_ENABLED: 'false'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '>=24.15.0 <25'
+          package-manager-cache: false
+      - run: npm ci --ignore-scripts
+      - name: Test transactions, concurrent retries, worker leases and deletion races
+        run: node scripts/test-capture-postgres.js
