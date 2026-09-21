@@ -55,7 +55,7 @@ function allFiles(directory, prefix = '') {
       assert.equal(fs.existsSync(path.join(directory, '.git')), false);
       assert.equal(fs.existsSync(path.join(directory, 'lib')), false);
     });
-    await test('the dedicated static definition matches visible form fields, limits, choices and explicit consent', () => {
+    await test('the relative static definition matches visible fields, limits, choices, consent and canonical destination', () => {
       const visible = new JSDOM(fs.readFileSync(path.join(root, 'public/marketing/index.html'), 'utf8'));
       const blueprint = new JSDOM(fs.readFileSync(path.join(root, 'public/marketing/form-definition.html'), 'utf8'));
       try {
@@ -63,7 +63,8 @@ function allFiles(directory, prefix = '') {
         const definition = blueprint.window.document.querySelector('form');
         assert.equal(definition.name, form.name);
         assert.equal(definition.method, form.method);
-        assert.equal(definition.getAttribute('action'), form.getAttribute('action'));
+        assert.equal(definition.getAttribute('action'), '/demo-requested');
+        assert.equal(new URL(definition.getAttribute('action'), 'https://www.jemlio.com').href, form.getAttribute('action'));
         assert.equal(definition.hidden, true);
         assert.equal(definition.getAttribute('data-netlify'), 'true');
         assert.equal(definition.getAttribute('netlify-honeypot'), 'bot-field');
