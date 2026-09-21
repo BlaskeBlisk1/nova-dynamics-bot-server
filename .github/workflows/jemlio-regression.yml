@@ -1,0 +1,46 @@
+name: Jemlio regression guard
+
+on:
+  push:
+    branches: [main, codex/jemlio-release-verification]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jemlio-regression-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NODE_ENV: test
+      OPENAI_API_KEY: ''
+      NOVA_DATABASE_URL: ''
+      RESEND_API_KEY: ''
+      NOVA_CAPTURE_ENABLED: 'false'
+      NOVA_CAPTURE_WORKER_ENABLED: 'false'
+      NOVA_PREVIEW_ENABLED: 'false'
+      NOVA_CAPTURE_CONFIG: ''
+      NOVA_CAPTURE_SECRET: ''
+      NOVA_CAPTURE_FROM: ''
+    steps:
+      - name: Check out the exact revision
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Use the supported Node 24 release line
+        uses: actions/setup-node@v7
+        with:
+          node-version: '>=24.15.0 <25'
+          check-latest: true
+          package-manager-cache: false
+      - name: Install the locked dependencies without install hooks
+        run: npm ci --ignore-scripts
+      - name: Run all existing demo, capture and marketing regressions
+        run: npm test
