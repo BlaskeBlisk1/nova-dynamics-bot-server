@@ -1,8 +1,7 @@
 'use strict';
 
 // Run only on the separate integration staging service, never npm start.
-// This performs at most one explicit, time-limited synthetic setup POST per
-// process. Clear the setup env values immediately after schema capture.
+// All setup and site-task capabilities must be cleared after their one-shot use.
 const http = require('node:http');
 const { randomUUID } = require('node:crypto');
 
@@ -49,7 +48,7 @@ if (require.main === module) {
   if (process.env.JEMLIO_STAGING_ONLY !== 'true') {
     console.error('Refusing to run outside isolated staging.'); process.exitCode = 1;
   } else {
-    let state = 'starting';
+    let state = 'starting', siteTask = { state: 'starting' }, mailState = 'starting';
     const server = http.createServer((req, res) => {
       res.setHeader('Cache-Control', 'no-store');
       res.setHeader('X-Robots-Tag', 'noindex, nofollow');
@@ -57,11 +56,23 @@ if (require.main === module) {
         res.writeHead(404); return res.end();
       }
       res.setHeader('Content-Type', 'application/json');
-      res.end(JSON.stringify({ mode: 'synthetic-only', schemaSample: state }));
+      res.end(JSON.stringify({ mode: 'integration-staging', schemaSample: state, siteTask, mailState }));
     });
-    server.listen(Number(process.env.PORT || 10000), '0.0.0.0', () => {
-      seed().then(result => { state = result; console.log(`Schema setup: ${result}. No customer data or mail.`); })
-        .catch(() => { state = 'failed'; console.error('Schema setup failed; no configuration or response body logged.'); });
+    server.listen(Number(process.env.PORT || 10000), '0.0.0.0', async () => {
+      try {
+        state = await seed(); console.log(`Schema setup: ${state}. No customer data or mail.`);
+        siteTask = await require('./staging-site-task.cjs').runSiteTask();
+        console.log(`Site task: ${siteTask.task}; state: ${siteTask.state}; exit: ${siteTask.exitCode ?? 'none'}. Verify provider state separately.`);
+        const mail = await require('./staging-resend-check.cjs').runResendCheck();
+        mailState = mail.state;
+        // The report contains only whitelisted status metadata and Jemlio's
+        // public DNS records. No key, raw provider error or email body is logged.
+        console.log('Resend verification: ' + JSON.stringify(mail));
+      } catch {
+        if (state === 'starting') state = 'failed';
+        siteTask = { state: 'failed' }; mailState = 'unconfirmed';
+        console.error('Staging task failed; no configuration, request body or subprocess output logged.');
+      }
     });
     process.on('SIGTERM', () => server.close());
   }

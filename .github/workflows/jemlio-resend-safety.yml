@@ -1,0 +1,30 @@
+name: Jemlio Resend diagnostic safety
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main, codex/enquiry-readiness]
+    paths:
+      - 'scripts/staging-resend-check.cjs'
+      - 'scripts/test-staging-resend-check.cjs'
+      - 'scripts/staging-enquiry-setup.cjs'
+      - '.github/workflows/jemlio-resend-safety.yml'
+permissions:
+  contents: read
+jobs:
+  safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    env:
+      RESEND_API_KEY: ''
+      JEMLIO_RESEND_CHECK: 'false'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '>=24.15.0 <25'
+          package-manager-cache: false
+      - run: node --check scripts/staging-enquiry-setup.cjs
+      - run: node scripts/test-staging-resend-check.cjs
