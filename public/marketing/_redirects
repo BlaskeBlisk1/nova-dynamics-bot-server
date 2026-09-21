@@ -1,4 +1,5 @@
 /chat https://nova-dynamics-bot-server.onrender.com/chat 200
+/enquiry https://nova-dynamics-bot-server.onrender.com/api/marketing-enquiry 200
 # Keep the API proxy first so existing POST clients do not follow a 301.
 # All public marketing hosts converge on the verified Jemlio www domain.
 http://jemlio.com/* https://www.jemlio.com/:splat 301!
