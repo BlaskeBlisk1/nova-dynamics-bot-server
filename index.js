@@ -173,6 +173,9 @@ app.get(["/previews/:client", "/previews/:client/"], (req, res) => {
 });
 
 app.use("/api/capture", upgrades.router);
+app.use("/api/marketing-enquiry", require("./lib/marketing-enquiries").createMarketingEnquiryRouter({
+  allowedOrigins: ["https://www.jemlio.com", "https://jemlio.com"]
+}));
 
 app.get("/api/demo-config/:client", async (req, res) => {
   const client = safeSlug(req.params.client);
