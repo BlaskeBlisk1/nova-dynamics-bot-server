@@ -1,0 +1,58 @@
+name: Jemlio public release smoke
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'lib/marketing-enquiries.js'
+      - 'scripts/verify-safe-release.cjs'
+      - '.github/workflows/jemlio-live-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jemlio-public-release-smoke
+  cancel-in-progress: false
+
+jobs:
+  public-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '>=24.15.0 <25'
+          package-manager-cache: false
+      - name: Wait within a bounded window for the new public readiness route
+        run: |
+          node <<'NODE'
+          const { setTimeout: delay } = require('node:timers/promises');
+          (async () => {
+            for (let n = 0; n < 12; n++) {
+              try {
+                const response = await fetch('https://nova-dynamics-bot-server.onrender.com/api/marketing-enquiry/status', { signal: AbortSignal.timeout(10000) });
+                if (response.ok) {
+                  const value = await response.json();
+                  if (value.capability === 'webhook-forwarding' && value.storageVerified === false) return;
+                }
+              } catch { /* Deployment propagation can briefly interrupt this read. */ }
+              if (n < 11) await delay(10000);
+            }
+            throw new Error('New readiness route was not observed within the verification window');
+          })().catch(() => { console.error('Readiness verification failed.'); process.exitCode = 1; });
+          NODE
+      - name: Check existing demos, bounded context and website chat without form submissions
+        run: node scripts/verify-safe-release.cjs --live
+      - name: Preserve the public smoke report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: jemlio-safe-public-smoke
+          path: release-verification/safe-live.json
+          if-no-files-found: warn
+          retention-days: 14
