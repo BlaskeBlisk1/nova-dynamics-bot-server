@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const os = require('node:os');
 const { EventEmitter } = require('node:events');
+const { JSDOM } = require('jsdom');
 const { configuration, prepareBundle, runSiteTask, FILES } = require('./staging-site-task.cjs');
 const at = Date.parse('2026-09-21T21:00:00Z');
 const base = { JEMLIO_SITE_TASK: 'publish-marketing', JEMLIO_STAGING_ONLY: 'true',
@@ -45,13 +46,36 @@ function allFiles(directory, prefix = '') {
         assert.throws(() => configuration({ ...base, JEMLIO_NETLIFY_DEPLOY_PROXY: url }, at));
       }
     });
-    await test('the publish bundle contains only nine allowlisted public assets and a static publish config', () => {
+    await test('the publish bundle contains only ten allowlisted public assets and a static publish config', () => {
       const directory = path.join(temp, 'bundle'); fs.mkdirSync(directory);
       prepareBundle(root, directory);
+      assert.equal(FILES.length, 10);
       assert.deepEqual(allFiles(directory), ['netlify.toml', ...FILES.map(file => path.join('public', 'marketing', file))].sort());
       assert.match(fs.readFileSync(path.join(directory, 'public/marketing/index.html'), 'utf8'), /data-netlify="true"/);
       assert.equal(fs.existsSync(path.join(directory, '.git')), false);
       assert.equal(fs.existsSync(path.join(directory, 'lib')), false);
+    });
+    await test('the dedicated static definition matches visible form fields, limits, choices and explicit consent', () => {
+      const visible = new JSDOM(fs.readFileSync(path.join(root, 'public/marketing/index.html'), 'utf8'));
+      const blueprint = new JSDOM(fs.readFileSync(path.join(root, 'public/marketing/form-definition.html'), 'utf8'));
+      try {
+        const form = visible.window.document.querySelector('#contact-form');
+        const definition = blueprint.window.document.querySelector('form');
+        assert.equal(definition.name, form.name);
+        assert.equal(definition.method, form.method);
+        assert.equal(definition.getAttribute('action'), form.getAttribute('action'));
+        assert.equal(definition.hidden, true);
+        assert.equal(definition.getAttribute('data-netlify'), 'true');
+        assert.equal(definition.getAttribute('netlify-honeypot'), 'bot-field');
+        const fields = node => [...node.elements].filter(item => item.name).map(item => ({
+          name: item.name, tag: item.tagName, type: item.type, required: item.required,
+          maxlength: item.getAttribute('maxlength'),
+          value: ['hidden', 'checkbox'].includes(item.type) ? item.value : null,
+          choices: item.tagName === 'SELECT' ? [...item.options].map(option => option.value) : []
+        })).sort((a, b) => a.name.localeCompare(b.name));
+        assert.deepEqual(fields(definition), fields(form));
+        assert.match(blueprint.window.document.querySelector('meta[name="robots"]').content, /noindex/);
+      } finally { visible.window.close(); blueprint.window.close(); }
     });
     await test('a mocked publish uses only the official scoped command and cannot retry its attempted session', async () => {
       let calls = 0;
