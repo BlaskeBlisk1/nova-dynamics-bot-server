@@ -39,4 +39,6 @@ jobs:
           node-version: '>=24.15.0 <25'
           package-manager-cache: false
       - run: npm ci --ignore-scripts
+      - name: Audit production dependencies for high or critical vulnerabilities
+        run: npm audit --omit=dev --audit-level=high
       - run: npm test
