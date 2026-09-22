@@ -190,8 +190,47 @@ function element(tag, className, text) {
   return node;
 }
 
+function clearFollowUps() {
+  messages.querySelectorAll(".chat-followups").forEach(node => node.remove());
+}
+
+function renderFollowUps(message, payload) {
+  if (config?.features?.conversation !== true || payload.unsure !== false || payload.captureIntent) return;
+  if (!Array.isArray(payload.followUps)) return;
+  const allowed = new Set(["price", "contents", "booking", "contact"]);
+  const seen = new Set();
+  const choices = payload.followUps.slice(0, 3).filter(choice => {
+    if (!choice || !allowed.has(choice.id) || seen.has(choice.id) ||
+        typeof choice.label !== "string" || !choice.label.trim() || choice.label.length > 60 ||
+        typeof choice.message !== "string" || !choice.message.trim() || choice.message.length > 200) return false;
+    seen.add(choice.id);
+    return true;
+  });
+  if (!choices.length) return;
+  const group = element("div", "chat-followups");
+  group.setAttribute("role", "group");
+  group.setAttribute("aria-label", "Spør videre");
+  group.append(element("span", "chat-followups-label", "Spør videre"));
+  const actions = element("div", "chat-followup-actions");
+  for (const choice of choices) {
+    const button = element("button", "chat-followup", choice.label);
+    button.type = "button";
+    button.setAttribute("aria-label", choice.message);
+    button.addEventListener("click", () => {
+      if (!button.isConnected || sendButton.disabled) return;
+      captureAnalytics("followup_question_clicked", { followup_id: choice.id });
+      ask(choice.message, "followup");
+    });
+    actions.append(button);
+  }
+  group.append(actions);
+  message.append(group);
+  scrollMessages();
+}
+
 function cancelChatRequest() {
   chatGeneration++;
+  clearFollowUps();
   if (activeChatRequest) {
     clearTimeout(activeChatRequest.timer);
     activeChatRequest.controller.abort();
@@ -488,6 +527,7 @@ async function submitCapture(submit, edit, status) {
 async function ask(question, source = "typed") {
   const text = String(question || "").trim();
   if (!text || sendButton.disabled) return;
+  clearFollowUps();
 
   const questionCategory = classifyQuestion(text);
   const startedAt = performance.now();
@@ -531,7 +571,8 @@ async function ask(question, source = "typed") {
 
     typing.remove();
     if (config?.features?.conversation && typeof payload.conversationId === "string") conversationId = payload.conversationId;
-    addMessage(payload.reply, "bot");
+    const answer = addMessage(payload.reply, "bot");
+    renderFollowUps(answer, payload);
     const interested = captureInterest(text, payload);
     if (interested) suggestCaptureService(text);
     else suggestedService = "";

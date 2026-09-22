@@ -4036,7 +4036,8 @@ app.post("/chat", async (req, res) => {
       // unsupported/unknown answer cannot seed a routine price or booking.
       if (body.unsure === true && !context.clarification) context.discardContext();
       return sendJson({ ...body, conversationId: context.conversationId,
-        contextApplied: context.contextApplied, contextExpired: context.contextExpired });
+        contextApplied: context.contextApplied, contextExpired: context.contextExpired,
+        followUps: body.unsure === false && !body.captureIntent ? context.getFollowUps() : [] });
     };
     if (context.clarification) return res.json({ reply: context.clarification, unsure: true, suggestions: [] });
     message = context.message;

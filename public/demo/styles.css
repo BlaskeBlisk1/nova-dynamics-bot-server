@@ -1591,6 +1591,26 @@ body[data-capture="enabled"] .chat-card { height: 740px; min-height: 540px; }
   cursor: pointer;
 }
 .chat-retry:focus-visible { outline: 3px solid var(--accent-secondary); outline-offset: 3px; }
+.chat-followups { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); white-space: normal; }
+.chat-followups-label { display: block; margin-bottom: 8px; font-size: 11px; color: var(--muted); }
+.chat-followup-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.chat-followup {
+  min-height: 44px;
+  max-width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: left;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.chat-followup:hover { border-color: currentColor; background: var(--panel); }
+.chat-followup:focus-visible { outline: 3px solid var(--accent-secondary); outline-offset: 3px; }
 .capture-offer p { margin: 0 0 12px; }
 .capture-panel {
   flex: 0 0 auto;

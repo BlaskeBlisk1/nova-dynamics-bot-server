@@ -47,6 +47,34 @@ CRM destination automatically.
 
 ## Local review
 
+### Guided follow-up questions, 22 September 2026
+
+Tiller and Frank Olsen now offer up to three **Spør videre** buttons after a
+supported answer. The choices ask about the selected service's price, contents
+or booking process. Frank Olsen's glasses and repair answers offer a contact
+question; they never inherit the routine eye-exam price. Contact-lens choices
+offer fitting information and booking guidance, not an unpublished price.
+
+The server constructs complete questions from bounded service/class enums and
+omits the intent just answered. Clicking a button uses the existing chat route;
+it does not book an appointment, submit a lead or send a message. A complete
+question still identifies its service if the conversation has expired.
+Unsupported answers, ambiguity, privacy/personal-data questions, and sensitive
+qualifiers offer no choices. Old buttons disappear when a new request starts,
+on reset, or after a superseded response. Labels render as text, keyboard focus
+is visible, and touch targets are at least 44 pixels high.
+
+The optional `followup_question_clicked` event contains only an allowlisted
+intent ID. Generated question text, conversation IDs and service names are not
+added to analytics. Owner/test/preview analytics suppression remains in force.
+Existing conversation switches limit this release to Tiller and Frank Olsen;
+no capture, recipient, CRM, preview or deployment environment setting changes.
+
+Verification includes every offered question through the real HTTP handlers,
+expiry and superseded-turn checks, DOM click/reset/late-response checks, plain
+text rendering, and the full existing regression suite. Live visual checks are
+recorded in the release handover after deployment.
+
 ### Answer-quality update, 22 September 2026
 
 The Tiller conversation resolver now retains the selected Standardpakke or
