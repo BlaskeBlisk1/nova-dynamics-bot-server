@@ -47,6 +47,30 @@ CRM destination automatically.
 
 ## Local review
 
+### Answer-quality update, 22 September 2026
+
+The Tiller conversation resolver now retains the selected Standardpakke or
+Superpakke and the numbered trinnvurdering. Bounded follow-ups about price,
+contents, duration and booking reuse that selection. Comparisons remain
+ambiguous; unknown answers, reset and expiry clear it. Only enum values remain
+in memory, with the same tenant/origin boundaries and feature switches.
+
+The direct Tiller handler distinguishes Norwegian `be om` from licence BE and
+does not assign an ordinary lesson price to a requested 60/90-minute lesson or
+double lesson. Frank Olsen keeps a repair follow-up separate from glasses and
+asks for business confirmation for unverified attestation/førerkort exams and
+durations. Optician clarification text no longer asks for a driving licence.
+The normal booking answers still point to the businesses' existing websites.
+
+Source review: [Tiller's published prices](https://tillertrafikkskole.no/priser)
+and [Frank Olsen's services](https://www.frankolsen.no/tjenester), checked
+22 September 2026. These changes reuse the existing published prices; they do
+not verify appointment availability or an additional attestation service.
+Focused HTTP and context tests cover complete multi-turn sequences, ambiguous
+selection, ordinary-versus-specific requests, reset/expiry, and unknown-answer
+invalidation. The legacy answer suites also exercise the handlers with context
+disabled. This release changes no intake, delivery or pilot activation settings.
+
 Use Node 24.15+ within the Node 24 release line for the development test dependencies
 (this release was tested on Node 24.19). jsdom also supports Node 22.22.2+ within
 the Node 22 release line and Node 26+.

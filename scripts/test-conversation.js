@@ -306,4 +306,64 @@ test("discarding an unsupported answer clears only that turn's context", () => {
   assert.equal(followup.contextApplied, true, "a delayed old response cannot erase a newer turn");
 });
 
+test("Tiller package identity survives price, contents and explicit replacement", () => {
+  const manager = createConversationManager();
+  const scope = { client: "tiller", origin: "https://tillertrafikkskole.no" };
+  let current = manager.prepare({ ...scope, message: "Hva inkluderer Standardpakken?" });
+  for (const [message, expected] of [
+    ["Hva koster den?", "Hva koster Standardpakken?"],
+    ["Hva med Superpakken?", "Hva koster Superpakken?"],
+    ["Hva er inkludert?", "Hva inngår i Superpakken?"],
+    ["Hvor lenge varer den?", "Hvor lenge varer Superpakken?"]
+  ]) {
+    current = manager.prepare({ ...scope, message, conversationId: current.conversationId });
+    assert.equal(current.message, expected);
+    assert.equal(current.contextApplied, true);
+  }
+  current = manager.prepare({ ...scope, message: "Sammenlign Standardpakken og Superpakken", conversationId: current.conversationId });
+  assert.ok(manager.prepare({ ...scope, message: "Hva koster den?", conversationId: current.conversationId }).clarification);
+});
+
+test("named Tiller services cannot be rewritten as another tenant's products", () => {
+  const manager = createConversationManager();
+  for (const client of ["frankolsen", "roma"]) {
+    const first = manager.prepare({ client, message: "Hva koster en kjøretime?" });
+    const message = "Hva med Superpakken?";
+    const next = manager.prepare({ client, message, conversationId: first.conversationId });
+    assert.equal(next.message, message);
+    assert.equal(next.contextApplied, false);
+  }
+});
+
+test("new duration and contents fragments cannot revive expired or discarded context", () => {
+  let clock = 0;
+  const manager = createConversationManager({ ttlMs: 1000, now: () => clock });
+  for (const followup of ["Hvor lenge varer det?", "Hva er inkludert?"]) {
+    const first = manager.prepare({ client: "tiller", message: "Hva koster trafikalt grunnkurs?" });
+    clock += 1000;
+    const expired = manager.prepare({ client: "tiller", message: followup, conversationId: first.conversationId });
+    assert.ok(expired.clarification);
+    assert.equal(expired.contextApplied, false);
+    assert.notEqual(expired.conversationId, first.conversationId);
+    const fresh = manager.prepare({ client: "tiller", message: "Hva koster Superpakken?" });
+    fresh.discardContext();
+    assert.ok(manager.prepare({ client: "tiller", message: followup, conversationId: fresh.conversationId }).clarification);
+  }
+});
+
+test("special-purpose and timed services are not reduced to ordinary enum context", () => {
+  const manager = createConversationManager();
+  for (const [client, message] of [
+    ["frankolsen", "Jeg vil vite om synsundersøkelse for førerkortattest"],
+    ["tiller", "Hva koster en kjøretime på 60 minutter?"],
+    ["tiller", "Hva koster en 90-minutters kjøretime?"]
+  ]) {
+    const first = manager.prepare({ client, message });
+    assert.equal(first.message, message);
+    const next = manager.prepare({ client, message: "Hva koster det?", conversationId: first.conversationId });
+    assert.ok(next.clarification, message);
+    if (client === "frankolsen") assert.doesNotMatch(next.clarification, /førerkortklasse/);
+  }
+});
+
 console.log(`Conversation context: ${checks} behavior checks passed.`);

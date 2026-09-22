@@ -128,6 +128,9 @@ const checks = [
   { message: "Er denne modellen på lager?", includes: ["ikke spesifisert", "Lagerstatus"], unsure: true },
   { message: "Reparerer dere briller?", includes: ["Reparasjoner", "tilpasning", "tidsbruk"] },
   { message: "Hva koster en brillereparasjon?", includes: ["ikke spesifisert", "Pris på reparasjoner"], unsure: true },
+  { message: "Hva koster synsundersøkelse for førerkortattest?", includes: ["ikke bekreftet", "synsattest"], forbids: ["gratis"], unsure: true },
+  { message: "Hvordan bestiller jeg en synsattest?", includes: ["ikke bekreftet", "avklare"], forbids: ["gratis", "Velg «Bestill»"], unsure: true },
+  { message: "Hvor lenge varer kontaktlinsetilpasning?", includes: ["Varighet", "ikke publisert"], forbids: ["70 år"], unsure: true },
   { message: "Hva koster komplette briller?", includes: ["ikke spesifisert", "generell", "innfatning", "glass"], unsure: true },
   { message: "Selger dere solbriller?", includes: ["briller og solbriller", "lagerstatus"] },
 
