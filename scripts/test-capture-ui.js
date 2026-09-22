@@ -475,6 +475,88 @@ async function test(name, run) {
     h.finish();
   });
 
+  const guidedConfig = structuredClone(baseConfig);
+  guidedConfig.features.capture = { enabled: false, mode: "off", services: [] };
+  const guidedChoice = { id: "contents", label: "Hva inngår?", message: "Hva inngår i Standardpakken?" };
+
+  await test("guided buttons ask the complete question once and keep only the newest answer's choices", async () => {
+    let turn = 0;
+    const h = await harness({ url: "https://nova.example/demos/tiller", config: guidedConfig, onChat: () => {
+      turn++;
+      return response({ reply: `Svar ${turn}`, unsure: false, conversationId: `guided-${turn}`,
+        followUps: turn === 1 ? [guidedChoice] : [{ id: "booking", label: "Hvordan bestiller jeg?", message: "Hvordan bestiller jeg Standardpakken?" }] });
+    } });
+    await h.ask("Hva koster Standardpakken?");
+    const oldButton = h.get(".chat-followup");
+    assert.equal(oldButton.type, "button");
+    assert.equal(oldButton.getAttribute("aria-label"), guidedChoice.message);
+    assert.equal(h.get(".chat-followups").getAttribute("role"), "group");
+    oldButton.click();
+    await until(() => !h.get("#send-button").disabled, "follow-up should finish");
+    const chats = h.calls.filter(call => call.url === "/chat");
+    assert.equal(chats.length, 2);
+    assert.equal(chats[1].payload.message, guidedChoice.message);
+    assert.equal(chats[1].payload.conversationId, "guided-1");
+    assert.equal(h.document.querySelectorAll(".chat-followups").length, 1);
+    assert.equal(h.get(".chat-followup").textContent, "Hvordan bestiller jeg?");
+    oldButton.click();
+    assert.equal(h.calls.filter(call => call.url === "/chat").length, 2, "detached choices cannot start another question");
+    const clicked = h.calls.filter(call => call.payload?.event === "followup_question_clicked");
+    assert.equal(clicked.length, 1);
+    assert.equal(clicked[0].payload.properties.followup_id, "contents");
+    const analytics = JSON.stringify(h.calls.filter(call => call.url.includes("posthog")));
+    assert.doesNotMatch(analytics, /Standardpakken|Hva inngår/);
+    assert.equal(h.calls.filter(call => call.url.startsWith("/api/capture/")).length, 0);
+    h.get("#conversation-reset").click();
+    assert.equal(h.get(".chat-followups"), null);
+    h.finish();
+  });
+
+  await test("uncertain answers and disabled conversation never display guided buttons", async () => {
+    for (const enabled of [true, false]) {
+      const config = structuredClone(guidedConfig);
+      config.features.conversation = enabled;
+      const h = await harness({ config, onChat: () => response({ reply: "Avklar med virksomheten.", unsure: enabled, followUps: [guidedChoice] }) });
+      await h.ask("Et spørsmål");
+      assert.equal(h.get(".chat-followups"), null);
+      h.finish();
+    }
+  });
+
+  await test("guided buttons disappear on a new request and cannot return after reset or late responses", async () => {
+    let turn = 0, finishLate;
+    const h = await harness({ config: guidedConfig, onChat: () => {
+      if (++turn === 1) return response({ reply: "Første svar", unsure: false, followUps: [guidedChoice] });
+      return new Promise(resolve => { finishLate = () => resolve(response({ reply: "Gammelt svar", unsure: false, followUps: [guidedChoice] })); });
+    } });
+    await h.ask("Hva koster Standardpakken?");
+    assert.ok(h.get(".chat-followup"));
+    h.startChat("Et nytt tema");
+    assert.equal(h.get(".chat-followups"), null);
+    h.get("#conversation-reset").click();
+    finishLate();
+    await settle();
+    await settle();
+    assert.equal(h.get(".chat-followups"), null);
+    assert.doesNotMatch(h.get("#messages").textContent, /Gammelt svar/);
+    h.finish();
+  });
+
+  await test("malformed guided choices are ignored and labels render as plain text", async () => {
+    const hostileLabel = '<img src=x onerror="alert(1)">';
+    const h = await harness({ config: guidedConfig, onChat: () => response({ reply: "Et svar", unsure: false, followUps: [
+      { ...guidedChoice, label: hostileLabel },
+      { ...guidedChoice, label: "Duplicate" },
+      { id: "send_email", label: "Send", message: "Send e-post" },
+      { id: "booking", label: "Extra", message: "Hvordan bestiller jeg?" }
+    ] }) });
+    await h.ask("Et spørsmål");
+    assert.equal(h.document.querySelectorAll(".chat-followup").length, 1);
+    assert.equal(h.get(".chat-followup").textContent, hostileLabel);
+    assert.equal(h.get(".chat-followup img"), null);
+    h.finish();
+  });
+
   console.log(`${checks} DOM integration scenarios passed (network mocked; no visual verification).`);
 })().catch(error => {
   console.error(error);

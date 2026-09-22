@@ -69,6 +69,7 @@ if (process.env.JEMLIO_CONTEXT_TEST_CHILD === "true") {
     assert.equal(reply.unsure, true);
     assert.match(reply.reply, /Hvilken tjeneste|Hva vil du vite/);
     assert.doesNotMatch(reply.reply, /800 kr|2 900 kr|gratis/i);
+    assert.deepEqual(reply.followUps, []);
   };
 
   (async () => {
@@ -173,6 +174,7 @@ if (process.env.JEMLIO_CONTEXT_TEST_CHILD === "true") {
           const qualifiedReply = await ask(client, question, first.conversationId);
           assert.equal(qualifiedReply.contextApplied, false);
           assert.equal(qualifiedReply.reply, baseline.reply, "the original medical/cancellation answer must stay unchanged");
+          assert.deepEqual(qualifiedReply.followUps, []);
           unclear(await ask(client, "Hva koster det?", first.conversationId));
         });
       }
@@ -334,6 +336,46 @@ if (process.env.JEMLIO_CONTEXT_TEST_CHILD === "true") {
         assert.equal(duration.unsure, true);
         assert.match(duration.reply, /Varighet.*ikke publisert/);
         unclear(await ask("frankolsen", "Hva koster det?", first.conversationId));
+      });
+    });
+
+    await withServer({}, async ({ ask }) => {
+      await check("every offered follow-up is a complete, answerable question for the selected service", async () => {
+        const cases = [
+          ["tiller", "Fortell om Standardpakken"], ["tiller", "Fortell om Superpakken"],
+          ["tiller", "Fortell om trafikalt grunnkurs"], ["tiller", "Hva koster en kjøretime for klasse B automat?"],
+          ["tiller", "Hva koster trinnvurdering 2?"], ["tiller", "Hva koster trinnvurdering 3?"],
+          ["tiller", "Hva koster mørkekjøring?"], ["tiller", "Hva koster førstehjelpskurs?"],
+          ["tiller", "Hva koster sikkerhetskurs på veg?"], ["tiller", "Hva koster sikkerhetskurs på bane?"],
+          ["frankolsen", "Fortell om synsundersøkelse"], ["frankolsen", "Tilbyr dere kontaktlinser?"],
+          ["frankolsen", "Reparerer dere briller?"], ["frankolsen", "Hvilke briller har dere?"]
+        ];
+        for (const [client, question] of cases) {
+          const first = await ask(client, question);
+          assert.equal(first.unsure, false, question);
+          assert.ok(first.followUps.length >= 1 && first.followUps.length <= 3, question);
+          assert.equal(new Set(first.followUps.map(x => x.id)).size, first.followUps.length);
+          for (const choice of first.followUps) {
+            assert.ok(["price", "contents", "booking", "contact"].includes(choice.id));
+            const clicked = await ask(client, choice.message); // also works after session expiry/reset
+            assert.equal(clicked.unsure, false, `${client}: ${choice.message}`);
+            assert.doesNotMatch(clicked.reply, /bestillingen er bekreftet|du er påmeldt/i);
+            if (["booking", "contact"].includes(choice.id)) {
+              assert.match(clicked.reply, client === "tiller" ? /tillertrafikkskole\.no\/contact/ : /frankolsen\.no\/kontakt/);
+            }
+          }
+        }
+      });
+      await check("privacy questions, ambiguous services and unsupported prices offer no follow-up buttons", async () => {
+        for (const [client, message] of [
+          ["tiller", "Sammenlign Standardpakken og Superpakken"],
+          ["tiller", "Hva koster en kjøretime for manuell?"],
+          ["tiller", "Lagrer dere chat om kjøretime?"],
+          ["frankolsen", "Hva koster kontaktlinser?"],
+          ["frankolsen", "Jeg har sterke øyesmerter og vil bestille synsundersøkelse"],
+          ["frankolsen", "Lagrer dere chat om synsundersøkelse?"]
+        ]) assert.deepEqual((await ask(client, message)).followUps, [], message);
+        assert.equal((await ask("fram", "Hva koster en kjøretime?")).followUps, undefined);
       });
     });
 

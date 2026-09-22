@@ -366,4 +366,36 @@ test("special-purpose and timed services are not reduced to ordinary enum contex
   }
 });
 
+test("guided questions keep the exact product and discard expired or superseded choices", () => {
+  let clock = 0;
+  const manager = createConversationManager({ ttlMs: 1000, now: () => clock });
+  const first = manager.prepare({ client: "tiller", message: "Hva koster Standardpakken?" });
+  assert.deepEqual(first.getFollowUps().map(x => x.message), [
+    "Hva inngår i Standardpakken?", "Hvordan bestiller jeg Standardpakken?"
+  ]);
+  const next = manager.prepare({ client: "tiller", conversationId: first.conversationId, message: "Hva med Superpakken?" });
+  assert.deepEqual(first.getFollowUps(), [], "an older turn cannot restore its buttons");
+  assert.ok(next.getFollowUps().every(x => x.message.includes("Superpakken")));
+  clock = 1000;
+  assert.deepEqual(next.getFollowUps(), []);
+  const fresh = manager.prepare({ client: "frankolsen", message: "Hva inngår i synsundersøkelsen?" });
+  assert.equal(fresh.getFollowUps().length, 2);
+  fresh.discardContext();
+  assert.deepEqual(fresh.getFollowUps(), []);
+});
+
+test("guided questions stay within reviewed tenants and never reuse restricted context", () => {
+  const manager = createConversationManager();
+  for (const client of ["fram", "fyllingsdalen", "onsoy", "trafikk1", "roma"]) {
+    assert.deepEqual(manager.prepare({ client, message: "Hva koster en kjøretime?" }).getFollowUps(), []);
+  }
+  for (const message of [
+    "Sammenlign Standardpakken og Superpakken", "Hva koster kjøretime for klasse A2?",
+    "Jeg heter Kari og vil ha kjøretime", "Lagrer dere chat om kjøretime?",
+    "Navnet mitt er Kari og jeg vil ha kjøretime", "Hva koster en kjøretime på 60 minutter?"
+  ]) assert.deepEqual(manager.prepare({ client: "tiller", message }).getFollowUps(), [], message);
+  assert.deepEqual(manager.prepare({ client: "frankolsen", message: "Reparerer dere briller?" }).getFollowUps().map(x => x.id), ["contact"]);
+  assert.deepEqual(manager.prepare({ client: "frankolsen", message: "Tilbyr dere kontaktlinser?" }).getFollowUps().map(x => x.id), ["contents", "booking"]);
+});
+
 console.log(`Conversation context: ${checks} behavior checks passed.`);
