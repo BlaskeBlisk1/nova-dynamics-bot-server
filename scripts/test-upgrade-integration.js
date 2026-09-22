@@ -22,6 +22,7 @@ if (process.env.NOVA_TEST_CHILD === "true") {
       NOVA_PREVIEW_ENABLED: "false", NOVA_PREVIEW_ORIGINS: origin,
       NOVA_CAPTURE_ENABLED: "false", NOVA_CAPTURE_WORKER_ENABLED: "false",
       NOVA_CAPTURE_CONFIG: "", NOVA_DATABASE_URL: "", RESEND_API_KEY: "",
+      JEMLIO_WEBSITE_ENQUIRY_ENABLED: "false", JEMLIO_WEBSITE_EMAIL_ENABLED: "false", JEMLIO_WEBSITE_CRM_ENABLED: "false",
       NOVA_CAPTURE_SECRET: "", NOVA_CAPTURE_FROM: "", NOVA_CONVERSATION_CLIENTS: "", ...extra
     }, stdio: ["ignore", "pipe", "pipe", "ipc"] });
     const ready = new Promise((resolve, reject) => {
@@ -81,6 +82,15 @@ if (process.env.NOVA_TEST_CHILD === "true") {
       assert.equal((await request("/previews/tiller")).status, 404);
       assert.equal((await request("/api/demo-config/tiller?preview=1")).status, 404);
       assert.equal((await request("/api/capture/session", { client: "tiller", preview: true })).status, 503);
+      const websiteStatus = await request("/api/website-enquiries/netlify/status");
+      const websitePost = await request("/api/website-enquiries/netlify", { client: "tiller" });
+      check("website receiver stays separate, disabled and outside public chat CORS", () => {
+        assert.equal(websiteStatus.data.enabled, false);
+        assert.equal(websiteStatus.headers.get("access-control-allow-origin"), null);
+        assert.equal(websitePost.status, 503);
+        assert.equal(websitePost.data.error, "website_intake_disabled");
+        assert.equal(websitePost.headers.get("access-control-allow-origin"), null);
+      });
       const preflight = await request("/chat", undefined, origin, "OPTIONS");
       check("preview route and preview chat CORS unavailable by default", () => {
         assert.equal(preflight.headers.get("access-control-allow-origin"), null);

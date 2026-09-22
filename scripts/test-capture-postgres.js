@@ -88,6 +88,25 @@ async function main() {
     });
     // Settle earlier synthetic rows so the next claim tests have an exact cohort.
     await pool.query("UPDATE nova_capture_outbox SET status='accepted',provider_id='synthetic-only'");
+    await check('website and school workers claim only their own queues under real concurrency', async () => {
+      const website = withCrm(input('jemlio-website'));
+      const school = withCrm(input('ci-school-scope'));
+      await Promise.all([store.create(website), store.create(school)]);
+      const at = Date.now() + 100;
+      const websiteMail = new PgStore({ pool, claimClient: 'jemlio-website' });
+      const schoolMail = new PgStore({ pool, excludeClient: 'jemlio-website' });
+      const websiteCrm = new CrmOutbox({ pool, claimClient: 'jemlio-website' });
+      const schoolCrm = new CrmOutbox({ pool, excludeClient: 'jemlio-website' });
+      const [wm, sm, wc, sc] = await Promise.all([
+        websiteMail.claimNext(at), schoolMail.claimNext(at), websiteCrm.claimNext(at), schoolCrm.claimNext(at)
+      ]);
+      assert.equal(wm.request_id, website.receipt); assert.equal(wc.request_id, website.receipt);
+      assert.equal(sm.request_id, school.receipt); assert.equal(sc.request_id, school.receipt);
+      assert.equal(await websiteMail.claimNext(at), null); assert.equal(await schoolMail.claimNext(at), null);
+      assert.equal(await websiteCrm.claimNext(at), null); assert.equal(await schoolCrm.claimNext(at), null);
+      await pool.query("UPDATE nova_capture_outbox SET status='accepted',provider_id='synthetic-only',lock_token=NULL,locked_until=NULL");
+      await pool.query("UPDATE nova_capture_crm_outbox SET status='synced',record_id='rec12345678901234',lock_token=NULL,locked_until=NULL");
+    });
     await check('concurrent worker claims are exclusive and expired leases fence stale completion', async () => {
       const rows = Array.from({ length: 3 }, () => input('ci-leases'));
       await Promise.all(rows.map(row => store.create(row)));

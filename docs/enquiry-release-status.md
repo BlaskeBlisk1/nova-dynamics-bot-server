@@ -1,6 +1,24 @@
 # Jemlio enquiry release status
 
-Updated: 2026-09-21. This is an operational checkpoint, not a claim that collection is live.
+Historical checkpoint: 2026-09-21. See the current note below before following the older activation gates.
+
+## Current checkpoint — 22 September 2026
+
+The public native Netlify form is registered and a synthetic submission was saved
+and read back. A permanent private PostgreSQL 18 database in Frankfurt is wired to
+production and its seven enquiry tables are migrated. Scoped Resend and Airtable
+credentials and a capture signing key are installed. The deployed server passed a
+real synthetic Airtable write/retry/removal check and a non-sending Resend
+authentication check. Actual backend inbox delivery is still a separate test.
+
+The new [signed website handoff](website-delivery.md) reuses this durable storage
+and provider queues. Its Netlify notification, public processing notice and
+controlled end-to-end delivery check must be verified before activation. The old
+Airtable webhook draft stays off; it is not needed by the new direct upsert path.
+Customer-demo capture still requires its own approved pilot routing and handling.
+
+The remainder records the earlier staging-only workflow and is not the current
+production setup or a requirement to enable the superseded Airtable automation.
 
 ## Verified this session
 

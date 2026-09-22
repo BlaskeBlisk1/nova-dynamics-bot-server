@@ -32,6 +32,10 @@ jobs:
       NOVA_CAPTURE_SECRET: ''
       NOVA_CAPTURE_FROM: ''
       JEMLIO_ENQUIRY_WEBHOOK_URL: ''
+      JEMLIO_WEBSITE_ENQUIRY_ENABLED: 'false'
+      JEMLIO_WEBSITE_EMAIL_ENABLED: 'false'
+      JEMLIO_WEBSITE_CRM_ENABLED: 'false'
+      JEMLIO_NETLIFY_WEBHOOK_SECRET: ''
     steps:
       - uses: actions/checkout@v7
         with:

@@ -10,7 +10,6 @@ const fetchFn = global.fetch || ((...args) =>
 
 const app = express();
 app.set("trust proxy", 1);
-app.use(express.json({ limit: "64kb" }));
 app.use((_, res, next) => {
   res.setHeader("Vary", "Origin");
   next();
@@ -59,6 +58,11 @@ fs.watchFile(REGISTRY_FILE, { interval: 1500, persistent: false }, loadRegistry)
 const upgrades = require("./lib/upgrade-runtime").createUpgradeRuntime({
   getRegistry: () => REGISTRY
 });
+const websiteEnquiries = require("./lib/website-enquiry-runtime").createWebsiteEnquiryRuntime();
+// Netlify signatures cover the exact bytes. Mount before JSON parsing and the
+// public chat CORS policy; this endpoint is a signed server-to-server receiver.
+app.use(require("./lib/website-enquiries").WEBHOOK_PATH, websiteEnquiries.router);
+app.use(express.json({ limit: "64kb" }));
 
 function safeSlug(s) {
   return String(s || "").toLowerCase().replace(/[^a-z0-9\-]/g, "");
@@ -4428,10 +4432,11 @@ if (require.main === module) {
   const server = app.listen(PORT, () => {
     console.log(`✅ Server live on port ${PORT}`);
     upgrades.startWorker();
+    websiteEnquiries.startWorker();
   });
   for (const signal of ["SIGTERM", "SIGINT"]) {
     process.once(signal, () => {
-      server.close(() => { void upgrades.close().then(() => process.exit(0)); });
+      server.close(() => { void Promise.all([upgrades.close(), websiteEnquiries.close()]).then(() => process.exit(0)); });
     });
   }
 }
@@ -4440,5 +4445,6 @@ module.exports = {
   app,
   publicDemoConfig,
   safeSlug,
-  upgrades
+  upgrades,
+  websiteEnquiries
 };
