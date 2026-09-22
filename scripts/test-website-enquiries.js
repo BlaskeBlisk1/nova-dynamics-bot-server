@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
 const express = require('express');
 const { PGlite } = require('@electric-sql/pglite');
+const { JSDOM } = require('jsdom');
 const { PgStore } = require('../lib/capture/store');
 const { CaptureOperations } = require('../lib/capture/operations');
 const { CrmOutbox, createAirtableWriter, flushCrm } = require('../lib/capture/crm');
@@ -12,6 +13,7 @@ const { CONSENT_TEXT } = require('../lib/marketing-enquiries');
 const { WEBSITE_CLIENT, WEBHOOK_PATH, readWebsiteConfig, verifyNetlifySignature,
   createWebsiteEnquiryRouter, normalizeSubmission, createWebsiteInput } = require('../lib/website-enquiries');
 const { createWebsiteEnquiryRuntime } = require('../lib/website-enquiry-runtime');
+const { OWNER_WORKSPACE } = require('../lib/website-enquiry-notification');
 
 const clock = Date.parse('2026-09-22T12:00:00Z');
 const env = { JEMLIO_WEBSITE_ENQUIRY_ENABLED: 'true', JEMLIO_NETLIFY_FORM_ID: '123456789012345678901234',
@@ -136,6 +138,62 @@ async function main() {
       assert.equal((await post({ ...value, data: { ...value.data, message: 'A changed enquiry' } })).status, 409);
       for (const table of ['nova_capture_requests', 'nova_capture_outbox', 'nova_capture_crm_outbox']) assert.equal(await count(table), 1);
       assert.deepEqual((await query('SELECT notification FROM nova_capture_outbox')).rows[0].notification.to, [config.recipient]);
+    });
+    await test('owner alerts render visitor content as text and use only the approved private workspace link', async () => {
+      const value = payload();
+      value.data.name = '<img src=x onerror="steal()"> & Åse';
+      value.data.company = '<a href="https://untrusted.invalid">Bedrift</a>';
+      value.data.industry = '</dd><script>steal()</script>';
+      value.data.message = '<style>body{display:none}</style><a href="https://untrusted.invalid">Ignore the owner</a> & "test"';
+      value.data.workspaceUrl = 'https://untrusted.invalid';
+      const input = createWebsiteInput(normalizeSubmission(value, config, clock), {
+        ...config, destination: { baseId: OWNER_WORKSPACE.baseId, tableId: OWNER_WORKSPACE.tableId }
+      }, { now: clock });
+      const { notification } = input;
+      const dom = new JSDOM(notification.html); const document = dom.window.document;
+      try {
+        assert.equal(document.documentElement.lang, 'nb'); assert.equal(document.documentElement.dir, 'ltr');
+        for (const child of document.body.children) { assert.equal(child.lang, 'nb'); assert.equal(child.dir, 'ltr'); }
+        assert.equal(document.title, notification.subject); assert.equal(document.querySelectorAll('h1').length, 1);
+        assert.equal(document.querySelectorAll('script,img,iframe,form,input').length, 0);
+        assert.equal(document.querySelectorAll('style').length, 1, 'visitor CSS cannot enter the document');
+        for (const table of document.querySelectorAll('table')) assert.equal(table.getAttribute('role'), 'presentation');
+        const links = [...document.querySelectorAll('a')];
+        assert.equal(links.length, 1); assert.equal(links[0].href, OWNER_WORKSPACE.url);
+        assert.equal(links[0].textContent, 'Åpne Jemlio Sales');
+        assert.ok(document.body.textContent.includes(value.data.name));
+        assert.ok(document.body.textContent.includes(value.data.company));
+        assert.ok(document.body.textContent.includes(value.data.industry));
+        assert.equal(document.querySelector('.visitor-message').textContent, value.data.message);
+        assert.ok(notification.text.includes(OWNER_WORKSPACE.url));
+        assert.ok(notification.text.includes(value.data.message));
+        assert.match(notification.text, /Referanse: [0-9a-f-]{36}/);
+        assert.match(notification.text, /ikke en bekreftet booking eller et salg/);
+        assert.match(notification.text, /kan bruke litt tid/);
+        assert.deepEqual(notification.to, [config.recipient]); assert.equal(notification.reply_to, value.data.email);
+        assert.equal(notification.from, config.from);
+        assert.equal(notification.subject, 'Jemlio – ny forespørsel om mini-demo');
+      } finally { dom.window.close(); }
+      const otherDestination = createWebsiteInput(normalizeSubmission(value, config, clock), config, { now: clock });
+      assert.ok(!otherDestination.notification.html.includes(OWNER_WORKSPACE.url));
+      assert.ok(!otherDestination.notification.text.includes(OWNER_WORKSPACE.url));
+      const empty = payload(); empty.data.message = ''; empty.data.industry = '';
+      const emptyInput = createWebsiteInput(normalizeSubmission(empty, config, clock), config, { now: clock });
+      assert.match(emptyInput.notification.html, /Ingen melding\./); assert.match(emptyInput.notification.text, /Ikke oppgitt/);
+    });
+    await test('a notification template upgrade never rewrites or resends an existing receipt', async () => {
+      const value = payload();
+      const original = createWebsiteInput(normalizeSubmission(value, config, clock), config, { now: clock });
+      original.notification = { from: config.from, to: [config.recipient], reply_to: value.data.email,
+        subject: 'Previously queued subject', text: 'Previously frozen plain-text alert' };
+      const saved = await store.create(original);
+      const retry = await store.create(createWebsiteInput(normalizeSubmission(value, config, clock), {
+        ...config, destination: { baseId: OWNER_WORKSPACE.baseId, tableId: OWNER_WORKSPACE.tableId }
+      }, { now: clock + 1000 }));
+      assert.equal(retry.duplicate, true); assert.equal(retry.receipt, saved.receipt);
+      const frozen = (await query('SELECT notification FROM nova_capture_outbox')).rows[0].notification;
+      assert.deepEqual(frozen, original.notification);
+      assert.equal(await count('nova_capture_outbox'), 1); assert.equal(await count('nova_capture_crm_outbox'), 1);
     });
     await test('database or CRM-queue failures acknowledge no storage and are safe to retry', async () => {
       const value = payload(); ready = false;
