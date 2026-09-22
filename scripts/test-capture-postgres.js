@@ -7,6 +7,7 @@ const { setTimeout: delay } = require('node:timers/promises');
 const { Pool } = require('pg');
 const { PgStore } = require('../lib/capture/store');
 const { CaptureOperations } = require('../lib/capture/operations');
+const { CrmOutbox, createCrmPayload } = require('../lib/capture/crm');
 const raw = process.env.JEMLIO_TEST_DATABASE_URL;
 if (!raw || process.env.JEMLIO_THROWAWAY_DATABASE !== 'true') throw new Error('Explicit disposable database configuration required');
 const url = new URL(raw);
@@ -17,10 +18,14 @@ const options = { connectionString: raw, max: 10, connectionTimeoutMillis: 5000,
 const pool = new Pool(options);
 const store = new PgStore({ pool });
 const ops = new CaptureOperations({ pool });
+const crmStore = new CrmOutbox({ pool });
 const input = (client, overrides = {}) => ({ client, receipt: randomUUID(), submissionId: randomUUID(),
   payloadHash: 'synthetic-payload', createdAt: Date.now(),
   data: { name: 'Synthetic test only', email: 'nobody@example.invalid' },
   notification: { to: 'nobody@example.invalid', subject: 'NOT SENT', text: 'Synthetic test only' }, ...overrides });
+const withCrm = row => ({ ...row, crm: createCrmPayload({ receipt: row.receipt,
+  destination: { baseId: 'app12345678901234', tableId: 'tbl12345678901234' }, name: 'Synthetic business',
+  service: 'Synthetic service', data: { ...row.data, consent: true }, createdAt: row.createdAt }) });
 let checks = 0;
 async function check(name, run) { await run(); console.log(`ok ${++checks} - ${name}`); }
 const accepted = id => pool.query("UPDATE nova_capture_outbox SET status='accepted',provider_id='synthetic-only',locked_until=NULL,lock_token=NULL WHERE request_id=$1", [id]);
@@ -53,6 +58,34 @@ async function main() {
       const replies = await Promise.all([store.create(row), store.create({ ...row, client: 'ci-tenant-b', receipt: randomUUID() })]);
       assert.notEqual(replies[0].receipt, replies[1].receipt);
     });
+    await check('concurrent CRM submissions keep one frozen export; failure rolls back both delivery queues', async () => {
+      const row = input('ci-crm-atomic');
+      const replies = await Promise.all(Array.from({ length: 8 }, () => store.create(withCrm({ ...row, receipt: randomUUID() }))));
+      assert.equal(replies.filter(r => !r.duplicate).length, 1);
+      assert.equal((await pool.query('SELECT count(*)::int AS n FROM nova_capture_crm_outbox')).rows[0].n, 1);
+      const receipt = replies[0].receipt;
+      assert.equal((await pool.query('SELECT payload FROM nova_capture_crm_outbox WHERE request_id=$1', [receipt])).rows[0].payload.fields.Receipt, receipt);
+      await pool.query('ALTER TABLE nova_capture_crm_outbox ADD CONSTRAINT simulated_failure CHECK (false) NOT VALID');
+      const failed = withCrm(input('ci-crm-rollback'));
+      try { await assert.rejects(store.create(failed)); }
+      finally { await pool.query('ALTER TABLE nova_capture_crm_outbox DROP CONSTRAINT simulated_failure'); }
+      assert.equal((await pool.query('SELECT count(*)::int AS n FROM nova_capture_requests WHERE id=$1', [failed.receipt])).rows[0].n, 0);
+      assert.equal((await pool.query('SELECT count(*)::int AS n FROM nova_capture_outbox WHERE request_id=$1', [failed.receipt])).rows[0].n, 0);
+      await pool.query("UPDATE nova_capture_crm_outbox SET status='synced',record_id='rec12345678901234'");
+    });
+    await check('real concurrent CRM claims are exclusive and fence stale workers', async () => {
+      const rows = Array.from({ length: 3 }, () => withCrm(input('ci-crm-leases')));
+      await Promise.all(rows.map(row => store.create(row)));
+      const at = Date.now() + 100;
+      const claims = await Promise.all(Array.from({ length: 3 }, () => crmStore.claimNext(at, 1000)));
+      assert.equal(new Set(claims.map(c => c.request_id)).size, 3);
+      assert.equal(await crmStore.claimNext(at, 1000), null);
+      const current = await crmStore.claimNext(at + 1001, 1000);
+      const old = claims.find(c => c.request_id === current.request_id);
+      assert.equal(await crmStore.finish(old, { status: 'synced', recordId: 'rec12345678901234', at: at + 1002 }), false);
+      assert.equal(await crmStore.finish(current, { status: 'synced', recordId: 'rec12345678901234', at: at + 1002 }), true);
+      await pool.query("UPDATE nova_capture_crm_outbox SET status='synced',record_id='rec12345678901234',lock_token=NULL,locked_until=NULL");
+    });
     // Settle earlier synthetic rows so the next claim tests have an exact cohort.
     await pool.query("UPDATE nova_capture_outbox SET status='accepted',provider_id='synthetic-only'");
     await check('concurrent worker claims are exclusive and expired leases fence stale completion', async () => {
@@ -78,8 +111,10 @@ async function main() {
       await assert.rejects(store.create({ ...row, receipt: randomUUID() }), e => e.code === 'submission_removed');
     });
     await check('a retry waiting on uncommitted deletion cannot recreate a request or notification', async () => {
-      const row = input('ci-delete-race');
+      const row = withCrm(input('ci-delete-race'));
       await store.create(row); await accepted(row.receipt);
+      assert.equal((await ops.deleteRequests({ client: row.client, receipt: row.receipt, apply: true })).deletedRequests, 0);
+      await pool.query("UPDATE nova_capture_crm_outbox SET status='synced',record_id='rec12345678901234' WHERE request_id=$1", [row.receipt]);
       const deleted = gate(), release = gate();
       const hookedPool = {
         query: (...args) => pool.query(...args),
@@ -108,6 +143,7 @@ async function main() {
       assert.equal((await deleting).deletedRequests, 1);
       assert.equal((await retry).error.code, 'submission_removed');
       assert.equal((await pool.query('SELECT count(*)::int AS n FROM nova_capture_requests WHERE client=$1', [row.client])).rows[0].n, 0);
+      assert.equal((await pool.query('SELECT count(*)::int AS n FROM nova_capture_crm_outbox WHERE request_id=$1', [row.receipt])).rows[0].n, 0);
       assert.equal((await pool.query('SELECT count(*)::int AS n FROM nova_capture_submission_tombstones WHERE client=$1', [row.client])).rows[0].n, 1);
     });
     await check('saved requests survive closing and reopening the client connection pool', async () => {

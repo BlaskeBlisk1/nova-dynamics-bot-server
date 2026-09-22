@@ -122,3 +122,53 @@ New notifications set `reply_to` to the validated visitor email when supplied,
 so the business can reply directly; phone-only enquiries omit it. The verified
 sender and approved recipient remain server-configured. Existing queued payloads
 and idempotency keys are unchanged. See the [Resend send-email API](https://resend.com/docs/api-reference/emails/send-email).
+
+## Optional Airtable delivery
+
+Reapply `npm run capture:migrate -- --apply` before configuring CRM capture. Each
+approved live tenant may add `"crm":{"baseId":"app…","tableId":"tbl…"}` to its
+existing `NOVA_CAPTURE_CONFIG` entry. Use actual 17-character IDs. Missing `crm`
+means no CRM copy; a malformed destination disables that tenant's capture. This
+is a separate decision for each business, never inferred from the client list.
+The destination must be covered by that business's approved handling process.
+
+The existing Jemlio `Inbound Enquiries` table is `tblq5mtY9cSMwKK70` in base
+`apppXqfehxmOi4pyw`. The required fields are Enquiry (text), Source (single select
+including `Chatbot capture`), Received (date/time), Name, Email, Phone, Business,
+Service, Preferred contact, Consent (checkbox) and Receipt (text). Preserve Receipt
+as the external key: do not edit it or let a second importer create the same rows.
+The worker never writes Status or Notes. New rows therefore use the table's own
+default status, or remain unclassified if none is configured; configure the team's
+inbox view to include those rows. CRM status is separate from recorded outcomes.
+
+An enabled tenant's CRM payload is saved in the same PostgreSQL transaction as
+the enquiry and email outbox, even while the CRM worker is off. No existing lead
+is backfilled automatically. Preview submissions cannot enqueue CRM work. CRM
+delivery requires `NOVA_CAPTURE_CRM_ENABLED=true` and a server-side
+`AIRTABLE_PERSONAL_ACCESS_TOKEN` restricted to the approved base(s) and
+`data.records:write`. Connected ChatGPT Airtable access does not supply this
+runtime credential. Keep credentials out of source, client JavaScript and logs.
+
+The independent worker processes one item per five-second tick. It uses Airtable
+[PATCH upsert](https://airtable.com/developers/web/api/update-multiple-records)
+with Receipt as `fieldsToMergeOn`, verifies the returned record ID and all written
+fields, and only then records `synced`. Database leases and fencing prevent stale
+workers from completing another worker's claim. An uncertain network response or
+database failure retries the same destination, receipt and fields, preserving
+sales Status and Notes. HTTP 429 and transient failures back off from 30 seconds
+to one hour; automatic retries stop after seven days. Permanent failures,
+revoked tenants and changed destinations stop for operator review. No provider
+body or submitted contact details are logged. Do not reset leases, change receipt
+keys or manually delete Airtable records while unresolved delivery is pending.
+
+`capture:status` and per-tenant `capture:operations report` show CRM queue counts
+without contact details. Pending, sending and uncertain CRM rows block local
+deletion even if email has finished. A confirmed CRM row may be deleted locally
+once email is also settled; removal of its Airtable copy, provider copy and
+mailbox copy remains part of the separate operator deletion process. The local
+tombstone prevents later browser retries from enqueueing either delivery again.
+
+This does not activate native Netlify form forwarding or the draft Airtable
+website automation. Those remain separate integrations. Enabling CRM capture
+also does not create a production database or install provider credentials.
+Tests use synthetic records and injected providers; they do not contact Airtable.
