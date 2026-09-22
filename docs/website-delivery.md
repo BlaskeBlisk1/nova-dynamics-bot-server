@@ -5,6 +5,24 @@ intake. Its action, confirmation page and all seven chatbot demo URLs are
 unchanged. This receiver handles a signed notification **after Netlify has saved
 the submission**. It does not replace the form with a direct browser API call.
 
+## Verified production state — 22 September 2026
+
+Website intake, CRM dispatch and owner email alerts are enabled. Netlify has a
+signed notification for only `jemlio-demo-request`; both providers use the
+existing production credentials, and alerts go only to `hei@jemlio.com`.
+The public privacy notice describes this processing. School/pilot capture and
+delivery switches remain off.
+
+The real website test produced native submission `6ab2c071208a9613246dfe01` and
+receipt `e8cea8f1-4788-4684-adb8-38862aa57cfd`. Airtable saved it once, with consent
+and Visitor message preserved. Replaying the same source returned HTTP 200 and
+the original receipt. The owner-approved held email was sent once using the
+production sender and its original idempotency key; Resend confirmed delivery
+for `01a0ca48-10f5-76ce-a5a4-918b630c2ec1`. Gmail's connector was rate-limited;
+no claim about inbox-folder placement was made. Future owner alerts were enabled
+only after that delivery confirmation. Keep the synthetic record marked as a
+test, and do not resubmit it to verify later configuration changes.
+
 ## Receiver and storage
 
 Send a form-specific Netlify HTTP POST notification to:
@@ -18,8 +36,9 @@ before Express JSON parsing is required. The route has no public chat CORS.
 
 Source: [Netlify notification signatures](https://docs.netlify.com/deploy/deploy-notifications/#payload-signature)
 and [form notifications](https://docs.netlify.com/manage/forms/notifications/).
-The form notification's actual payload and signature still require a controlled
-production check before this integration is described as live.
+The actual Netlify form notification payload and signature passed the controlled
+production check recorded above. Repeat that check when changing the source or
+signature scheme; configuration status alone is not proof of processing.
 
 The configured site ID, form ID and native submission ID produce one stable
 internal submission UUID. PostgreSQL saves the enquiry, frozen email and CRM
@@ -73,12 +92,17 @@ does not reroute old mail; the worker holds a mismatched destination for review.
    choice `Jemlio website`, Receipt, contact fields, Status and Notes.
 3. Add a notification for **only** `jemlio-demo-request` under Netlify Forms →
    Submission notifications, using the endpoint and dedicated JWS secret.
-4. After the owner approves one synthetic notification email, enable the website
-   intake and dispatch switches with the owner inbox as the sole recipient.
-   Submit a clearly labeled synthetic form. Read back its native Netlify ID,
-   durable receipt, Airtable record and actual email outcome. Never use a prospect
-   as a test recipient. An HTTP 201 or Resend acceptance is not inbox delivery.
-5. Replay the same signed event or use the same stored source record through the
+4. Enable website intake and CRM dispatch while keeping email dispatch off.
+   Submit one clearly labeled synthetic form using the approved owner inbox.
+   Read back its native Netlify ID, durable receipt and Airtable record. The email
+   remains held; do not create another source ID for its delivery test.
+5. After explicit owner approval, send only that held test through the production
+   notification code with its original payload and idempotency key. Verify actual
+   provider delivery separately from acceptance. Inbox-folder placement requires
+   a separate mailbox check. Only then enable owner-approved future email alerts,
+   after reviewing any other held jobs and their frozen recipients. Never use a
+   prospect as a test recipient.
+6. Replay the same signed event or use the same stored source record through the
    operator recovery process; verify the same receipt without another email or
    CRM row. Do not create a new source ID to retry uncertain delivery.
 

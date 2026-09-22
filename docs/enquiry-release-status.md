@@ -2,20 +2,30 @@
 
 Historical checkpoint: 2026-09-21. See the current note below before following the older activation gates.
 
-## Current checkpoint — 22 September 2026
+## Current checkpoint — 22 September 2026, 18:03 UTC
 
-The public native Netlify form is registered and a synthetic submission was saved
-and read back. A permanent private PostgreSQL 18 database in Frankfurt is wired to
-production and its seven enquiry tables are migrated. Scoped Resend and Airtable
-credentials and a capture signing key are installed. The deployed server passed a
-real synthetic Airtable write/retry/removal check and a non-sending Resend
-authentication check. Actual backend inbox delivery is still a separate test.
+Jemlio website intake, Airtable copying and owner email alerts are now active.
+The native Netlify form remains the primary submission store. Its form-specific,
+signed notification saves each enquiry in the permanent private PostgreSQL 18
+database in Frankfurt; independent workers handle CRM and email delivery.
 
-The new [signed website handoff](website-delivery.md) reuses this durable storage
-and provider queues. Its Netlify notification, public processing notice and
-controlled end-to-end delivery check must be verified before activation. The old
-Airtable webhook draft stays off; it is not needed by the new direct upsert path.
-Customer-demo capture still requires its own approved pilot routing and handling.
+One clearly marked synthetic enquiry was submitted through the actual website,
+read back from Netlify and PostgreSQL, and copied to Airtable within five seconds.
+A signed replay returned the same receipt with `duplicate: true`. After the owner
+approved sending the held test, the production notification code sent it once to
+`hei@jemlio.com`. Resend confirmed `delivered`; the database records provider
+acceptance after one attempt. Gmail's connector was rate-limited, so inbox-folder
+placement was not independently checked.
+
+The owner also approved future website alerts to that same inbox. All three
+`JEMLIO_WEBSITE_*_ENABLED` switches are now true; the activation deploy
+`dep-dapc5n0ae00c73cjg8mg` is live. The public privacy notice is published. See
+[website-delivery.md](website-delivery.md) and the
+[verified release record](https://github.com/BlaskeBlisk1/nova-dynamics-bot-server/pull/22).
+
+The old Airtable webhook draft remains off. Customer-demo capture and its delivery
+switches remain off pending pilot-specific routing and verification. The seven
+existing demo links remain available.
 
 The remainder records the earlier staging-only workflow and is not the current
 production setup or a requirement to enable the superseded Airtable automation.

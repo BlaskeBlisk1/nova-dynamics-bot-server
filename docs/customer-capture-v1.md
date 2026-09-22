@@ -2,10 +2,11 @@
 
 Current setup, 22 September 2026: the private production PostgreSQL database and
 its schema, scoped Resend/Airtable credentials, and capture signing secret are
-installed. Customer capture remains off pending an approved delivery test and
-pilot-specific routing. Jemlio's own website has a separate
-[signed notification receiver](website-delivery.md); enabling it does not enable
-any school or optician capture form.
+installed. Customer-demo capture remains off pending pilot-specific routing and
+delivery verification. Jemlio's own website uses a separate
+[signed notification receiver](website-delivery.md); its intake, CRM copying and
+owner email alerts are active after the approved production test. This does not
+enable any school or optician capture form.
 
 This release adds a path from a visitor's question to a reviewed contact request.
 Contact collection defaults off. The first production configuration enables
