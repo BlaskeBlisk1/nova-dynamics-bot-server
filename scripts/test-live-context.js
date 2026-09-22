@@ -225,6 +225,118 @@ if (process.env.JEMLIO_CONTEXT_TEST_CHILD === "true") {
       });
     });
 
+    await withServer({}, async ({ ask }) => {
+      for (const [name, price, otherPrice] of [["Standardpakken", /18 900 kr/, /24 900 kr/], ["Superpakken", /24 900 kr/, /18 900 kr/]]) {
+        await check(`Tiller retains ${name} through price, contents and the existing contact link`, async () => {
+          const first = await ask("tiller", `Hva inkluderer ${name}?`);
+          for (const message of ["Hva koster den?", "Hva er inkludert?", "Hva inneholder den?"]) {
+            const next = await ask("tiller", message, first.conversationId);
+            assert.equal(next.contextApplied, true);
+            assert.match(next.reply, price);
+            assert.doesNotMatch(next.reply, otherPrice);
+          }
+          const booking = await ask("tiller", "Hvordan bestiller jeg den?", first.conversationId);
+          assert.match(booking.reply, /tillertrafikkskole\.no\/contact/);
+          assert.doesNotMatch(booking.reply, /bestillingen er bekreftet|du er påmeldt/i);
+        });
+      }
+
+      await check("Tiller switches named packages but clarifies after a comparison", async () => {
+        const first = await ask("tiller", "Hva koster Standardpakken?");
+        const switched = await ask("tiller", "Hva med Superpakken?", first.conversationId);
+        assert.equal(switched.contextApplied, true);
+        assert.match(switched.reply, /24 900 kr/);
+        assert.doesNotMatch(switched.reply, /18 900 kr/);
+        await ask("tiller", "Sammenlign Standardpakken og Superpakken", first.conversationId);
+        unclear(await ask("tiller", "Hva koster den?", first.conversationId));
+      });
+
+      for (const [service, duration] of [["trafikalt grunnkurs", /17 undervisningstimer/], ["trinnvurdering 2", /45 minutter/], ["trinnvurdering 3", /60 minutter/]]) {
+        await check(`Tiller resolves the duration follow-up for ${service}`, async () => {
+          const first = await ask("tiller", `Hva koster ${service}?`);
+          const next = await ask("tiller", "Og hvor lenge varer det?", first.conversationId);
+          assert.equal(next.contextApplied, true);
+          assert.match(next.reply, duration);
+          assert.equal(next.unsure, false);
+        });
+      }
+
+      await check("changing the assessment stage keeps the price question", async () => {
+        const first = await ask("tiller", "Hva koster trinnvurdering 2?");
+        const next = await ask("tiller", "Hva med trinnvurdering 3?", first.conversationId);
+        assert.match(next.reply, /1 000 kr/);
+        assert.doesNotMatch(next.reply, /850 kr/);
+        assert.equal(next.contextApplied, true);
+      });
+
+      await check("a comparison of both assessment stages does not select only one", async () => {
+        for (const message of ["Hva koster trinnvurdering 2 og 3?", "Hva koster trinnvurdering tre eller to?"]) {
+          const first = await ask("tiller", message);
+          assert.match(first.reply, /850 kr/);
+          assert.match(first.reply, /1 000 kr/);
+          unclear(await ask("tiller", "Hva koster den?", first.conversationId));
+        }
+      });
+
+      for (const message of ["Hva koster en kjøretime på 60 minutter?", "Hva koster en 90-minutters kjøretime?", "Hva koster en dobbeltime?"]) {
+        await check(`Tiller does not assign the ordinary lesson price to: ${message}`, async () => {
+          const first = await ask("tiller", message);
+          assert.equal(first.unsure, true);
+          assert.doesNotMatch(first.reply, /800 kr/);
+          unclear(await ask("tiller", "Hva koster det?", first.conversationId));
+        });
+      }
+
+      await check("Tiller does not convert an unknown package duration into a later price", async () => {
+        const first = await ask("tiller", "Hva koster Superpakken?");
+        const duration = await ask("tiller", "Hvor lenge varer den?", first.conversationId);
+        assert.equal(duration.unsure, true);
+        assert.doesNotMatch(duration.reply, /24 900 kr/);
+        unclear(await ask("tiller", "Hva koster det?", first.conversationId));
+      });
+
+      await check("requesting a lesson with be om differs from requesting licence BE", async () => {
+        const request = await ask("tiller", "Kan jeg be om en kjøretime?");
+        assert.match(request.reply, /tillertrafikkskole\.no\/contact/);
+        assert.doesNotMatch(request.reply, /BE|B96/);
+        const price = await ask("tiller", "Kan jeg be om prisen på en kjøretime?");
+        assert.match(price.reply, /800 kr/);
+        for (const licence of ["BE", "B 96", "B kode 96"]) {
+          const trailer = await ask("tiller", `Kan jeg be om en kjøretime for klasse ${licence}?`);
+          assert.match(trailer.reply, /BE og B96 er ikke oppført/);
+          assert.doesNotMatch(trailer.reply, /800 kr/);
+        }
+      });
+
+      await check("Frank Olsen keeps repairs separate from a routine eye examination", async () => {
+        const first = await ask("frankolsen", "Reparerer dere briller?");
+        const next = await ask("frankolsen", "Hva koster det?", first.conversationId);
+        assert.equal(next.contextApplied, true);
+        assert.equal(next.unsure, true);
+        assert.match(next.reply, /Pris på reparasjoner/);
+        assert.doesNotMatch(next.reply, /gratis|førerkortklasse/);
+      });
+
+      for (const message of ["Hva koster synsundersøkelse for førerkortattest?", "Hvordan bestiller jeg en synsattest?", "Tilbyr dere synstest for førerkort?"]) {
+        await check(`Frank Olsen does not imply a verified special exam: ${message}`, async () => {
+          const seed = await ask("frankolsen", "Hva inngår i synsundersøkelsen?");
+          const special = await ask("frankolsen", message, seed.conversationId);
+          assert.equal(special.unsure, true);
+          assert.match(special.reply, /ikke bekreftet/);
+          assert.doesNotMatch(special.reply, /gratis|Velg «Bestill»/);
+          unclear(await ask("frankolsen", "Hva koster det?", seed.conversationId));
+        });
+      }
+
+      await check("an eye-exam duration follow-up remains unknown and clears the price context", async () => {
+        const first = await ask("frankolsen", "Hva inngår i synsundersøkelsen?");
+        const duration = await ask("frankolsen", "Hvor lenge varer den?", first.conversationId);
+        assert.equal(duration.unsure, true);
+        assert.match(duration.reply, /Varighet.*ikke publisert/);
+        unclear(await ask("frankolsen", "Hva koster det?", first.conversationId));
+      });
+    });
+
     await withServer({ JEMLIO_CONTEXT_TEST_FEATURE_FAILURE: "true" }, async ({ request, ask }) => {
       await check("failure of optional feature lookup preserves answers without promising unavailable forms", async () => {
         for (const client of ["tiller", "frankolsen"]) {

@@ -3,6 +3,7 @@ const express = require("express");
 const fs = require("fs");
 const path = require("path");
 const { companyOrigins } = require("./lib/brand-config");
+const { withoutRequestVerbBe, assessmentStages } = require("./lib/norwegian-intents");
 
 // Use Node 18+ global fetch or lazy-load node-fetch if needed
 const fetchFn = global.fetch || ((...args) =>
@@ -2721,7 +2722,7 @@ function directTillerAnswer(client, message) {
   // The official site markets class B automatic only. Explicitly rule out
   // other classes instead of allowing another client's knowledge to leak in.
   const asksManualTraining = includesAny(t, ["manuell", "manuelt gir", "gire selv", "manual car"]);
-  const asksTrailerTraining = /(^|\s)(be|b96)(\s|$)/.test(normalizedMessage) || includesAny(t, ["tilhenger", "hengerlappen"]);
+  const asksTrailerTraining = /\b(?:be|b\s*(?:kode\s*)?96)\b/.test(withoutRequestVerbBe(normalizedMessage)) || includesAny(t, ["tilhenger", "hengerlappen"]);
   const asksMotorcycleTraining =
     includesAny(t, ["motorsykkel", "a1", "a2", "tung mc", "lett mc", "mellomtung"]) ||
     /(^|\s)(?:mc|klasse a)(\s|$)/.test(normalizedMessage);
@@ -2757,6 +2758,10 @@ function directTillerAnswer(client, message) {
     return known("Moped-, traktor-, lastebil- og bussopplæring er ikke oppført blant tilbudene på Tiller Trafikkskoles offisielle nettside.");
   }
 
+  if (!asksPrice && /\bbe om (?:en )?kjoretime\b/.test(normalizedMessage)) {
+    return known("Du kan be om en kjøretime via https://tillertrafikkskole.no/contact eller ringe 96 84 73 41. Skolen bekrefter tidspunktet; demoen gjennomfører ikke bestillingen.");
+  }
+
   const mentionsPublishedSeptemberCourse =
     includesAny(t, ["grunnkurs", "tgk", "kurset", "kursdato"]) &&
     includesAny(t, [
@@ -2787,6 +2792,27 @@ function directTillerAnswer(client, message) {
 
   if (asksForLink && includesAny(t, ["påmelding", "pamelding", "bestilling", "bestille", "kontakt", "kurs"])) {
     return known("Du kan sende en forespørsel til skolen her: https://tillertrafikkskole.no/contact.");
+  }
+
+  const asksDuration = /hvor lenge varer|hvor lang tid tar|varighet/.test(normalizedMessage);
+  const stages = assessmentStages(normalizedMessage);
+  const mentionsLesson = /kjoretime|biltime|automat[- ]time|dobbeltime/.test(normalizedMessage);
+  if (mentionsLesson && (asksDuration || /\b\d{1,3}\s*[- ]?\s*min(?:utt(?:er|ers)?)?\b|dobbeltime/.test(normalizedMessage))) {
+    return unknown("Pris og varighet for den ønskede timelengden er ikke bekreftet i kildene demoen bruker. Be skolen bekrefte dette før du bestiller.");
+  }
+  if (asksDuration && asksPackage) {
+    return unknown("En fast varighet for hele pakken er ikke publisert. Be skolen avklare et opplegg og tidsrom som passer deg.");
+  }
+  if (stages.size === 2 && (asksPrice || asksDuration)) {
+    return known(asksPrice
+      ? "Trinnvurdering 2 koster 850 kr og er oppgitt til 45 minutter. Trinnvurdering 3 koster 1 000 kr og er oppgitt til 60 minutter."
+      : "Trinnvurdering 2 er oppgitt til 45 minutter og trinnvurdering 3 til 60 minutter på skolens prisside.");
+  }
+  if (asksDuration && stages.has(2)) {
+    return known("Trinnvurdering 2 er oppgitt til 45 minutter på skolens prisside.");
+  }
+  if (asksDuration && stages.has(3)) {
+    return known("Trinnvurdering 3 er oppgitt til 60 minutter på skolens prisside.");
   }
 
   if (
@@ -3628,6 +3654,13 @@ function directFrankOlsenAnswer(client, message) {
     return known("Denne demoen kan ikke lagre, videresende eller følge opp navn, telefonnummer, e-post eller andre personopplysninger. Ikke skriv sensitive opplysninger her. Kontakt Frank Olsen direkte via https://www.frankolsen.no/kontakt.");
   }
 
+  // The reviewed service page describes routine eye examinations, not an
+  // attestation service. Never turn an unverified special purpose into a free
+  // routine exam or a promise that it can be booked.
+  if (/attest|forerkort|forerprove/.test(normalizedMessage)) {
+    return unknown("Tilbud, pris og vilkår for synsattest eller undersøkelse til førerkort er ikke bekreftet i kildene demoen bruker. Be butikken avklare den konkrete tjenesten.");
+  }
+
   if (includesAny(t, [
     "kan du sende e-post", "kan du sende epost", "kan chatten sende e-post", "kan chatten sende epost",
     "send e-post", "send epost", "videresend", "sende melding", "send melding"
@@ -3720,6 +3753,11 @@ function directFrankOlsenAnswer(client, message) {
 
   if (asksEyeExam && includesAny(t, ["hvor lang tid", "varighet", "hvor lenge varer"])) {
     return unknown("Varighet på synsundersøkelsen er ikke publisert; se tilgjengelige tidspunkt på bestillingssiden eller ring butikken.");
+  }
+
+  if (/hvor lenge varer|hvor lang tid tar|varighet/.test(normalizedMessage) &&
+      /kontaktlinse|\blinse|brill|reparasjon/.test(normalizedMessage)) {
+    return unknown("Varighet på tilpasning, levering eller reparasjon er ikke publisert; be butikken bekrefte et realistisk tidsrom.");
   }
 
   if (asksEyeExam && asksPrice) {
