@@ -23,6 +23,8 @@ jobs:
       OPENAI_API_KEY: ''
       NOVA_DATABASE_URL: ''
       RESEND_API_KEY: ''
+      AIRTABLE_PERSONAL_ACCESS_TOKEN: ''
+      NOVA_CAPTURE_CRM_ENABLED: 'false'
       NOVA_CAPTURE_ENABLED: 'false'
       NOVA_CAPTURE_WORKER_ENABLED: 'false'
       NOVA_PREVIEW_ENABLED: 'false'
@@ -67,6 +69,8 @@ jobs:
       NOVA_DATABASE_URL: ''
       OPENAI_API_KEY: ''
       RESEND_API_KEY: ''
+      AIRTABLE_PERSONAL_ACCESS_TOKEN: ''
+      NOVA_CAPTURE_CRM_ENABLED: 'false'
       NOVA_CAPTURE_ENABLED: 'false'
       NOVA_CAPTURE_WORKER_ENABLED: 'false'
     steps:
