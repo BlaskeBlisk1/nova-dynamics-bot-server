@@ -15,7 +15,7 @@ const settle = () => new Promise(resolve => setImmediate(resolve));
 let checks = 0;
 async function test(name, run) { await run(); console.log(`ok ${++checks} - ${name}`); }
 
-function harness({ url = 'https://www.jemlio.com/', online = true, clipboard = 'success', answer = true } = {}) {
+function harness({ url = 'https://www.jemlio.com/', online = true, clipboard = 'success', answer = true, onChat } = {}) {
   const calls = [], copied = [], timers = new Map(), errors = [];
   const virtualConsole = new VirtualConsole();
   virtualConsole.on('jsdomError', error => errors.push(error));
@@ -35,6 +35,7 @@ function harness({ url = 'https://www.jemlio.com/', online = true, clipboard = '
   window.fetch = async (url, options = {}) => {
     calls.push({ url, options });
     if (url !== '/chat') throw new Error('Contact must use native POST, never AJAX');
+    if (onChat) return onChat(JSON.parse(options.body), options);
     if (!answer) throw new Error('Chat offline');
     return { ok: true, json: async () => ({ reply: 'Du finner riktig informasjon her.', suggestions: ['Hva koster det?'] }) };
   };
@@ -230,6 +231,88 @@ function harness({ url = 'https://www.jemlio.com/', online = true, clipboard = '
     assert.doesNotMatch(document.body.textContent, /garantert|e-posten er levert|e-posten er lest/i);
     assert.equal(document.querySelector('form'), null);
     dom.window.close();
+  });
+
+  await test('website retries preserve a different draft and expired buttons cannot send', async () => {
+    let attempt = 0;
+    const h = harness({ onChat: () => {
+      if (++attempt === 1) throw new Error('Offline');
+      return { ok: true, json: async () => ({ reply: 'Et nyttig svar.' }) };
+    } });
+    await h.ask();
+    const oldRetry = h.get('.chat-retry');
+    h.get('#demo-input').value = 'Mitt neste spørsmål';
+    oldRetry.click(); await settle();
+    assert.equal(h.calls.length, 2);
+    assert.equal(h.calls[0].options.body, h.calls[1].options.body);
+    assert.equal(h.get('#demo-input').value, 'Mitt neste spørsmål');
+    oldRetry.click(); await settle();
+    assert.equal(h.calls.length, 2);
+    h.finish();
+  });
+
+  await test('offline website chat preserves the draft and performs no automatic request on reconnect', async () => {
+    const h = harness({ online: false }); await h.ask();
+    assert.equal(h.calls.length, 0);
+    assert.match(h.get('#demo-input').value, /Private test question/);
+    Object.defineProperty(h.window.navigator, 'onLine', { value: true });
+    h.window.dispatchEvent(new h.window.Event('online')); await settle();
+    assert.equal(h.calls.length, 0);
+    h.get('.chat-retry').click(); await settle();
+    assert.equal(h.calls.length, 1);
+    h.finish();
+  });
+
+  await test('website suggestions preserve drafts and composition waits for completion', async () => {
+    const h = harness();
+    h.get('#demo-input').value = 'Min kladd'; h.get('#demo-suggestions button').click(); await settle();
+    assert.equal(h.get('#demo-input').value, 'Min kladd');
+    h.get('#demo-input').dispatchEvent(new h.window.Event('compositionstart'));
+    h.get('#demo-form').requestSubmit(); await settle();
+    assert.equal(h.calls.length, 1);
+    h.get('#demo-input').dispatchEvent(new h.window.Event('compositionend'));
+    h.get('#demo-form').requestSubmit(); await settle();
+    assert.equal(h.calls.length, 2);
+    assert.equal(JSON.parse(h.calls[1].options.body).message, 'Min kladd');
+    h.finish();
+  });
+
+  await test('switching demos cancels the pending timer and suppresses a late answer', async () => {
+    let complete, signal;
+    const h = harness({ onChat: (_payload, options) => { signal = options.signal; return new Promise(resolve => { complete = resolve; }); } });
+    await h.ask();
+    h.get('#tab-optician').click();
+    assert.equal(signal.aborted, true);
+    assert.equal(h.timers.size, 0);
+    complete({ ok: true, json: async () => ({ reply: 'Stale driving answer.' }) }); await settle();
+    assert.doesNotMatch(h.get('#demo-messages').textContent, /Stale driving answer/);
+    assert.match(h.get('#demo-messages').textContent, /fiktiv optiker/);
+    assert.equal(h.get('#demo-next').hidden, true);
+    h.finish();
+  });
+
+  await test('support reset clears pending messages and drafts without submitting anything else', async () => {
+    let complete;
+    const h = harness({ onChat: () => new Promise(resolve => { complete = resolve; }) });
+    h.get('#chat-launcher').click();
+    h.get('#support-input').value = 'Hei'; h.get('#support-form').requestSubmit(); await settle();
+    h.get('#support-input').value = 'En usendt kladd'; h.get('#support-reset').click();
+    assert.equal(h.get('#support-input').value, '');
+    assert.equal(h.document.activeElement.id, 'support-input');
+    assert.equal(h.timers.size, 0);
+    complete({ ok: true, json: async () => ({ reply: 'Stale support answer.' }) }); await settle();
+    assert.doesNotMatch(h.get('#support-messages').textContent, /Stale support answer/);
+    assert.equal(h.calls.length, 1);
+    assert.equal(h.get('#support-form button').disabled, false);
+    h.finish();
+  });
+
+  await test('uncertain answers do not reveal a success CTA and rate limits have their own recovery', async () => {
+    const uncertain = harness({ onChat: () => ({ ok: true, json: async () => ({ reply: 'Ukjent spørsmål.', unsure: true }) }) });
+    await uncertain.ask(); assert.equal(uncertain.get('#demo-next').hidden, true); uncertain.finish();
+    const limited = harness({ onChat: () => ({ ok: false, status: 429 }) });
+    await limited.ask(); assert.match(limited.get('#demo-messages').textContent, /mange spørsmål/);
+    assert.ok(limited.get('.chat-retry')); assert.equal(limited.get('#demo-next').hidden, true); limited.finish();
   });
 
   console.log(`Marketing UI: ${checks} checks passed. Native Netlify processing must be verified separately on the deployed site.`);

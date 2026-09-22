@@ -28,7 +28,7 @@ async function until(test, label) {
   assert.ok(test(), label);
 }
 
-async function harness({ url = "https://nova.example/previews/tiller", config = baseConfig, onCapture, onChat, roma = false } = {}) {
+async function harness({ url = "https://nova.example/previews/tiller", config = baseConfig, onCapture, onChat, onConfig, ready = true, online = true, roma = false } = {}) {
   const calls = [], errors = [];
   const virtualConsole = new VirtualConsole();
   virtualConsole.on("jsdomError", error => errors.push(error));
@@ -37,6 +37,7 @@ async function harness({ url = "https://nova.example/previews/tiller", config = 
   const document = window.document;
   window.matchMedia = () => ({ matches: false });
   window.confirm = () => true;
+  Object.defineProperty(window.navigator, "onLine", { configurable: true, value: online });
   const chatTimers = new Map();
   const nativeSetTimeout = window.setTimeout.bind(window);
   const nativeClearTimeout = window.clearTimeout.bind(window);
@@ -49,7 +50,7 @@ async function harness({ url = "https://nova.example/previews/tiller", config = 
   window.fetch = async (url, options = {}) => {
     const payload = options.body ? JSON.parse(options.body) : undefined;
     calls.push({ url: String(url), method: options.method || "GET", payload });
-    if (String(url).startsWith("/api/demo-config/")) return response(structuredClone(config));
+    if (String(url).startsWith("/api/demo-config/")) return onConfig ? onConfig(options, config) : response(structuredClone(config));
     if (url === "/chat") {
       if (onChat) return onChat(payload, options);
       return response({ reply: "Her er informasjonen.", unsure: false, conversationId: `conversation-${calls.filter(call => call.url === "/chat").length}` });
@@ -64,7 +65,8 @@ async function harness({ url = "https://nova.example/previews/tiller", config = 
   };
   // Both shipped scripts share the same classic-script lexical scope in RoMa.
   window.eval(script + (roma ? `\n${romaScript}` : ""));
-  await until(() => document.querySelector("#business-name").textContent === config.name, "configuration should render");
+  if (ready) await until(() => document.querySelector("#business-name").textContent === config.name && !document.querySelector("#send-button").disabled, "configuration should render");
+  else await settle();
   const get = selector => document.querySelector(selector);
   const clickText = text => {
     const button = [...document.querySelectorAll("button")].find(button => button.textContent.trim() === text);
@@ -157,17 +159,21 @@ async function test(name, run) {
     h.finish();
   });
 
-  await test("legacy demos retain question answering with upgrade controls disabled", async () => {
+  await test("legacy demos retain answering and local reset without activating capture or server context", async () => {
     const config = structuredClone(baseConfig);
     config.features = { conversation: false, capture: { enabled: false, mode: "off", services: [] } };
     const h = await harness({ url: "https://nova.example/demos/tiller", config });
     assert.equal(h.get("#capture-open").hidden, true);
-    assert.equal(h.get("#conversation-reset").hidden, true);
-    assert.equal(h.get("#chat-tools").hidden, true);
+    assert.equal(h.get("#conversation-reset").hidden, false);
+    assert.equal(h.get("#chat-tools").hidden, false);
     await h.ask("Hva koster en kjøretime?");
     assert.deepEqual(h.calls.find(call => call.url === "/chat").payload, { client: "tiller", message: "Hva koster en kjøretime?" });
     assert.equal(h.get(".capture-offer"), null);
     assert.equal(h.calls.filter(call => call.url.startsWith("/api/capture/")).length, 0);
+    h.get("#message-input").value = "Usendt spørsmål";
+    h.get("#conversation-reset").click();
+    assert.equal(h.get("#message-input").value, "");
+    assert.equal(h.document.querySelectorAll(".message").length, 1);
     h.finish();
   });
 
@@ -554,6 +560,102 @@ async function test(name, run) {
     assert.equal(h.document.querySelectorAll(".chat-followup").length, 1);
     assert.equal(h.get(".chat-followup").textContent, hostileLabel);
     assert.equal(h.get(".chat-followup img"), null);
+    h.finish();
+  });
+
+  await test("startup blocks premature questions and enables the composer only after configuration", async () => {
+    let complete;
+    const h = await harness({ ready: false, onConfig: () => new Promise(resolve => { complete = resolve; }) });
+    assert.equal(h.get("#send-button").disabled, true);
+    assert.equal(h.get("#message-input").disabled, true);
+    h.startChat("Hei");
+    assert.equal(h.calls.filter(call => call.url === "/chat").length, 0);
+    complete(response(baseConfig));
+    await until(() => !h.get("#send-button").disabled, "configuration recovers");
+    assert.equal(h.get("#message-input").disabled, false);
+    assert.equal(h.document.querySelectorAll(".message").length, 1);
+    h.finish();
+  });
+
+  await test("a stalled configuration times out and a single explicit retry restores the demo", async () => {
+    let attempts = 0;
+    const h = await harness({ ready: false, onConfig: options => {
+      if (++attempts > 1) return response(baseConfig);
+      return new Promise((_resolve, reject) => options.signal.addEventListener("abort", () => {
+        const error = new Error("Aborted"); error.name = "AbortError"; reject(error);
+      }));
+    } });
+    h.expireChat();
+    await until(() => !h.get("#demo-load-recovery").hidden, "loading recovery appears");
+    assert.doesNotMatch(h.get("#business-name").textContent, /ikke funnet/);
+    assert.equal(h.get("#chat-form").hidden, true);
+    h.get("#demo-load-retry").click(); h.get("#demo-load-retry").click();
+    await until(() => !h.get("#send-button").disabled, "retry restores chat");
+    assert.equal(attempts, 2);
+    assert.equal(h.get("#chat-form").hidden, false);
+    assert.equal(h.get("#demo-load-recovery").hidden, true);
+    assert.equal(h.document.querySelectorAll(".message").length, 1);
+    h.finish();
+  });
+
+  await test("missing demos are distinguished from temporary and malformed configuration failures", async () => {
+    for (const status of [404, 503, 200]) {
+      const h = await harness({ ready: false, onConfig: () => response({}, status) });
+      assert.equal(h.get("#demo-load-recovery").hidden, false);
+      assert.equal(h.get("#demo-load-retry").hidden, status === 404);
+      assert.equal(h.get("#send-button").disabled, true);
+      assert.equal(h.get("#message-input").disabled, true);
+      h.finish();
+    }
+  });
+
+  await test("suggestions preserve another draft and text composition cannot submit prematurely", async () => {
+    const config = structuredClone(baseConfig); config.suggestedQuestions = ["Hva tilbyr dere?"];
+    const h = await harness({ config });
+    h.get("#message-input").value = "Mitt neste spørsmål";
+    h.get(".suggestion").click();
+    await until(() => !h.get("#send-button").disabled, "suggestion completes");
+    assert.equal(h.get("#message-input").value, "Mitt neste spørsmål");
+    h.get("#message-input").dispatchEvent(new h.window.Event("compositionstart"));
+    h.get("#chat-form").requestSubmit();
+    assert.equal(h.calls.filter(call => call.url === "/chat").length, 1);
+    h.get("#message-input").dispatchEvent(new h.window.Event("compositionend"));
+    h.get("#chat-form").requestSubmit();
+    await until(() => !h.get("#send-button").disabled, "typed question completes");
+    assert.equal(h.calls.filter(call => call.url === "/chat")[1].payload.message, "Mitt neste spørsmål");
+    h.finish();
+  });
+
+  await test("offline questions stay in the composer and reconnecting never submits automatically", async () => {
+    const h = await harness({ online: false });
+    await h.ask("Hva tilbyr dere?");
+    assert.equal(h.calls.filter(call => call.url === "/chat").length, 0);
+    assert.equal(h.get("#message-input").value, "Hva tilbyr dere?");
+    assert.equal(h.get("#status-label").textContent, "Frakoblet");
+    Object.defineProperty(h.window.navigator, "onLine", { value: true });
+    h.window.dispatchEvent(new h.window.Event("online"));
+    assert.equal(h.calls.filter(call => call.url === "/chat").length, 0);
+    h.get("#message-input").value = "En annen kladd";
+    h.get(".chat-retry").click();
+    await until(() => !h.get("#send-button").disabled, "retry completes");
+    assert.equal(h.calls.filter(call => call.url === "/chat").length, 1);
+    assert.equal(h.get("#message-input").value, "En annen kladd");
+    h.finish();
+  });
+
+  await test("rate limits remain understandable for non-JSON responses and obsolete retries cannot send", async () => {
+    let count = 0;
+    const h = await harness({ onChat: () => ++count === 2
+      ? { ok: false, status: 429, json: async () => { throw new Error("HTML error"); } }
+      : response({ reply: "Et nyttig svar.", conversationId: "known-context" }) });
+    await h.ask("Hva tilbyr dere?"); await h.ask("Hva koster det?");
+    assert.match(h.get("#messages").textContent, /mange spørsmål/);
+    const oldRetry = h.get(".chat-retry");
+    await h.ask("Hva koster grunnkurs?");
+    assert.equal(h.calls.filter(call => call.url === "/chat")[2].payload.conversationId, undefined);
+    oldRetry.click(); await settle();
+    assert.equal(h.calls.filter(call => call.url === "/chat").length, 3);
+    assert.equal(h.get(".chat-retry"), null);
     h.finish();
   });
 

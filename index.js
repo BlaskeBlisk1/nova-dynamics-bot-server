@@ -16,6 +16,14 @@ app.use((_, res, next) => {
   next();
 });
 
+// Public deployment identity only; never return environment/configuration data.
+const releaseRevision = /^[a-f0-9]{40}$/.test(process.env.RENDER_GIT_COMMIT || "")
+  ? process.env.RENDER_GIT_COMMIT : null;
+app.get("/api/release", (_req, res) => {
+  res.setHeader("Cache-Control", "no-store");
+  res.json({ service: "jemlio", revision: releaseRevision });
+});
+
 // -------------------- Static site (optional) --------------------
 const publicDir = path.join(__dirname, "public");
 

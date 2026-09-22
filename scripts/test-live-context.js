@@ -73,7 +73,12 @@ if (process.env.JEMLIO_CONTEXT_TEST_CHILD === "true") {
   };
 
   (async () => {
-    await withServer({}, async ({ request, ask }) => {
+    await withServer({ RENDER_GIT_COMMIT: "a".repeat(40) }, async ({ request, ask }) => {
+      await check("public release identity exposes only the validated deployed revision", async () => {
+        const release = await request("/api/release");
+        assert.equal(release.status, 200);
+        assert.deepEqual(release.data, { service: "jemlio", revision: "a".repeat(40) });
+      });
       await check("only Tiller and Frank Olsen expose conversation; every existing demo keeps capture off", async () => {
         for (const client of ["fram", "fyllingsdalen", "onsoy", "tiller", "trafikk1", "frankolsen", "roma", "jemlio"]) {
           const config = await request(`/api/demo-config/${client}`);

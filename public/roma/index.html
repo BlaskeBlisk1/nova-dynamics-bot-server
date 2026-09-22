@@ -28,6 +28,7 @@
         <div class="identity-row"><p id="eyebrow" class="eyebrow">DIN VEI VIDERE</p><span id="location-label" class="location-label">TOLVSRØD · TØNSBERG</span></div>
         <h1>Et spørsmål nærmere<br><span>førerkortet.</span></h1>
         <p id="business-description" class="description">Fra første kjøretime til neste MC-klasse. Finn svar om kurs, priser og veien videre på Tolvsrød.</p>
+        <div id="demo-load-recovery" class="demo-load-recovery" hidden><button id="demo-load-retry" type="button">Prøv å laste igjen</button><a href="https://www.jemlio.com/#kontakt">Kontakt Jemlio</a></div>
         <div id="highlights" class="highlights" aria-label="Førerkortklasser"></div>
       </div>
       <div class="road-card" aria-hidden="true"><span class="road-label">NESTE STOPP</span><strong>Din frihet<br>på veien.</strong><div class="road-graphic"><i></i><i></i><i></i></div><span class="road-bottom">BIL / MC / TILHENGER</span></div>
@@ -46,11 +47,11 @@
       </aside>
 
       <section class="chat-card" aria-label="Chatdemo">
-        <div class="chat-header"><div id="assistant-avatar" class="assistant-avatar">R</div><div><strong id="assistant-label">RoMa elevassistent</strong><span><i></i> <span id="status-label" class="status-label">Kobler til demoen…</span></span></div><button id="reset-chat" class="reset-chat" type="button" aria-label="Start en ny samtale" title="Start på nytt">↺</button></div>
+        <div class="chat-header"><div id="assistant-avatar" class="assistant-avatar">R</div><div><strong id="assistant-label">RoMa elevassistent</strong><span><i></i> <span id="status-label" class="status-label" role="status">Kobler til demoen…</span></span></div><button id="reset-chat" class="reset-chat" type="button" aria-label="Start en ny samtale" title="Start på nytt">↺</button></div>
         <div class="chat-info">02 / SPØR ASSISTENTEN <span>Informasjon, ikke bestilling</span></div>
-        <div id="messages" class="messages" role="log" aria-live="polite" aria-relevant="additions"></div>
-        <form id="chat-form" class="chat-form"><label class="sr-only" for="message-input">Skriv et spørsmål</label><input id="message-input" name="message" placeholder="F.eks. Hva koster A2 til A?" autocomplete="off" maxlength="2000" required><button id="send-button" type="submit" aria-label="Send spørsmål"><span>Send</span><span aria-hidden="true">↗</span></button></form>
-        <p class="privacy-note">Ikke skriv personopplysninger. Nevn klassen når du spør om priser.</p>
+        <div id="messages" class="messages" role="log" aria-label="Samtalen med assistenten" tabindex="0" aria-live="polite" aria-relevant="additions"></div>
+        <form id="chat-form" class="chat-form"><label class="sr-only" for="message-input">Skriv et spørsmål</label><input id="message-input" name="message" placeholder="F.eks. Hva koster A2 til A?" autocomplete="off" maxlength="2000" aria-describedby="chat-privacy" enterkeyhint="send" disabled required><button id="send-button" type="submit" disabled aria-label="Send spørsmål"><span>Send</span><span aria-hidden="true">↗</span></button></form>
+        <p id="chat-privacy" class="privacy-note">Ikke skriv personopplysninger. Nevn klassen når du spør om priser.</p>
         <nav class="next-steps" aria-label="Gå videre hos RoMa"><a href="https://romatrafikkskole.no/kursoversikt" target="_blank" rel="noreferrer">Se kurs og påmelding ↗</a><a href="https://romatrafikkskole.no/kontakt" target="_blank" rel="noreferrer">Kontakt RoMa ↗</a></nav>
       </section>
     </section>

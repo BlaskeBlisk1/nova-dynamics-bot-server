@@ -32,11 +32,18 @@
     const choices = $(prefix + '-suggestions');
     let controller = null;
     let generation = 0;
+    let requestTimer = null;
+    let composing = false;
     function message(text, kind) {
       const item = document.createElement('div');
       item.className = 'message ' + kind;
       const p = document.createElement('p');
-      richText(p, text);
+      const sender = document.createElement('span');
+      sender.className = 'sr-only';
+      sender.textContent = kind === 'user' ? 'Du: ' : 'Assistenten: ';
+      item.append(sender);
+      if (kind === 'user') p.textContent = text;
+      else richText(p, text);
       item.append(p); log.append(item); log.scrollTop = log.scrollHeight;
       return item;
     }
@@ -51,41 +58,62 @@
         if (typeof question !== 'string' || question.length > 200) return;
         const button = document.createElement('button');
         button.type = 'button'; button.textContent = question;
-        button.addEventListener('click', () => submit(question)); choices.append(button);
+        button.addEventListener('click', () => submit(question, 'suggestion')); choices.append(button);
       });
     }
-    async function submit(raw) {
+    function clearRetries() { log.querySelectorAll('.chat-retry').forEach(button => button.remove()); }
+    function failure(question, source, error = {}) {
+      clearRetries();
+      const offline = navigator.onLine === false;
+      const item = message(offline
+        ? 'Du ser ut til å være frakoblet. Koble til nettet og prøv spørsmålet igjen.'
+        : error.httpStatus === 429 ? 'Det kom mange spørsmål på kort tid. Vent litt og prøv igjen.'
+        : 'Jeg fikk ikke hentet svaret akkurat nå. Du kan prøve igjen eller kontakte Jemlio på hei@jemlio.com.', 'assistant error');
+      const retry = document.createElement('button');
+      retry.type = 'button'; retry.className = 'chat-retry'; retry.textContent = 'Prøv spørsmålet igjen';
+      retry.addEventListener('click', () => { if (retry.isConnected) submit(question, source, true); });
+      item.append(retry); log.scrollTop = log.scrollHeight;
+    }
+    async function submit(raw, source = 'typed', retrying = false) {
       const question = String(raw).trim().slice(0, 1200);
       if (!question || controller) return;
+      clearRetries();
+      if (navigator.onLine === false) { failure(question, source); return; }
       const current = ++generation;
       const activeController = new AbortController(); controller = activeController;
       const client = getClient();
-      message(question, 'user'); input.value = ''; pending(true);
+      message(question, 'user');
+      if (source === 'typed' && (!retrying || input.value.trim() === question)) input.value = '';
+      pending(true);
       const waiting = message('Henter svar …', 'assistant pending');
       const timer = setTimeout(() => activeController.abort(), 25000);
+      requestTimer = timer;
       try {
         const response = await fetch(api, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ client, message: question }), signal: activeController.signal });
-        if (!response.ok) throw new Error('HTTP ' + response.status);
+        if (!response.ok) { const error = new Error('Chat unavailable'); error.httpStatus = response.status; throw error; }
         const data = await response.json();
         if (typeof data.reply !== 'string' || !data.reply.trim()) throw new Error('Missing reply');
         if (current !== generation) return;
         waiting.remove(); message(data.reply, 'assistant');
         if (Array.isArray(data.suggestions)) suggestions(data.suggestions);
-        onAnswer();
+        if (data.unsure !== true) onAnswer();
       } catch (error) {
         if (current !== generation) return;
         waiting.remove();
-        message('Jeg fikk ikke hentet svaret akkurat nå. Prøv igjen om litt, eller kontakt Jemlio på hei@jemlio.com.', 'assistant error');
+        failure(question, source, error);
       } finally {
         clearTimeout(timer);
-        if (current === generation) { controller = null; pending(false); }
+        if (current === generation) { controller = null; requestTimer = null; pending(false); }
       }
     }
-    form.addEventListener('submit', event => { event.preventDefault(); submit(input.value); });
-    choices.querySelectorAll('button').forEach(button => button.addEventListener('click', () => submit(button.textContent)));
+    input.addEventListener('compositionstart', () => { composing = true; });
+    input.addEventListener('compositionend', () => { composing = false; });
+    form.addEventListener('submit', event => { event.preventDefault(); if (!composing && !event.isComposing) submit(input.value); });
+    choices.querySelectorAll('button').forEach(button => button.addEventListener('click', () => submit(button.textContent, 'suggestion')));
     return {
       reset(greeting, questions) {
         generation++; if (controller) controller.abort(); controller = null;
+        clearTimeout(requestTimer); requestTimer = null; composing = false;
         log.replaceChildren(); input.value = ''; message(greeting, 'assistant'); suggestions(questions); pending(false);
       }
     };
@@ -120,7 +148,12 @@
     updateEmailDraft();
   });
   document.querySelectorAll('[data-try]').forEach(button => button.addEventListener('click', () => { select(button.dataset.try); $('demo').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' }); $('demo-input').focus({ preventScroll: true }); }));
-  chat('support', () => 'jemlio');
+  const support = chat('support', () => 'jemlio');
+  $('support-reset').addEventListener('click', () => {
+    support.reset('Hei! Jeg kan svare på spørsmål om Jemlio og hvordan du får en gratis demo. Hva lurer du på?',
+      ['Hva kan Jemlio hjelpe med?', 'Hvordan får jeg en gratis demo?']);
+    $('support-input').focus();
+  });
   const launcher = $('chat-launcher');
   const panel = $('support-panel');
   function toggle(open) { panel.hidden = !open; launcher.setAttribute('aria-expanded', String(open)); if (open) $('support-input').focus(); else launcher.focus(); }
