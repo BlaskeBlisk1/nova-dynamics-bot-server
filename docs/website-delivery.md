@@ -23,6 +23,42 @@ no claim about inbox-folder placement was made. Future owner alerts were enabled
 only after that delivery confirmation. Keep the synthetic record marked as a
 test, and do not resubmit it to verify later configuration changes.
 
+## Owner workspace and actionable alerts
+
+The Airtable base is now **Jemlio Sales**, retaining base ID
+`apppXqfehxmOi4pyw` and the existing Inbound Enquiries table. Its private
+[Today workspace](https://airtable.com/apppXqfehxmOi4pyw/pagwcZ9lPAcCeVHHC)
+shows new enquiries, due follow-ups and in-progress enquiries missing a date.
+Pipeline and All enquiries open the same record details. Only Status, Next action,
+Next follow-up, Last contacted and Notes are editable there. The workspace scopes
+out records marked Test record, including the original delivery test.
+
+New website notifications include a Norwegian HTML layout and a complete
+plain-text alternative, received time in Europe/Oslo, the visitor's contact
+details and message, and an **Åpne Jemlio Sales** button. Reply-To remains the
+validated visitor email; the sender and owner recipient remain server-controlled.
+The template escapes every submitted value. Only the fixed workspace link is
+rendered as a link; submitted website/message text cannot insert active markup.
+No external image, tracking pixel, font or script is required.
+
+The workspace button is included only when both configured Airtable IDs match
+the approved Jemlio destination. A different CRM destination does not inherit
+the link. Email and CRM dispatch remain independent, so the alert explicitly
+allows time for the CRM copy to arrive. It does not claim that a row is already
+synced, that an appointment exists, or that a customer has been won.
+
+Only newly saved requests receive this template. Existing frozen notifications,
+receipts, provider idempotency keys and CRM payloads are preserved; deploys and
+webhook retries do not rewrite or resend previous alerts. Airtable sales statuses
+still do not synchronize back to the PostgreSQL outcome report. Follow-up dates
+are a manual work queue, not automatic customer messages.
+
+`node scripts/preview-website-alert.js /absolute/path/preview.html` writes a
+synthetic preview without using a database, provider credentials or sending mail.
+The website-enquiry tests cover hostile markup, owner routing, plain-text
+fallback, private-link scoping and frozen pre-upgrade notifications.
+HTML and text use the existing [Resend send-email API](https://resend.com/docs/api-reference/emails/send-email).
+
 ## Receiver and storage
 
 Send a form-specific Netlify HTTP POST notification to:
