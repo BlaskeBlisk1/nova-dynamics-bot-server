@@ -20,15 +20,28 @@ The native-form smoke operation is armed separately after registration is confir
 
 After either task, set `JEMLIO_SITE_TASK=off` and clear the proxy, expected commit, deadline and test marker. The staging service has auto-deploy disabled and no request-triggered write endpoint.
 
-## Airtable status
+## Website delivery upgrade — 22 September 2026
 
-The mapped `Jemlio inbound enquiry webhook` draft has a captured schema and validated field mapping. It remains OFF until the owner reviews and enables it in Airtable. Publishing this website does not activate it or configure automatic Netlify-to-Airtable synchronization.
+The backend now contains a separately gated signed Netlify notification receiver.
+It saves the website enquiry and both delivery payloads in PostgreSQL before
+acknowledging persistence, then uses independent Airtable/email retry workers.
+The native Netlify form remains the public submission destination. This code does
+not automatically create a Netlify notification or enable dispatch. See
+[website-delivery.md](website-delivery.md) for exact configuration and verification.
+
+The production PostgreSQL database, Resend sending credential, Airtable token and
+capture signing secret are now installed. Provider connection checks passed;
+customer-demo capture and all delivery switches remained off at this checkpoint.
+
+## Previous Airtable automation
+
+The mapped `Jemlio inbound enquiry webhook` draft has a captured schema and validated field mapping. It remains OFF. The signed notification receiver uses direct, receipt-based Airtable upserts instead; do not enable both as duplicate importers. Publishing the website alone does not activate either path.
 
 Airtable should be a CRM projection, not evidence of durable storage based on a webhook acknowledgement. Its current receipt lookup protects sequential retries only, not simultaneous races. Preserve sales progress when synchronizing existing records.
 
 ## In-chat capture status
 
-The existing seven customer-demo links remain unchanged. In-chat capture, its email worker and production database wiring remain disabled. Do not use the expiring free staging database for real customer records.
+The existing seven customer-demo links remain unchanged. In-chat capture and its email worker remain disabled. The permanent production database is wired and migrated; the expiring free staging database is not used for real customer records.
 
 ## Verification record
 

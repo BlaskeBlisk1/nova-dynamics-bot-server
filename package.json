@@ -5,11 +5,12 @@
   "scripts": {
     "start": "node index.js",
     "new-client": "node new-client.js",
-    "test": "npm run test:legacy && npm run test:brand && npm run test:conversation && npm run test:capture && npm run test:capture-crm && npm run test:capture-operations && npm run test:upgrade && npm run test:live-context && npm run test:capture-ui && npm run test:marketing-ui && npm run test:marketing-enquiries && npm run test:staging-site",
+    "test": "npm run test:legacy && npm run test:brand && npm run test:conversation && npm run test:capture && npm run test:capture-crm && npm run test:website-enquiries && npm run test:capture-operations && npm run test:upgrade && npm run test:live-context && npm run test:capture-ui && npm run test:marketing-ui && npm run test:marketing-enquiries && npm run test:staging-site",
     "test:legacy": "node scripts/smoke-demo.js && node scripts/smoke-fram.js && node scripts/smoke-fyllingsdalen.js && node scripts/smoke-onsoy.js && node scripts/smoke-tiller.js && node scripts/smoke-trafikk1.js && node scripts/smoke-frankolsen.js && node scripts/smoke-analytics.js && node scripts/smoke-roma.js",
     "test:conversation": "node scripts/test-conversation.js",
     "test:capture": "node scripts/test-capture.js",
     "test:capture-crm": "node scripts/test-capture-crm.js",
+    "test:website-enquiries": "node scripts/test-website-enquiries.js",
     "test:upgrade": "node scripts/test-upgrade-integration.js",
     "test:capture-ui": "node scripts/test-capture-ui.js",
     "preview:upgrade": "node scripts/preview-upgrade.js",
