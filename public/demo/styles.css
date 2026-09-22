@@ -1492,6 +1492,7 @@ body[data-theme="optical"] .privacy-note {
 }
 
 body[data-theme="optical"] .website-link:focus-visible,
+body[data-theme="optical"] .text-action:focus-visible,
 body[data-theme="optical"] .chat-form input:focus-visible,
 body[data-theme="optical"] .chat-form button:focus-visible {
   outline-color: #0e6f68;
@@ -1568,7 +1569,7 @@ body[data-capture="enabled"] .chat-card { height: 740px; min-height: 540px; }
   min-height: 36px;
   padding: 7px 0;
   border: 0;
-  color: var(--text);
+  color: inherit;
   background: transparent;
   font-size: 12px;
   text-decoration: underline;
@@ -1592,13 +1593,13 @@ body[data-capture="enabled"] .chat-card { height: 740px; min-height: 540px; }
 }
 .chat-retry:focus-visible { outline: 3px solid var(--accent-secondary); outline-offset: 3px; }
 .chat-followups { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); white-space: normal; }
-.chat-followups-label { display: block; margin-bottom: 8px; font-size: 11px; color: var(--muted); }
+.chat-followups-label { display: block; margin-bottom: 8px; font-size: 11px; color: inherit; }
 .chat-followup-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .chat-followup {
   min-height: 44px;
   max-width: 100%;
   padding: 9px 12px;
-  border: 1px solid var(--line);
+  border: 1px solid currentColor;
   border-radius: 10px;
   background: transparent;
   color: inherit;
@@ -1609,8 +1610,8 @@ body[data-capture="enabled"] .chat-card { height: 740px; min-height: 540px; }
   overflow-wrap: anywhere;
   cursor: pointer;
 }
-.chat-followup:hover { border-color: currentColor; background: var(--panel); }
-.chat-followup:focus-visible { outline: 3px solid var(--accent-secondary); outline-offset: 3px; }
+.chat-followup:hover { text-decoration: underline; text-underline-offset: 3px; }
+.chat-followup:focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
 .capture-offer p { margin: 0 0 12px; }
 .capture-panel {
   flex: 0 0 auto;
