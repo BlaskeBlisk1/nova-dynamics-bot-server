@@ -1,74 +1,40 @@
-# Jemlio enquiry release status
+# Jemlio production status
 
-Historical checkpoint: 2026-09-21. See the current note below before following the older activation gates.
+Current checkpoint: 22 September 2026. This document replaces the obsolete staging-only activation checklist. Historical steps remain in Git history.
 
-## Current checkpoint — 22 September 2026, 18:03 UTC
+## Live and completed
 
-Jemlio website intake, Airtable copying and owner email alerts are now active.
-The native Netlify form remains the primary submission store. Its form-specific,
-signed notification saves each enquiry in the permanent private PostgreSQL 18
-database in Frankfurt; independent workers handle CRM and email delivery.
+- All seven shared demo URLs are preserved: `fram`, `fyllingsdalen`, `onsoy`, `tiller`, `trafikk1`, `frankolsen`, `roma`.
+- Tiller and Frank Olsen have bounded conversation context and guided service follow-ups. The other demos retain their established answer handlers. Resetting the visible conversation does not require enabling server context.
+- Jemlio's website uses the existing native Netlify form `jemlio-demo-request`. The form has already passed its production storage test; do not resubmit the original test to check a later UI release.
+- The form-specific signed notification saves enquiries and independent email/CRM outboxes in the permanent private PostgreSQL 18 database in Frankfurt.
+- Website enquiries copy to the private **Jemlio Sales** Airtable base. Owner alerts go to the approved `hei@jemlio.com` inbox. The original synthetic email was delivered; future owner alerts are approved and enabled.
+- The private enquiry workspace and sales follow-up planner are published. Follow-up dates create a manual work queue; they do not send messages.
 
-One clearly marked synthetic enquiry was submitted through the actual website,
-read back from Netlify and PostgreSQL, and copied to Airtable within five seconds.
-A signed replay returned the same receipt with `duplicate: true`. After the owner
-approved sending the held test, the production notification code sent it once to
-`hei@jemlio.com`. Resend confirmed `delivered`; the database records provider
-acceptance after one attempt. Gmail's connector was rate-limited, so inbox-folder
-placement was not independently checked.
+See [website delivery](website-delivery.md) for verified receipt, provider and database details, [marketing intake](marketing-intake.md) for publishing, and [the completion pass](completion-pass.md) for the current UI and release behavior.
 
-The owner also approved future website alerts to that same inbox. All three
-`JEMLIO_WEBSITE_*_ENABLED` switches are now true; the activation deploy
-`dep-dapc5n0ae00c73cjg8mg` is live. The public privacy notice is published. See
-[website-delivery.md](website-delivery.md) and the
-[verified release record](https://github.com/BlaskeBlisk1/nova-dynamics-bot-server/pull/22).
+## Intentionally inactive
 
-The old Airtable webhook draft remains off. Customer-demo capture and its delivery
-switches remain off pending pilot-specific routing and verification. The seven
-existing demo links remain available.
+- Customer-demo capture and its delivery switches remain off. Activating a real business pilot requires its agreed recipient, privacy notice, exact website origins and a verified delivery test.
+- Public synthetic preview routes remain off.
+- The older `/api/marketing-enquiry` forwarding gateway remains disabled. The live website does not submit to it.
+- The superseded Airtable webhook automation remains off. **Do not enable it**: the signed receiver already performs CRM ingestion.
+- The expiring staging database is not a production store.
 
-The remainder records the earlier staging-only workflow and is not the current
-production setup or a requirement to enable the superseded Airtable automation.
+## What still needs a business decision or separate verification
 
-## Verified this session
+1. Select the first willing business for a customer-capture pilot and obtain its routing/privacy details. The code and permanent infrastructure are present; this is a customer onboarding step.
+2. Verify the redesigned owner notification visually in an actual email client when an approved/new real alert is available. Its HTML/text, escaping and routing tests passed, but inbox placement and email-client appearance are not inferred from provider delivery.
+3. Airtable sales status changes remain in Airtable; they do not synchronize back into PostgreSQL outcome reports. A broader sales-outcome integration is a separate feature.
 
-- The separate `jemlio-integration-staging` service delivered one synthetic Airtable webhook example. No customer details or emails were used.
-- Airtable reported `webhookSchemaIsSet: true` for `Jemlio inbound enquiry webhook`.
-- The replacement automation draft passed configuration validation. It maps the captured fields into `Inbound Enquiries`, requires explicit consent and `setupOnly: false`, limits its source to `Jemlio website`, and skips receipts already found in that table.
-- The staging setup switch was turned off and its webhook URL and expiry were cleared after capture. Auto-deploy on that service is off.
+No booking calendar, SMS or automated prospect follow-up is implied by the present release.
 
-## What is still not live
+## Release and recovery checks
 
-The Airtable automation remains OFF. Its tool supports editing the draft, not publishing it; the owner must review and enable it in Airtable. Configuration validation is not a successful action execution.
+`npm test` covers the existing answers, context, UI recovery, enquiry validation, transactional outboxes and worker behavior. GitHub CI separately runs PostgreSQL concurrency and production dependency auditing.
 
-The public Netlify website remains on its separately published release until its deploy ID is verified. Merging the backend does not publish the Netlify site. The repository's `/enquiry` form must not be promoted as a working durable intake while its destination is unverified.
+After backend deployment, `JEMLIO_EXPECTED_COMMIT=<full SHA> node scripts/verify-safe-release.cjs --live` waits for that exact revision at `/api/release`, then checks all seven demos, guided follow-ups, website chat, intake configuration and the public native form/privacy page. It never submits a contact form or sends an email. It cannot prove fresh CRM/email delivery.
 
-The marketing gateway requires both `JEMLIO_ENQUIRY_ENABLED=true` and a valid server-side `JEMLIO_ENQUIRY_WEBHOOK_URL`. Neither is enabled by this release. A webhook URL alone does not activate collection.
+The public smoke workflow now runs on relevant backend, client, UI and dependency changes. Netlify publishing remains separate from a Render merge: verify the published website assets and Netlify deploy ID as well.
 
-Customer-demo capture, its email worker and production database wiring remain disabled. The seven shared demo URLs must remain unchanged.
-
-## Acceptance is not persistence
-
-Airtable can acknowledge a webhook even when the automation is off. The gateway therefore returns HTTP 202 with `persisted: false` and a correlation `requestId`, not HTTP 201 with an alleged durable receipt. The no-JavaScript response states the same distinction. It must never redirect to a page claiming storage or email delivery based only on that acknowledgement.
-
-The CRM receipt lookup prevents ordinary sequential duplicate rows from resetting sales progress. It is not atomic: simultaneous requests can race. The marketing gateway currently generates a new correlation ID per call and does not offer restart-safe idempotency. Do not advertise it as an exactly-once or durable capture system.
-
-## Next activation gates, in order
-
-1. Choose and verify the durable primary store for website enquiries. Use a controlled synthetic submission and read the saved record back from the authoritative storage API.
-2. Review and enable the mapped Airtable automation in its UI. Confirm a fresh, clearly labeled synthetic non-setup payload produces the intended row with the correct fields and consent. Keep live forwarding disabled until this readback is complete.
-3. Verify deletion, retries and duplicate handling across the durable store and any CRM projection. Do not repeatedly POST after an ambiguous response.
-4. Verify the marketing deployment, canonical domain, no-JavaScript form, error recovery and mobile presentation. Do not treat a 200 status, a thank-you page or a configuration check as proof of a stored enquiry.
-5. Test email notification separately using an owner-approved recipient. No notification recipient has been silently selected by this release.
-6. Only then enable the relevant production feature and repeat the live smoke checks. In-chat capture remains a separate pilot rollout.
-
-## Staging database
-
-`jemlio-capture-staging` is a free PostgreSQL 18 instance in Frankfurt, separate from production. Its recorded expiry is 2026-10-21T18:42:45Z. It is not an approved permanent production store; do not move real customer records there. Its connection has not been wired into the live chatbot.
-
-## Security and rollback
-
-- Never commit webhook URLs, database passwords, API keys or deployment capabilities to the repository.
-- The staging seed script runs only through its explicit staging start command. `npm start` never imports it.
-- To disable marketing forwarding, set `JEMLIO_ENQUIRY_ENABLED=false`; keep customer capture and worker flags unchanged/off.
-- Keep the existing FAQ/chat paths independent of optional storage and notification failures.
+To pause website forwarding, disable its three `JEMLIO_WEBSITE_*_ENABLED` flags and its Netlify notification as needed. Native Netlify submissions remain stored. Customer flags and demo links are independent; do not change them to pause the website queue.
