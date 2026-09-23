@@ -46,6 +46,13 @@ async function main() {
   });
   // Fail before running chat checks against an old or unidentified deployment.
   if (!deployedRevision) { writeReport(null); return; }
+  await check('Booking demonstration is isolated and its assets are available', async () => {
+    const page = await request(`${backend}/booking-demo`);
+    assert.equal(page.status, 200);
+    assert.match(page.headers.get('content-security-policy') || '', /connect-src 'none'/);
+    assert.match(await page.text(), /Alle personer, tider og resultater er eksempler/);
+    for (const asset of ['app.js', 'styles.css']) assert.equal((await request(`${backend}/booking/${asset}`)).status, 200);
+  });
   for (const client of clients) {
     await check(`${client}: shared URL and capture-off configuration`, async () => {
       const page = await request(`${backend}/demos/${client}?owner=1`);
@@ -55,6 +62,9 @@ async function main() {
       const config = await response.json();
       assert.equal(config.client, client); assert.equal(config.features.capture.enabled, false);
       assert.equal(config.features.conversation, ['tiller', 'frankolsen'].includes(client));
+      const booking = await request(`${backend}/api/booking/config/${client}`);
+      assert.equal((await booking.json()).enabled, false);
+      assert.equal((await request(`${backend}/book/${client}`)).status, 404);
     });
     await check(`${client}: synthetic answer`, () => ask(backend, client, 'Hva tilbyr dere?'));
   }
@@ -108,7 +118,7 @@ function writeReport(deployedRevision) {
   const report = { checkedAt: new Date().toISOString(), verificationCommit: process.env.GITHUB_SHA || null, deployedRevision,
     results, passed: results.filter(x => x.passed).length, failed: results.filter(x => !x.passed).length,
     limits: ['No marketing or capture submission was made.', 'Does not verify saved enquiries, Airtable action execution or email delivery.',
-      'Configuration checks do not prove worker execution or provider delivery.', 'No visual/browser review.'] };
+      'Configuration checks do not prove worker execution or provider delivery.', 'No real appointment was made or Calendly credentials tested.', 'No visual/browser review.'] };
   fs.mkdirSync('release-verification', { recursive: true });
   fs.writeFileSync('release-verification/safe-live.json', JSON.stringify(report, null, 2));
   console.log(`RESULT ${report.passed} passed; ${report.failed} failed.`);
