@@ -25,6 +25,8 @@ jobs:
       RESEND_API_KEY: ''
       AIRTABLE_PERSONAL_ACCESS_TOKEN: ''
       NOVA_CAPTURE_CRM_ENABLED: 'false'
+      JEMLIO_BOOKING_ENABLED: 'false'
+      JEMLIO_BOOKING_CONFIG: ''
       NOVA_CAPTURE_ENABLED: 'false'
       NOVA_CAPTURE_WORKER_ENABLED: 'false'
       NOVA_PREVIEW_ENABLED: 'false'
@@ -75,6 +77,8 @@ jobs:
       RESEND_API_KEY: ''
       AIRTABLE_PERSONAL_ACCESS_TOKEN: ''
       NOVA_CAPTURE_CRM_ENABLED: 'false'
+      JEMLIO_BOOKING_ENABLED: 'false'
+      JEMLIO_BOOKING_CONFIG: ''
       NOVA_CAPTURE_ENABLED: 'false'
       NOVA_CAPTURE_WORKER_ENABLED: 'false'
     steps:
@@ -88,3 +92,5 @@ jobs:
       - run: npm ci --ignore-scripts
       - name: Test transactions, concurrent retries, worker leases and deletion races
         run: node scripts/test-capture-postgres.js
+      - name: Test booking claims, deletion races and closed-outcome isolation
+        run: node scripts/test-booking-postgres.js

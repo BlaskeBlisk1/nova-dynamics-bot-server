@@ -146,7 +146,8 @@ function allowCORS(res, origin) {
 // ---- Dynamic CORS middleware ----
 app.use((req, res, next) => {
   // Capture owns its CORS policy; legacy preflights must not intercept it.
-  if (req.path === "/api/capture" || req.path.startsWith("/api/capture/")) return next();
+  if (req.path === "/api/capture" || req.path.startsWith("/api/capture/") ||
+      req.path === "/api/booking" || req.path.startsWith("/api/booking/")) return next();
   const origin = req.headers.origin || "";
   const rawClient = (req.body && req.body.client) || (req.query && req.query.client) || "";
   const client = safeSlug(rawClient);
@@ -186,6 +187,21 @@ app.get(["/previews/:client", "/previews/:client/"], (req, res) => {
 });
 
 app.use("/api/capture", upgrades.router);
+app.use("/api/booking", upgrades.booking.router);
+// Independent synthetic demo: no network writes, bookings or messages.
+app.get(["/booking-demo", "/booking-demo/"], (_req, res) => {
+  res.set('X-Robots-Tag', 'noindex, nofollow'); res.set('Cache-Control', 'no-store');
+  res.set('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; form-action 'none'; frame-ancestors 'none'; base-uri 'none'");
+  return res.sendFile(path.join(publicDir, 'booking', 'index.html'));
+});
+app.get(["/book/:client", "/book/:client/"], async (req, res) => {
+  res.set('X-Robots-Tag', 'noindex, nofollow'); res.set('Cache-Control', 'no-store');
+  res.set('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; form-action 'none'; frame-ancestors 'none'; base-uri 'none'");
+  try {
+    if (!(await upgrades.booking.publicConfig(req.params.client)).enabled) return res.status(404).send('Booking is not enabled for this business.');
+    return res.sendFile(path.join(publicDir, 'booking', 'index.html'));
+  } catch { return res.status(503).send('Booking temporarily unavailable.'); }
+});
 app.use("/api/marketing-enquiry", require("./lib/marketing-enquiries").createMarketingEnquiryRouter({
   allowedOrigins: ["https://www.jemlio.com", "https://jemlio.com"]
 }));
