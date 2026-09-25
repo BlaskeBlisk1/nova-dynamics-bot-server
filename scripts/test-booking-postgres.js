@@ -167,6 +167,18 @@ async function main() {
       try{await held.promise;response=offers.respond(q.token,{response:'interested'},()=>true).then(value=>({value}),error=>({error}));await blocked('SELECT id FROM nova_capture_requests%');}finally{release.resolve();}
       assert.equal((await deleting).deletedRequests,1);assert.equal((await response).error.code,'request_not_found');for(const table of ['jemlio_offers','jemlio_offer_events','jemlio_followups'])assert.equal((await pool.query('SELECT * FROM '+table+' WHERE request_id=$1',[row.receipt])).rows.length,0);
     });
+    const manual={submissionId:randomUUID(),source:'email',name:'Synthetic manual',email:'nobody@example.invalid',service:'Synthetic service',due:new Date(Date.now()+3600000).toISOString(),verified:true};
+    await check('eight concurrent manual retries produce one enquiry, one task and no outgoing notification',async()=>{
+      const results=await Promise.all(Array.from({length:8},()=>ws.create('ci-manual',manual,'test')));assert.equal(new Set(results.map(r=>r.id)).size,1);assert.equal(results.filter(r=>!r.duplicate).length,1);
+      const id=results[0].id;assert.equal((await pool.query('SELECT * FROM jemlio_followups WHERE request_id=$1',[id])).rows.length,1);assert.equal((await pool.query('SELECT * FROM nova_capture_outbox WHERE request_id=$1',[id])).rows.length,0);
+    });
+    await check('manual retry waiting behind deletion is blocked by the retained submission guard',async()=>{
+      const input={...manual,submissionId:randomUUID()},row=await ws.create('ci-manual-delete',input,'test'),held=gate(),release=gate();
+      const deleting=new CaptureOperations({pool:hookedPool('SELECT r.id FROM nova_capture_requests r WHERE',held,release)}).deleteRequests({client:'ci-manual-delete',receipt:row.id,apply:true});let retry;
+      try{await held.promise;retry=ws.create('ci-manual-delete',input,'test').then(value=>({value}),error=>({error}));await blocked('%nova_capture_requests%');}finally{release.resolve();}
+      assert.equal((await deleting).deletedRequests,1);assert.ok(['submission_removed','conflict'].includes((await retry).error.code));assert.equal((await pool.query('SELECT * FROM nova_capture_requests WHERE id=$1',[row.id])).rows.length,0);
+      await assert.rejects(ws.create('ci-manual-delete',input,'test'),/submission_removed/);
+    });
     console.log(`Real PostgreSQL booking checks passed: ${checks}. No provider calls or production database access.`);
   } finally { await pool.end(); }
 }

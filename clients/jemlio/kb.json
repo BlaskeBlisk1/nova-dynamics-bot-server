@@ -63,5 +63,10 @@
     "id": "offers",
     "q": "Hva med prisforslag og tilbudsoppfølging?",
     "a": "Jemlio har en demonstrasjon av prisforslag og kundesvar: [prøv kundens tilbudssvar](https://nova-dynamics-bot-server.onrender.com/offer-demo) og [prøv bedriftens oppfølging](https://nova-dynamics-bot-server.onrender.com/workspace-demo). I en avtalt pilot kan bedriften kontrollere et prisforslag og dele en privat lenke selv. Kunden kan ønske å gå videre, stille spørsmål eller takke nei. Svaret blir en oppfølgingsoppgave; det er ingen signering, betaling eller automatisk booking. Tilgang og behandling av opplysninger må avklares før aktivering. Eksemplene bruker fiktive data. Har du allerede en chat, vurder om oppfølgingen løser et faktisk behov."
+  },
+  {
+    "id": "manual-intake",
+    "q": "Kan vi registrere telefonhenvendelser og se pilotresultater?",
+    "a": "I en avtalt pilot kan bedriften selv legge inn mottatte henvendelser fra telefon, e-post eller andre kanaler og følge dem opp i en privat oversikt. Du kan beholde nettsiden og chatten du har. Dette er manuell registrering, ikke automatisk import eller utsending. Pilotrapporten viser registrerte henvendelser, oppgitte kilder, siste prisforslagssvar og manuelt bekreftede salg. Rapporten kan kopieres uten kontaktopplysninger; den dokumenterer ikke meromsetning. [Prøv arbeidsdagen med fiktive data](https://nova-dynamics-bot-server.onrender.com/workspace-demo). Tilgang og behandling av opplysninger avklares før aktivering. Denne chatten registrerer ingen henvendelse."
   }
 ]
