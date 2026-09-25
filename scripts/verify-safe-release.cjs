@@ -59,7 +59,7 @@ async function main() {
     assert.match(page.headers.get('content-security-policy') || '', /connect-src 'none'/);
     const html=await page.text();
     assert.match(html, /Prøv arbeidsdagen med eksempeldata/);
-    for(const label of ['Kommende avtaler','Avlyste avtaler','Kalender må avklares','Legg til henvendelse','Se pilotresultater'])assert.ok(html.includes(label));
+    for(const label of ['Kommende avtaler','Avlyste avtaler','Kalender må avklares','Legg til henvendelse','Arbeidsoversikt'])assert.ok(html.includes(label));
     for(const asset of ['app.js','styles.css']) assert.equal((await request(`${backend}/workspace/${asset}`)).status,200);
     const privateResponse=await request(`${backend}/api/workspace/enquiries`);
     assert.equal(privateResponse.status,503);
