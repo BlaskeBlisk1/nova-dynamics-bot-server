@@ -2,8 +2,9 @@
   'use strict';
   const $ = id => document.getElementById(id);
   const examples = {
-    driving: { client: 'jemlio-driving-demo', title: 'Trafikkskoleassistent', greeting: 'Hei! Jeg er assistenten til en fiktiv trafikkskole. Spør meg om kjøretimer, automatgir eller hvordan du bestiller en time.', questions: ['Hva koster en kjøretime?', 'Tilbyr dere automatgir?', 'Hvordan bestiller jeg time?'] },
-    optician: { client: 'jemlio-optician-demo', title: 'Optikerassistent', greeting: 'Hei! Jeg er assistenten til en fiktiv optiker. Spør meg om synsundersøkelser, kontaktlinser eller veien til timebestilling.', questions: ['Hva koster en synsundersøkelse?', 'Kan jeg få hjelp med kontaktlinser?', 'Hvordan bestiller jeg en synstest?'] }
+    driving: { client: 'jemlio-driving-demo', title: 'Trafikkskoleassistent', industry: 'Trafikkskole', greeting: 'Hei! Jeg er assistenten til en fiktiv trafikkskole. Spør om kjøretimer eller booking. Du kan også spørre hvordan Jemlio hjelper bedriften med oppfølging etter en henvendelse.', questions: ['Hva koster en kjøretime?', 'Hvordan bestiller jeg time?', 'Hva skjer etter henvendelsen?'] },
+    optician: { client: 'jemlio-optician-demo', title: 'Optikerassistent', industry: 'Optiker', greeting: 'Hei! Jeg er assistenten til en fiktiv optiker. Spør om synsundersøkelser eller booking. Du kan også spørre hvordan Jemlio hjelper bedriften med henvendelser og oppfølging.', questions: ['Hva koster en synsundersøkelse?', 'Hvordan bestiller jeg en synstest?', 'Hva skjer etter henvendelsen?'] },
+    workflow: { client: 'jemlio', title: 'Jemlios arbeidsflyt', greeting: 'Hva skjer etter kundens første spørsmål? Jeg kan forklare henvendelser, booking, prisforslag og personlig oppfølging. Spør meg, og prøv deretter arbeidsoversikten med fiktive data via lenkene under.', questions: ['Hvordan fungerer oppfølgingen?', 'Hvordan fungerer prisforslag?', 'Hva viser resultatrapporten?'] }
   };
   // On the marketing host, Netlify proxies only this endpoint to the stable API.
   const api = '/chat';
@@ -127,6 +128,9 @@
     $('demo-next').hidden = true;
     tabs.forEach(tab => { const active = tab.dataset.demo === kind; tab.setAttribute('aria-selected', String(active)); tab.tabIndex = active ? 0 : -1; if (active && focus) tab.focus(); });
     $('demo-title').textContent = examples[kind].title;
+    $('demo-badge').textContent = kind === 'workflow' ? 'JEMLIO' : 'EKSEMPEL';
+    $('demo-note').textContent = kind === 'workflow' ? 'Prøv med fiktive data. Ingen meldinger sendes.' : 'Fiktive priser og tjenester. Ingen bestillinger.';
+    $('demo-input').placeholder = kind === 'workflow' ? 'Spør om booking, prisforslag eller oppfølging …' : 'Hva ville kundene dine spurt om?';
     $('demo-panel').setAttribute('aria-labelledby', 'tab-' + kind);
     demo.reset(examples[kind].greeting, examples[kind].questions);
   }
@@ -143,15 +147,15 @@
   $('demo-tailor').addEventListener('click', () => {
     // Only the explicitly chosen example category crosses into the contact form.
     // No question, answer or conversation content is copied or stored.
-    $('contact-industry').value = selected === 'optician' ? 'Optiker' : 'Trafikkskole';
+    if (examples[selected].industry) $('contact-industry').value = examples[selected].industry;
     $('contact-company').focus({ preventScroll: true });
     updateEmailDraft();
   });
   document.querySelectorAll('[data-try]').forEach(button => button.addEventListener('click', () => { select(button.dataset.try); $('demo').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' }); $('demo-input').focus({ preventScroll: true }); }));
   const support = chat('support', () => 'jemlio');
   $('support-reset').addEventListener('click', () => {
-    support.reset('Hei! Jeg kan svare på spørsmål om Jemlio og hvordan du får en gratis demo. Hva lurer du på?',
-      ['Hva kan Jemlio hjelpe med?', 'Hvordan får jeg en gratis demo?']);
+    support.reset('Hei! Spør meg om Jemlios chat, booking, prisforslag eller oppfølging. Jeg kan vise deg hvor du prøver funksjonene med fiktive data, eller hvordan du får en demo for din bedrift.',
+      ['Hvordan fungerer oppfølgingen?', 'Hvordan fungerer prisforslag?', 'Hvordan får jeg en gratis demo?']);
     $('support-input').focus();
   });
   const launcher = $('chat-launcher');

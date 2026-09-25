@@ -12,9 +12,9 @@ const labels = Object.freeze({
   "jemlio-optician-demo": "Eksempel: optiker — fiktiv virksomhet."
 });
 const suggestions = Object.freeze({
-  jemlio: ["Hva kan chatten hjelpe med?", "Kan jeg få en gratis mini-demo?", "Hva koster Jemlio?"],
-  "jemlio-driving-demo": ["Hva koster en kjøretime?", "Tilbyr dere automatgir?", "Hvordan bestiller jeg time?"],
-  "jemlio-optician-demo": ["Hva koster en synsundersøkelse?", "Kan jeg få hjelp med kontaktlinser?", "Hvordan bestiller jeg en synstest?"]
+  jemlio: ["Hvordan fungerer oppfølgingen?", "Hvordan fungerer prisforslag?", "Hvordan fungerer booking?"],
+  "jemlio-driving-demo": ["Hva koster en kjøretime?", "Hvordan bestiller jeg time?", "Hva skjer etter henvendelsen?"],
+  "jemlio-optician-demo": ["Hva koster en synsundersøkelse?", "Hvordan bestiller jeg en synstest?", "Hva skjer etter henvendelsen?"]
 });
 const normal = value => String(value || "").normalize("NFKC").toLowerCase()
   .replace(/æ/g, "ae").replace(/ø/g, "o").replace(/å/g, "a")
@@ -34,8 +34,14 @@ function answer(client, message) {
     suggestions: [...suggestions[client]]
   });
   const fact = (...ids) => make(ids.map(id => knowledge[client].find(row => row.id === id).a).join("\n\n"));
+  const productFact = id => ({
+    ...make((client === "jemlio" ? "" : "Om Jemlios arbeidsflyt for bedriften:\n\n") + knowledge.jemlio.find(row => row.id === id).a),
+    suggestions: id === "offers"
+      ? ["Kan jeg prøve bedriftsoversikten?", "Hva viser resultatrapporten?", "Hva koster Jemlio?"]
+      : ["Hvordan fungerer oppfølgingen?", "Hvordan fungerer prisforslag?", "Hvordan fungerer booking?"]
+  });
   const fallback = () => make(client === "jemlio"
-    ? "Det har jeg ikke bekreftede opplysninger om. Jeg kan forklare den tilgjengelige chatten eller vise hvordan du ber om en gratis mini-demo. For andre spørsmål: hei@jemlio.com."
+    ? "Det har jeg ikke bekreftede opplysninger om. Jeg kan forklare chatten, oppfølgingen og de andre demonstrasjonene, eller vise hvordan du ber om en gratis mini-demo. For andre spørsmål: hei@jemlio.com."
     : "Det er ikke beskrevet i dette fiktive eksemplet, så jeg vil ikke gjette. Prøv et av spørsmålene under. Hos en virkelig bedrift må slike detaljer bekreftes direkte med bedriften.", true);
 
   // Safety and action limits take precedence over informational topics.
@@ -48,16 +54,26 @@ function answer(client, message) {
     return make("Spørsmålet sendes til serveren for å gi deg et svar. Denne chatten er ikke et skjema for kundeopplysninger eller en kanal for sletteforespørsler. Ikke del personopplysninger. For spørsmål om personvern, kontakt Jemlio på hei@jemlio.com.");
   if (has(/send.*(?:mail|e-post|epost|melding)|videresend|betaling|betal.*(?:her|chat)|kortbetaling/))
     return make("Chatten sender ikke meldinger, videresender ikke opplysninger og tar ikke betaling. Den gir informasjon og kan vise videre til riktig kontaktpunkt. For Jemlio: hei@jemlio.com.");
+  if (client === "jemlio-optician-demo" && has(/symptom|smerte|vondt|rode? oye|rodt oye|rodhet|torr|svie|klor|kloring|synstap|uklar|takete|dobbeltsyn|lysblink|floater|ser.*(?:darlig|prikk|flekk)|diagnos|behandl|medisin|sykdom|migrene|hodepine|helse|akutt|blind|glaukom|staer|hva feiler|(?:kan|bor).*jeg.*(?:bruke|ha|velge).*(?:brill|linse)|(?:trenger jeg|bor jeg ta|ma jeg ta).*(?:undersok|brill|linse)|vurder.*(?:syn|oy)/)) return { ...fact("health"), unsure: true };
   if (has(/hva kan du|hvem er du|hva.*demo.*(?:gjore|kan)|er du.*(?:bot|robot)/)) return fact("limits");
+
+  // Shared product explanations are public Jemlio facts, never another tenant's data.
+  // Keep ordinary lesson/eye-exam questions on their existing fictional path.
+  const productContext = client === "jemlio" || has(/jemlio|oppgradering|arbeidsflyt|bedriftsoversikt|arbeidsoversikt|oppfolging|prisforslag|pilot/);
+  if (productContext && has(/garanter/)) return productFact("results");
+  if (productContext && has(/koster|kostnad|hvor mye|how much|price|abonnement/)) return productFact("pricing");
+  if (has(/telefonhenvend|eposthenvend|e-posthenvend|manuell.*(?:henvend|registr)|(?:registrere|legge inn).*(?:telefon|e-post|epost)|allerede.*chat|beholde.*chat|lovable/)) return productFact("manual-intake");
+  if (has(/pilotresultat|pilotrapport|resultatrapport|rapport|statistikk|resultater|resultatene/)) return productFact("results-report");
+  if (has(/prisforslag|tilbudsoppfolging|tilbudssvar|kundesvar|folge opp tilbud/)) return productFact("offers");
+  if (has(/etter.*henvendelse|oppfolging|folge opp|henvendels|arbeidsliste/)) return productFact("followup");
+  if (has(/kontaktsteg|kontaktforesporsler|(?:kunder|besokende).*(?:be om kontakt|bli kontaktet)/)) return productFact("contact-pilot");
+  if (has(/bedriftsoversikt|arbeidsoversikt|arbeidsflyt|oppgradering|nye funksjoner|hva er nytt|booking.?demo/)) return productFact("workflow");
+  if (productContext && has(/book|bestill|reserver|kalender/) && !has(/gratis.*demo|mini.?demo|book.*demo|bestill.*demo/)) return productFact("booking-pilot");
 
   if (client === "jemlio") {
     // Asking how to request a demo is different from asking the chat to book.
     // The demo answer still makes clear that the visitor must send the email.
     if (has(/demo/) && has(/gratis|mini.?demo|\b(?:fa|far|lage|be om|bestill(?:e|er)?|book(?:e|er)?|prove|teste)\b/)) return fact("demo");
-    if (has(/telefonhenvend|eposthenvend|e-posthenvend|manuell|pilotresultat|pilotrapport|resultatrapport|allerede.*chat|beholde.*chat/)) return fact("manual-intake");
-    if (has(/bedriftsoversikt|arbeidsflyt|oppfolgingsoversikt|bookingdemo|booking.?demo/)) return fact("workflow");
-    if (has(/prisforslag|tilbudsoppfolging|tilbudssvar|kundesvar|folge opp tilbud|lovable/)) return fact("offers");
-    if (has(/kontaktsteg|kontaktforesporsler|(?:kunder|besokende).*(?:be om kontakt|bli kontaktet)/)) return fact("contact-pilot");
     if (has(/book|bestill|reserver|kundeopplysn|lead.?capture|leadfangst|kundeinnsamling|samle.*(?:kunde|kontakt)|registrere.*(?:kunde|kontakt)|automatisk.*(?:booking|bestill|epost|e-post)|integrasjon|kalender|crm|airtable|sms|analyse|statistikk|dashboard|rapport/)) return fact("limits");
     if (has(/garanti|garanter|omsetning|flere kunder|salgstall|konvertering/)) return fact("results");
     if (has(/referanse|ekte kunde|kundeliste|hvem.*bruker|hvor mange.*kunde|fiktiv|oppdikt|virkelig/)) return fact("examples");
@@ -74,7 +90,6 @@ function answer(client, message) {
     return fallback();
   }
 
-  if (client === "jemlio-optician-demo" && has(/symptom|smerte|vondt|rode? oye|rodt oye|rodhet|torr|svie|klor|kloring|synstap|uklar|takete|dobbeltsyn|lysblink|floater|ser.*(?:darlig|prikk|flekk)|diagnos|behandl|medisin|sykdom|migrene|hodepine|helse|akutt|blind|glaukom|staer|hva feiler|(?:kan|bor).*jeg.*(?:bruke|ha|velge).*(?:brill|linse)|(?:trenger jeg|bor jeg ta|ma jeg ta).*(?:undersok|brill|linse)|vurder.*(?:syn|oy)/)) return { ...fact("health"), unsure: true };
   if (client === "jemlio-driving-demo" && has(/forerrett|lov.*kjore|aldersgrense|ovelseskjor|vegvesen|helse|promille|fritak|fritatt|kode 78|garanti|bestatt|bestar|totalpris|hele.*(?:lappen|forerkort)|hvor mange.*time/)) return fallback();
   // Unknown conditions must not inherit the price/duration of a basic example.
   if (has(/paske|jul|nyttar|helligdag|ferie|\b17\.?\s*mai\b|stengt.*(?:dato|uke)/)) return fallback();
