@@ -2,6 +2,8 @@
 
 `/workspace-demo` is a browser-only synthetic example. No API calls, contact messages, real bookings or browser storage. Reload or reset clears edits. `/workspace` is the real private owner interface; `/api/workspace` is disabled by default.
 
+Manual phone/email enquiries, private search and the pilot results view are documented in `manual-intake-results.md`. This path can start with existing enquiries without enabling a public chat or calendar integration.
+
 ## Included
 
 - Tenant-scoped enquiries, due/open/won/lost, upcoming/past/cancelled/calendar-attention views and 50-row pagination.

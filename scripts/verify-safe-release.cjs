@@ -59,12 +59,15 @@ async function main() {
     assert.match(page.headers.get('content-security-policy') || '', /connect-src 'none'/);
     const html=await page.text();
     assert.match(html, /Prøv arbeidsdagen med eksempeldata/);
-    for(const label of ['Kommende avtaler','Avlyste avtaler','Kalender må avklares'])assert.ok(html.includes(label));
+    for(const label of ['Kommende avtaler','Avlyste avtaler','Kalender må avklares','Legg til henvendelse','Se pilotresultater'])assert.ok(html.includes(label));
     for(const asset of ['app.js','styles.css']) assert.equal((await request(`${backend}/workspace/${asset}`)).status,200);
     const privateResponse=await request(`${backend}/api/workspace/enquiries`);
     assert.equal(privateResponse.status,503);
     assert.deepEqual(await privateResponse.json(),{error:'unavailable'});
     assert.equal(privateResponse.headers.get('cache-control'),'no-store');
+  });
+  await check('Manual intake and pilot results remain private until setup',async()=>{
+    for(const [path,options]of[['/results',{}],['/enquiries',{method:'POST',headers:{'Content-Type':'application/json',Origin:backend},body:'{}'}]]){const r=await request(backend+'/api/workspace'+path,options);assert.equal(r.status,503);assert.deepEqual(await r.json(),{error:'unavailable'});}
   });
   await check('Calendar updates remain inactive until an approved pilot is configured',async()=>{
     const response=await request(`${backend}/api/calendar-sync/calendly/tiller`,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});

@@ -54,6 +54,7 @@ function answer(client, message) {
     // Asking how to request a demo is different from asking the chat to book.
     // The demo answer still makes clear that the visitor must send the email.
     if (has(/demo/) && has(/gratis|mini.?demo|\b(?:fa|far|lage|be om|bestill(?:e|er)?|book(?:e|er)?|prove|teste)\b/)) return fact("demo");
+    if (has(/telefonhenvend|eposthenvend|e-posthenvend|manuell|pilotresultat|pilotrapport|resultatrapport|allerede.*chat|beholde.*chat/)) return fact("manual-intake");
     if (has(/bedriftsoversikt|arbeidsflyt|oppfolgingsoversikt|bookingdemo|booking.?demo/)) return fact("workflow");
     if (has(/prisforslag|tilbudsoppfolging|tilbudssvar|kundesvar|folge opp tilbud|lovable/)) return fact("offers");
     if (has(/kontaktsteg|kontaktforesporsler|(?:kunder|besokende).*(?:be om kontakt|bli kontaktet)/)) return fact("contact-pilot");
