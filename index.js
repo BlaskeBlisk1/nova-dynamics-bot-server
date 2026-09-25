@@ -28,6 +28,8 @@ app.get("/api/release", (_req, res) => {
 const publicDir = path.join(__dirname, "public");
 
 // Private APIs own their parsing/origin policy; public chat CORS never applies.
+const calendarSync = require('./lib/calendar-sync/runtime').createCalendarSyncRuntime();
+app.use('/api/calendar-sync', calendarSync.router);
 const workspace = require('./lib/workspace/runtime').createWorkspaceRuntime();
 app.use('/api/workspace', workspace.router);
 app.use(['/workspace', '/workspace-demo'], (req, res, next) => {
@@ -4509,10 +4511,11 @@ if (require.main === module) {
     console.log(`✅ Server live on port ${PORT}`);
     upgrades.startWorker();
     websiteEnquiries.startWorker();
+    calendarSync.startWorker();
   });
   for (const signal of ["SIGTERM", "SIGINT"]) {
     process.once(signal, () => {
-      server.close(() => { void Promise.all([upgrades.close(), websiteEnquiries.close(), workspace.close()]).then(() => process.exit(0)); });
+      server.close(() => { void Promise.all([upgrades.close(), websiteEnquiries.close(), workspace.close(), calendarSync.close()]).then(() => process.exit(0)); });
     });
   }
 }

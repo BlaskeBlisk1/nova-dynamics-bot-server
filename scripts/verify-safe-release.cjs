@@ -57,12 +57,18 @@ async function main() {
     const page=await request(`${backend}/workspace-demo`);
     assert.equal(page.status,200);
     assert.match(page.headers.get('content-security-policy') || '', /connect-src 'none'/);
-    assert.match(await page.text(), /Prøv arbeidsdagen med eksempeldata/);
+    const html=await page.text();
+    assert.match(html, /Prøv arbeidsdagen med eksempeldata/);
+    for(const label of ['Kommende avtaler','Avlyste avtaler','Kalender må avklares'])assert.ok(html.includes(label));
     for(const asset of ['app.js','styles.css']) assert.equal((await request(`${backend}/workspace/${asset}`)).status,200);
     const privateResponse=await request(`${backend}/api/workspace/enquiries`);
     assert.equal(privateResponse.status,503);
     assert.deepEqual(await privateResponse.json(),{error:'unavailable'});
     assert.equal(privateResponse.headers.get('cache-control'),'no-store');
+  });
+  await check('Calendar updates remain inactive until an approved pilot is configured',async()=>{
+    const response=await request(`${backend}/api/calendar-sync/calendly/tiller`,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+    assert.equal(response.status,503);assert.deepEqual(await response.json(),{error:'sync_unavailable'});
   });
   for (const client of clients) {
     await check(`${client}: shared URL and capture-off configuration`, async () => {

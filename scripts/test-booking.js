@@ -52,9 +52,11 @@ async function main() {
     const adapter = createCalendly({ token: 'synthetic-key-only', fetchFn: async (url, options) => {
       calls.push({ url, options }); return reply({ resource: { uri: providerId, event, status: 'active', cancel_url: 'https://evil.invalid', reschedule_url: 'https://calendly.com/reschedulings/test-id' } });
     } });
-    const result = await adapter.book({ service: { eventType }, slot: '2026-09-24T10:00:00.000Z', name: 'Example', email: 'nobody@example.invalid' });
+    const attemptId=randomUUID();
+    const result = await adapter.book({ service: { eventType }, slot: '2026-09-24T10:00:00.000Z', name: 'Example', email: 'nobody@example.invalid',attemptId });
     assert.equal(calls.length, 1); assert.equal(calls[0].url, 'https://api.calendly.com/invitees');
     assert.equal(JSON.parse(calls[0].options.body).invitee.timezone, 'Europe/Oslo');
+    assert.equal(JSON.parse(calls[0].options.body).tracking.utm_content,'jemlio:'+attemptId);
     assert.equal(result.providerId, providerId); assert.equal(result.cancelUrl, null);
     assert.equal(JSON.stringify(result).includes('synthetic-key'), false);
   });
