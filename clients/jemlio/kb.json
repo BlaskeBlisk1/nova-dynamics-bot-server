@@ -53,5 +53,10 @@
     "id": "contact-pilot",
     "q": "Kan kunder be om kontakt direkte i chatten?",
     "a": "Et frivillig kontaktsteg er under utprøving for en avgrenset pilot. Kunden skal velge selv om hen ønsker kontakt og se opplysningene før innsending. Funksjonen er ikke aktivert i de offentlige eksemplene eller eksisterende kundedemoer. Mottaker og behandling av opplysninger må avklares før aktivering. Denne chatten registrerer ingen kundehenvendelse."
+  },
+  {
+    "id": "workflow",
+    "q": "Hva med booking og bedriftsoversikt?",
+    "a": "Jemlio har egne demonstrasjoner av bookingreisen og bedriftsoversikten med fiktive data: [prøv booking](https://nova-dynamics-bot-server.onrender.com/booking-demo) og [prøv oppfølgingsoversikten](https://nova-dynamics-bot-server.onrender.com/workspace-demo). I en avtalt pilot kan henvendelser, notater, oppfølgingsdatoer og manuelt registrerte resultater samles i en privat oversikt. Tilgang, mottaker og eventuell støttet kalender må settes opp først. Demoene gjør ingen ekte bestillinger og sender ingen meldinger. Denne chatten utfører ingen handlinger."
   }
 ]

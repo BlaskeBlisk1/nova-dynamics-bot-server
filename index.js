@@ -27,6 +27,19 @@ app.get("/api/release", (_req, res) => {
 // -------------------- Static site (optional) --------------------
 const publicDir = path.join(__dirname, "public");
 
+// Private APIs own their parsing/origin policy; public chat CORS never applies.
+const workspace = require('./lib/workspace/runtime').createWorkspaceRuntime();
+app.use('/api/workspace', workspace.router);
+app.use(['/workspace', '/workspace-demo'], (req, res, next) => {
+  res.set('Cache-Control', 'no-store'); res.set('X-Robots-Tag', 'noindex, nofollow');
+  res.set('Referrer-Policy', 'no-referrer'); res.set('X-Content-Type-Options', 'nosniff');
+  res.set('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src " +
+    (req.baseUrl === '/workspace-demo' ? "'none'" : "'self'") + "; form-action 'none'; frame-ancestors 'none'; base-uri 'none'");
+  next();
+});
+app.get(['/workspace', '/workspace/', '/workspace-demo', '/workspace-demo/'], (_req, res) =>
+  res.sendFile(path.join(publicDir, 'workspace', 'index.html')));
+
 if (fs.existsSync(publicDir)) {
   // A separate marketing entry point preserves the existing root and demo URLs.
   app.get(/^\/jemlio$/, (_req, res) => res.redirect(302, "/jemlio/"));
@@ -4499,7 +4512,7 @@ if (require.main === module) {
   });
   for (const signal of ["SIGTERM", "SIGINT"]) {
     process.once(signal, () => {
-      server.close(() => { void Promise.all([upgrades.close(), websiteEnquiries.close()]).then(() => process.exit(0)); });
+      server.close(() => { void Promise.all([upgrades.close(), websiteEnquiries.close(), workspace.close()]).then(() => process.exit(0)); });
     });
   }
 }
