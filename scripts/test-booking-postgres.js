@@ -10,6 +10,7 @@ const { PgStore } = require('../lib/capture/store');
 const { CaptureOperations } = require('../lib/capture/operations');
 const { BookingStore } = require('../lib/booking/store');
 const { WorkspaceStore } = require('../lib/workspace/store');
+const { CalendarStore } = require('../lib/calendar-sync/store');
 const raw = process.env.JEMLIO_TEST_DATABASE_URL;
 if (!raw || process.env.JEMLIO_THROWAWAY_DATABASE !== 'true') throw new Error('Explicit disposable database configuration required');
 const url = new URL(raw);
@@ -106,6 +107,40 @@ async function main() {
       assert.equal(results.filter(r=>r.status==='fulfilled').length,1);
       assert.ok(results.filter(r=>r.status==='rejected').every(r=>r.reason.code==='conflict'));
       assert.equal((await pool.query('SELECT count(*)::int AS n FROM jemlio_workspace_audit WHERE request_id=$1',[row.receipt])).rows[0].n,1);
+    });
+    await pool.query(readFileSync(join(__dirname, '../lib/calendar-sync/schema.sql'), 'utf8'));
+    const calendar=new CalendarStore({pool});
+    const providerId=id=>'https://api.calendly.com/scheduled_events/'+id+'/invitees/synthetic-guest';
+    async function booked(client){const row=await entry(client),c=await bookings.claim(claim(row));await bookings.finish(c.row,{status:'confirmed',providerId:providerId(row.receipt)});return row;}
+    const notice=(row,digest=randomUUID())=>({references:[providerId(row.receipt)],attempt:null,hint:providerId(row.receipt),digest});
+    const answer=(row,extra={})=>({providerId:providerId(row.receipt),slot,status:'confirmed',cancelUrl:null,rescheduleUrl:null,aliases:[providerId(row.receipt)],...extra});
+    await check('concurrent duplicate notifications and worker claims produce one durable job and one lease',async()=>{
+      const row=await booked('ci-calendar-duplicates'),event=notice(row);
+      const results=await Promise.all(Array.from({length:8},()=>calendar.enqueue(row.client,event,[eventType])));
+      assert.equal(results.filter(r=>!r.duplicate).length,1);
+      const jobs=await Promise.all(Array.from({length:8},()=>calendar.claim([row.client])));assert.equal(jobs.filter(Boolean).length,1);
+      await calendar.process(jobs.find(Boolean),{read:async()=>answer(row)},[eventType]);
+      assert.equal((await bookings.read(row.client,row.receipt)).calendar_state,'synced');
+    });
+    await check('new webhook during provider read invalidates the old lease result without losing the notification',async()=>{
+      const row=await booked('ci-calendar-generation'),held=gate(),release=gate();await calendar.enqueue(row.client,notice(row),[eventType]);const job=await calendar.claim([row.client]);
+      const work=calendar.process(job,{read:async()=>{held.resolve();await release.promise;return answer(row,{status:'cancelled'});}},[eventType]);
+      try{await held.promise;await calendar.enqueue(row.client,notice(row),[eventType]);}finally{release.resolve();}await work;
+      const b=await bookings.read(row.client,row.receipt);assert.equal(b.status,'confirmed');assert.equal(b.calendar_state,'pending');
+      const q=(await pool.query('SELECT * FROM jemlio_calendar_jobs WHERE request_id=$1',[row.receipt])).rows[0];assert.equal(String(q.generation),'2');assert.equal(q.lease_id,null);assert.ok(q.available_at);
+    });
+    await check('manual reconciliation cannot overwrite a reschedule completed during its provider read',async()=>{
+      const row=await booked('ci-calendar-manual-race'),held=gate(),release=gate();
+      const manual=bookings.reconcile({client:row.client,receipt:row.receipt,apply:true,provider:{verify:async()=>{held.resolve();await release.promise;return answer(row);}}}).then(value=>({value}),error=>({error}));
+      const movedId=providerId(randomUUID()),movedSlot=new Date(Date.parse(slot)+3600000).toISOString();
+      try{await held.promise;await calendar.enqueue(row.client,notice(row),[eventType]);const job=await calendar.claim([row.client]);await calendar.process(job,{read:async()=>answer(row,{providerId:movedId,slot:movedSlot,aliases:[providerId(row.receipt),movedId]})},[eventType]);}finally{release.resolve();}
+      assert.equal((await manual).error.code,'booking_state_changed');const b=await bookings.read(row.client,row.receipt);assert.equal(b.provider_id,movedId);assert.equal(new Date(b.slot).toISOString(),movedSlot);
+    });
+    await check('deletion during calendar read cascades queued jobs and cannot recreate private records',async()=>{
+      const row=await booked('ci-calendar-delete'),held=gate(),release=gate();await pool.query("UPDATE jemlio_bookings SET status='cancelled' WHERE request_id=$1",[row.receipt]);await calendar.enqueue(row.client,notice(row),[eventType]);const job=await calendar.claim([row.client]);
+      const work=calendar.process(job,{read:async()=>{held.resolve();await release.promise;return answer(row,{status:'cancelled'});}},[eventType]);
+      try{await held.promise;assert.equal((await ops.deleteRequests({client:row.client,receipt:row.receipt,apply:true})).deletedRequests,1);}finally{release.resolve();}await work;
+      for(const table of ['jemlio_bookings','jemlio_calendar_jobs','jemlio_calendar_receipts','jemlio_calendar_aliases'])assert.equal((await pool.query('SELECT * FROM '+table+' WHERE request_id=$1',[row.receipt])).rows.length,0);
     });
     console.log(`Real PostgreSQL booking checks passed: ${checks}. No provider calls or production database access.`);
   } finally { await pool.end(); }

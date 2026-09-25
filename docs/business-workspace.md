@@ -4,11 +4,11 @@
 
 ## Included
 
-- Tenant-scoped enquiries, due/open/won/lost views and 50-row pagination.
+- Tenant-scoped enquiries, due/open/won/lost, upcoming/past/cancelled/calendar-attention views and 50-row pagination.
 - Contact details, internal notes, manual follow-up dates, verified outcomes and observed appointment results.
 - Recorded sales values in integer øre. These are self-reported values, not collected payments, profit or measured incremental revenue. Booking confirmation never means a won sale.
 - Durable sessions, CSRF/origin checks, rate limits, hashed access keys, revision conflicts and a field-change audit. No contact text or raw credentials in the audit.
-- Booking uncertainty remains visible even after closing an enquiry. Reconciliation remains an operator task in `booking:operations`.
+- Booking uncertainty remains visible even after closing an enquiry. Optional signed calendar synchronization handles verified cancellations and linked reschedules; unresolved cases remain an operator task. See `calendar-sync.md`.
 
 ## Approved pilot setup
 

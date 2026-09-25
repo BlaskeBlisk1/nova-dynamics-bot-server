@@ -31,3 +31,7 @@ CREATE TABLE IF NOT EXISTS jemlio_workflow_events (
   recorded_at timestamptz NOT NULL
 );
 CREATE INDEX IF NOT EXISTS jemlio_followups_due ON jemlio_followups(due_at);
+
+-- Calendar synchronization metadata; safe to apply to the existing booking table.
+ALTER TABLE jemlio_bookings ADD COLUMN IF NOT EXISTS calendar_state text NOT NULL DEFAULT 'manual' CHECK (calendar_state IN ('manual','pending','synced','attention'));
+ALTER TABLE jemlio_bookings ADD COLUMN IF NOT EXISTS calendar_checked_at timestamptz;

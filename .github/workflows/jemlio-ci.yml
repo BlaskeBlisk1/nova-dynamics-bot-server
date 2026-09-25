@@ -25,6 +25,8 @@ jobs:
       RESEND_API_KEY: ''
       AIRTABLE_PERSONAL_ACCESS_TOKEN: ''
       NOVA_CAPTURE_CRM_ENABLED: 'false'
+      JEMLIO_CALENDAR_SYNC_ENABLED: 'false'
+      JEMLIO_CALENDAR_SYNC_CONFIG: ''
       JEMLIO_WORKSPACE_ENABLED: 'false'
       JEMLIO_WORKSPACE_CONFIG: ''
       JEMLIO_BOOKING_ENABLED: 'false'
@@ -79,6 +81,8 @@ jobs:
       RESEND_API_KEY: ''
       AIRTABLE_PERSONAL_ACCESS_TOKEN: ''
       NOVA_CAPTURE_CRM_ENABLED: 'false'
+      JEMLIO_CALENDAR_SYNC_ENABLED: 'false'
+      JEMLIO_CALENDAR_SYNC_CONFIG: ''
       JEMLIO_WORKSPACE_ENABLED: 'false'
       JEMLIO_WORKSPACE_CONFIG: ''
       JEMLIO_BOOKING_ENABLED: 'false'
@@ -96,5 +100,5 @@ jobs:
       - run: npm ci --ignore-scripts
       - name: Test transactions, concurrent retries, worker leases and deletion races
         run: node scripts/test-capture-postgres.js
-      - name: Test booking claims, deletion races and closed-outcome isolation
+      - name: Test booking, calendar synchronization, workspace and deletion races
         run: node scripts/test-booking-postgres.js
