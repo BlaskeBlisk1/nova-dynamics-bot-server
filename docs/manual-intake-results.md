@@ -7,7 +7,7 @@ The private workspace now supports a focused pilot using enquiries the business 
 1. Search existing enquiries by name, email, phone or service to avoid entering the same enquiry twice.
 2. Choose **Legg til henvendelse**, enter one received enquiry, its source, at least one contact method and a follow-up time. Confirm that the information has been checked. Avoid sensitive details and cold contact lists.
 3. The enquiry appears in **Alle henvendelser**, with a dated callback task. The existing proposal and outcome workflow applies. Manual entry does not assert visitor consent or put anything in email/CRM delivery queues.
-4. Open **Se pilotresultater**. Select the last 7, 30 or 90 rolling days, or all retained enquiries. Copy the aggregate report when needed. It contains no names, contact details, notes or proposal scope.
+4. Open **Resultater**. Select the last 7, 30 or 90 rolling days, or all retained enquiries. Copy the aggregate report when needed. It contains no names, contact details, notes or proposal scope.
 
 `/workspace-demo` includes the same actions with fictional, memory-only data. Reload/reset discards changes, and the demo CSP prevents API connections. A direct link to the existing website contact section lets interested businesses request a discussion. Nothing in this release changes existing prices or creates a free product trial.
 
@@ -46,3 +46,9 @@ To disable private access, use the existing workspace global/tenant gate. A code
 ## Validation
 
 The workspace tests cover authentication/CSRF, input rejection, no delivery side effects, exact/conflicting retries, literal tenant search, result bounds/amounts, deletion and tombstones. UI tests cover isolated demo entry/report, aggregate copying, response-loss retry preservation and private-data clearing on session expiry. Real PostgreSQL CI races eight creation retries and deletion against a retry, alongside existing booking/offer/calendar races.
+
+## Navigation
+
+The workspace opens directly on **Oppfølging**. The top navigation also opens **Henvendelser**, **Prisforslag**, **Avtaler** and **Resultater**. The existing **Visning** selector exposes the more specific queues; **Nullstill søk** removes a search. Statistics live on the results page, with the all-time overview collapsed below the dated report.
+
+Opening results and returning preserves an unsaved enquiry draft. Changing the work queue still asks before discarding edits. On narrow screens, selecting a record opens its details with **Tilbake til listen**, instead of making the owner scroll past the entire list. The demo explanation is expandable; fictional data remain labeled in the business heading.
