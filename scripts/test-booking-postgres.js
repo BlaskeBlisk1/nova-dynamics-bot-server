@@ -9,6 +9,7 @@ const { Pool } = require('pg');
 const { PgStore } = require('../lib/capture/store');
 const { CaptureOperations } = require('../lib/capture/operations');
 const { BookingStore } = require('../lib/booking/store');
+const { WorkspaceStore } = require('../lib/workspace/store');
 const raw = process.env.JEMLIO_TEST_DATABASE_URL;
 if (!raw || process.env.JEMLIO_THROWAWAY_DATABASE !== 'true') throw new Error('Explicit disposable database configuration required');
 const url = new URL(raw);
@@ -96,6 +97,15 @@ async function main() {
         await db.query('COMMIT');
       } finally { await db.query('ROLLBACK'); db.release(); }
       assert.equal((await booking).error.code, 'request_closed');
+    });
+    await pool.query(readFileSync(join(__dirname, '../lib/workspace/schema.sql'), 'utf8'));
+    await check('concurrent workspace edits allow one commit and reject stale updates', async () => {
+      const row = await entry('ci-workspace-race'), store = new WorkspaceStore({ pool });
+      const before = (await store.list(row.client)).items[0];
+      const results = await Promise.allSettled(Array.from({length:8}, (_,i) => store.update(row.client,row.receipt,{revision:before.revision,note:'Synthetic note '+i},'test')));
+      assert.equal(results.filter(r=>r.status==='fulfilled').length,1);
+      assert.ok(results.filter(r=>r.status==='rejected').every(r=>r.reason.code==='conflict'));
+      assert.equal((await pool.query('SELECT count(*)::int AS n FROM jemlio_workspace_audit WHERE request_id=$1',[row.receipt])).rows[0].n,1);
     });
     console.log(`Real PostgreSQL booking checks passed: ${checks}. No provider calls or production database access.`);
   } finally { await pool.end(); }

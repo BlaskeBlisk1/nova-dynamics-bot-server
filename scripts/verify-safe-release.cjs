@@ -53,6 +53,17 @@ async function main() {
     assert.match(await page.text(), /Alle personer, tider og resultater er eksempler/);
     for (const asset of ['app.js', 'styles.css']) assert.equal((await request(`${backend}/booking/${asset}`)).status, 200);
   });
+  await check('Workspace demo is isolated; private data remains gated', async () => {
+    const page=await request(`${backend}/workspace-demo`);
+    assert.equal(page.status,200);
+    assert.match(page.headers.get('content-security-policy') || '', /connect-src 'none'/);
+    assert.match(await page.text(), /Prøv arbeidsdagen med eksempeldata/);
+    for(const asset of ['app.js','styles.css']) assert.equal((await request(`${backend}/workspace/${asset}`)).status,200);
+    const privateResponse=await request(`${backend}/api/workspace/enquiries`);
+    assert.equal(privateResponse.status,503);
+    assert.deepEqual(await privateResponse.json(),{error:'unavailable'});
+    assert.equal(privateResponse.headers.get('cache-control'),'no-store');
+  });
   for (const client of clients) {
     await check(`${client}: shared URL and capture-off configuration`, async () => {
       const page = await request(`${backend}/demos/${client}?owner=1`);
@@ -99,6 +110,8 @@ async function main() {
     const page = await request(website);
     assert.equal(page.status, 200);
     const html = await page.text();
+    assert.match(html, /workspace-demo/);
+    assert.match(html, /booking-demo/);
     assert.match(html, /name="jemlio-demo-request"/);
     assert.match(html, /data-netlify="true"/);
     assert.match(html, /action="https:\/\/www\.jemlio\.com\/demo-requested"/);

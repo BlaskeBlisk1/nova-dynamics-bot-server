@@ -5,7 +5,7 @@
   "scripts": {
     "start": "node index.js",
     "new-client": "node new-client.js",
-    "test": "npm run test:legacy && npm run test:brand && npm run test:conversation && npm run test:capture && npm run test:capture-crm && npm run test:website-enquiries && npm run test:capture-operations && npm run test:upgrade && npm run test:live-context && npm run test:capture-ui && npm run test:marketing-ui && npm run test:marketing-enquiries && npm run test:staging-site && npm run test:booking && npm run test:booking-ui",
+    "test": "npm run test:legacy && npm run test:brand && npm run test:conversation && npm run test:capture && npm run test:capture-crm && npm run test:website-enquiries && npm run test:capture-operations && npm run test:upgrade && npm run test:live-context && npm run test:capture-ui && npm run test:marketing-ui && npm run test:marketing-enquiries && npm run test:staging-site && npm run test:booking && npm run test:booking-ui && npm run test:workspace && npm run test:workspace-ui",
     "test:legacy": "node scripts/smoke-demo.js && node scripts/smoke-fram.js && node scripts/smoke-fyllingsdalen.js && node scripts/smoke-onsoy.js && node scripts/smoke-tiller.js && node scripts/smoke-trafikk1.js && node scripts/smoke-frankolsen.js && node scripts/smoke-analytics.js && node scripts/smoke-roma.js",
     "test:conversation": "node scripts/test-conversation.js",
     "test:capture": "node scripts/test-capture.js",
@@ -34,7 +34,10 @@
     "test:staging-site": "node scripts/test-staging-site-task.cjs",
     "test:booking": "node scripts/test-booking.js",
     "test:booking-ui": "node scripts/test-booking-ui.js",
-    "booking:operations": "node scripts/booking-operations.js"
+    "booking:operations": "node scripts/booking-operations.js",
+    "test:workspace": "node scripts/test-workspace.js",
+    "test:workspace-ui": "node scripts/test-workspace-ui.js",
+    "workspace:operations": "node scripts/workspace-operations.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

@@ -2,6 +2,8 @@
 
 Date: 23 September 2026. Customer booking stays disabled until one business has an agreed pilot and approved configuration. All seven existing `/demos/:client` links retain their current behaviour.
 
+Update 25 September: the separate authenticated owner workspace and its synthetic demo are now implemented. See [business-workspace.md](business-workspace.md) for access, configuration and remaining pilot setup. Statements below describe the 23 September booking release.
+
 ## Available now
 
 - `/booking-demo`: interactive Norwegian example of choosing a service, choosing a time, confirmation, no availability, and an uncertain provider response. Uses fictional Eksempel Bilpleie and fixed fictional contact details. The example owner dashboard tracks only actions performed on this page. Reloading clears everything. Its Content Security Policy blocks all API connections; no storage, analytics, email or calendar writes.
