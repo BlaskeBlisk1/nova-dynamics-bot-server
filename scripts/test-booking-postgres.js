@@ -11,6 +11,7 @@ const { CaptureOperations } = require('../lib/capture/operations');
 const { BookingStore } = require('../lib/booking/store');
 const { WorkspaceStore } = require('../lib/workspace/store');
 const { CalendarStore } = require('../lib/calendar-sync/store');
+const { OfferStore } = require('../lib/offers/store');
 const raw = process.env.JEMLIO_TEST_DATABASE_URL;
 if (!raw || process.env.JEMLIO_THROWAWAY_DATABASE !== 'true') throw new Error('Explicit disposable database configuration required');
 const url = new URL(raw);
@@ -141,6 +142,30 @@ async function main() {
       const work=calendar.process(job,{read:async()=>{held.resolve();await release.promise;return answer(row,{status:'cancelled'});}},[eventType]);
       try{await held.promise;assert.equal((await ops.deleteRequests({client:row.client,receipt:row.receipt,apply:true})).deletedRequests,1);}finally{release.resolve();}await work;
       for(const table of ['jemlio_bookings','jemlio_calendar_jobs','jemlio_calendar_receipts','jemlio_calendar_aliases'])assert.equal((await pool.query('SELECT * FROM '+table+' WHERE request_id=$1',[row.receipt])).rows.length,0);
+    });
+    const offers=new OfferStore({pool}),ws=new WorkspaceStore({pool});
+    const proposal=async row=>({revision:(await ws.list(row.client,{view:'all'})).items[0].revision,title:'Synthetic proposal',description:'Synthetic service details only.',totalOre:100000,priceBasis:'incl_vat',days:7,verified:true});
+    await check('eight concurrent proposal creates commit one version and reject stale duplicates',async()=>{
+      const row=await entry('ci-offer-create'),input=await proposal(row),results=await Promise.allSettled(Array.from({length:8},()=>offers.issue(row.client,row.receipt,input)));
+      assert.equal(results.filter(r=>r.status==='fulfilled').length,1);assert.ok(results.filter(r=>r.status==='rejected').every(r=>r.reason.code==='conflict'));
+    });
+    await check('eight duplicate customer responses commit one response and follow-up, never a won sale',async()=>{
+      const row=await entry('ci-offer-responses'),q=await offers.issue(row.client,row.receipt,await proposal(row));
+      const results=await Promise.all(Array.from({length:8},()=>offers.respond(q.token,{response:'interested',note:'Synthetic'},()=>true)));
+      assert.ok(results.every(r=>r.response==='interested'));assert.equal((await pool.query("SELECT count(*)::int AS n FROM jemlio_offer_events WHERE request_id=$1 AND action='response_interested'",[row.receipt])).rows[0].n,1);assert.equal((await ws.report({client:row.client})).won,0);
+    });
+    await check('a response waiting behind a new version cannot approve the replaced proposal',async()=>{
+      const row=await entry('ci-offer-replace'),first=await offers.issue(row.client,row.receipt,await proposal(row)),held=gate(),release=gate();
+      const hooked=new OfferStore({pool:hookedPool('SELECT id FROM nova_capture_requests',held,release)});
+      const replacing=hooked.issue(row.client,row.receipt,await proposal(row));let response;
+      try{await held.promise;response=offers.respond(first.token,{response:'interested'},()=>true).then(value=>({value}),error=>({error}));await blocked('SELECT id FROM nova_capture_requests%');}finally{release.resolve();}
+      assert.equal((await replacing).offer.version,2);assert.equal((await response).error.code,'offer_unavailable');assert.equal((await pool.query("SELECT * FROM jemlio_offer_events WHERE request_id=$1 AND action LIKE 'response_%'",[row.receipt])).rows.length,0);
+    });
+    await check('a response waiting behind deletion cannot recreate an offer or customer task',async()=>{
+      const row=await entry('ci-offer-delete'),q=await offers.issue(row.client,row.receipt,await proposal(row)),held=gate(),release=gate();
+      const deleting=new CaptureOperations({pool:hookedPool('SELECT r.id FROM nova_capture_requests',held,release)}).deleteRequests({client:row.client,receipt:row.receipt,apply:true});let response;
+      try{await held.promise;response=offers.respond(q.token,{response:'interested'},()=>true).then(value=>({value}),error=>({error}));await blocked('SELECT id FROM nova_capture_requests%');}finally{release.resolve();}
+      assert.equal((await deleting).deletedRequests,1);assert.equal((await response).error.code,'request_not_found');for(const table of ['jemlio_offers','jemlio_offer_events','jemlio_followups'])assert.equal((await pool.query('SELECT * FROM '+table+' WHERE request_id=$1',[row.receipt])).rows.length,0);
     });
     console.log(`Real PostgreSQL booking checks passed: ${checks}. No provider calls or production database access.`);
   } finally { await pool.end(); }
