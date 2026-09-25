@@ -22,7 +22,7 @@
   {
     "id": "booking",
     "q": "Hvordan bestiller jeg en kjøretime?",
-    "a": "Dette er en fiktiv demonstrasjon uten timebok eller bestilling. På en virkelig skoles nettside kan Jemlio vise videre til skolens eksisterende booking- eller kontaktside. Chatten bestiller, endrer eller avbestiller ingen timer."
+    "a": "Dette er en fiktiv demonstrasjon uten timebok eller bestilling. På en virkelig skoles nettside kan Jemlio vise videre til skolens eksisterende booking- eller kontaktside. Chatten bestiller, endrer eller avbestiller ingen timer. Vil du utforske selve bookingflyten? [Prøv Jemlios separate bookingdemo](https://nova-dynamics-bot-server.onrender.com/booking-demo). Den bruker en annen fiktiv eksempelbedrift og gjør ingen ekte bestillinger."
   },
   {
     "id": "contact",
@@ -32,6 +32,6 @@
   {
     "id": "limits",
     "q": "Hva kan denne demoen gjøre?",
-    "a": "Demoen viser svar på spørsmål om klasse B, girvalg, eksempelpris, varighet og fiktive kontortider. Den kan ikke bekrefte førerrett, kursdatoer eller ledige timer, og kan ikke registrere kundeopplysninger eller gjennomføre bestillinger."
+    "a": "Demoen viser svar på spørsmål om klasse B, girvalg, eksempelpris, varighet og fiktive kontortider. Den kan ikke bekrefte førerrett, kursdatoer eller ledige timer, og kan ikke registrere kundeopplysninger eller gjennomføre bestillinger. Du kan også spørre hvordan Jemlios oppfølging og prisforslag fungerer, eller [prøve bedriftens arbeidsoversikt](https://nova-dynamics-bot-server.onrender.com/workspace-demo) med en annen fiktiv eksempelbedrift."
   }
 ]

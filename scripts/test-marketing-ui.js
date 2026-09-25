@@ -219,6 +219,38 @@ function harness({ url = 'https://www.jemlio.com/', online = true, clipboard = '
     h.finish();
   });
 
+  await test('all demo tabs explain the real product workflow and render its links without moving chat data', async () => {
+    const { answer } = require('../clients/jemlio/answer');
+    const h = harness({ onChat: ({ client, message }) => ({ ok: true, json: async () => answer(client, message) }) });
+    for (const [tab, client] of [['driving', 'jemlio-driving-demo'], ['optician', 'jemlio-optician-demo'], ['workflow', 'jemlio']]) {
+      h.get('#tab-' + tab).click();
+      h.get('#demo-input').value = 'Hva skjer etter henvendelsen?';
+      h.get('#demo-form').requestSubmit(); await settle();
+      assert.equal(JSON.parse(h.calls.at(-1).options.body).client, client);
+      const link = h.get('#demo-messages a[href="https://nova-dynamics-bot-server.onrender.com/workspace-demo"]');
+      assert.ok(link); assert.equal(link.target, '_blank');
+      assert.match(link.rel, /noopener/);
+      assert.equal(h.get('#demo-panel').getAttribute('aria-labelledby'), 'tab-' + tab);
+    }
+    assert.equal(h.get('#demo-badge').textContent, 'JEMLIO');
+    assert.equal(h.get('#demo-note').textContent.includes('Ingen meldinger sendes'), true);
+    h.fill();
+    h.get('#demo-tailor').click();
+    assert.equal(h.get('#contact-industry').value, 'Optiker', 'product tab must not invent a driving-school category');
+    assert.equal(h.get('#contact-message').value, 'Spørsmål om åpningstider & linser');
+    assert.equal(h.get('#demo-next').hidden, false);
+    assert.equal(h.document.querySelectorAll('.demo-journey a').length, 3);
+    for (const link of h.document.querySelectorAll('.demo-journey a')) {
+      assert.equal(new URL(link.href).search, '');
+      assert.equal(link.target, '_blank');
+    }
+    h.get('#tab-workflow').dispatchEvent(new h.window.KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    assert.equal(h.get('#tab-driving').getAttribute('aria-selected'), 'true');
+    assert.equal(h.get('#demo-badge').textContent, 'EKSEMPEL');
+    assert.equal(h.window.localStorage.length, 0);
+    h.finish();
+  });
+
   await test('the native success page is accessible and does not assert a receipt for a direct visit', () => {
     const dom = new JSDOM(confirmation, { url: 'https://www.jemlio.com/demo-requested' });
     const document = dom.window.document;

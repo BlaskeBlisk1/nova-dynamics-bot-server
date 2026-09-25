@@ -22,7 +22,7 @@
   {
     "id": "booking",
     "q": "Hvordan bestiller jeg en synsundersøkelse?",
-    "a": "Dette er en fiktiv demonstrasjon uten timebok eller bestilling. På en virkelig optikers nettside kan Jemlio vise videre til bedriftens eksisterende bestillings- eller kontaktside. Chatten bestiller, endrer eller avbestiller ingen timer."
+    "a": "Dette er en fiktiv demonstrasjon uten timebok eller bestilling. På en virkelig optikers nettside kan Jemlio vise videre til bedriftens eksisterende bestillings- eller kontaktside. Chatten bestiller, endrer eller avbestiller ingen timer. Vil du utforske selve bookingflyten? [Prøv Jemlios separate bookingdemo](https://nova-dynamics-bot-server.onrender.com/booking-demo). Den bruker en annen fiktiv eksempelbedrift og gjør ingen ekte bestillinger."
   },
   {
     "id": "contact",
@@ -42,6 +42,6 @@
   {
     "id": "limits",
     "q": "Hva kan denne demoen gjøre?",
-    "a": "Demoen viser praktiske svar om en fiktiv synsundersøkelse, eksempelpris, varighet og åpningstider. Den gir ikke helseråd eller symptomvurderinger, og kan ikke registrere kundeopplysninger eller gjennomføre bestillinger."
+    "a": "Demoen viser praktiske svar om en fiktiv synsundersøkelse, eksempelpris, varighet og åpningstider. Den gir ikke helseråd eller symptomvurderinger, og kan ikke registrere kundeopplysninger eller gjennomføre bestillinger. Du kan også spørre hvordan Jemlios oppfølging og prisforslag fungerer, eller [prøve bedriftens arbeidsoversikt](https://nova-dynamics-bot-server.onrender.com/workspace-demo) med en annen fiktiv eksempelbedrift."
   }
 ]
