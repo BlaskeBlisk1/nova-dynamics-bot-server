@@ -58,5 +58,10 @@
     "id": "workflow",
     "q": "Hva med booking og bedriftsoversikt?",
     "a": "Jemlio har egne demonstrasjoner av bookingreisen og bedriftsoversikten med fiktive data: [prøv booking](https://nova-dynamics-bot-server.onrender.com/booking-demo) og [prøv oppfølgingsoversikten](https://nova-dynamics-bot-server.onrender.com/workspace-demo). I en avtalt pilot kan henvendelser, notater, oppfølgingsdatoer og manuelt registrerte resultater samles i en privat oversikt. Tilgang, mottaker og eventuell støttet kalender må settes opp først. Demoene gjør ingen ekte bestillinger og sender ingen meldinger. Denne chatten utfører ingen handlinger."
+  },
+  {
+    "id": "offers",
+    "q": "Hva med prisforslag og tilbudsoppfølging?",
+    "a": "Jemlio har en demonstrasjon av prisforslag og kundesvar: [prøv kundens tilbudssvar](https://nova-dynamics-bot-server.onrender.com/offer-demo) og [prøv bedriftens oppfølging](https://nova-dynamics-bot-server.onrender.com/workspace-demo). I en avtalt pilot kan bedriften kontrollere et prisforslag og dele en privat lenke selv. Kunden kan ønske å gå videre, stille spørsmål eller takke nei. Svaret blir en oppfølgingsoppgave; det er ingen signering, betaling eller automatisk booking. Tilgang og behandling av opplysninger må avklares før aktivering. Eksemplene bruker fiktive data. Har du allerede en chat, vurder om oppfølgingen løser et faktisk behov."
   }
 ]

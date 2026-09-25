@@ -70,6 +70,13 @@ async function main() {
     const response=await request(`${backend}/api/calendar-sync/calendly/tiller`,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
     assert.equal(response.status,503);assert.deepEqual(await response.json(),{error:'sync_unavailable'});
   });
+  await check('Customer offer demo is isolated and real proposal access remains gated',async()=>{
+    const page=await request(`${backend}/offer-demo`);assert.equal(page.status,200);
+    assert.match(page.headers.get('content-security-policy')||'',/connect-src 'none'/);assert.match(await page.text(),/Fiktivt eksempel/);
+    for(const asset of ['app.js','styles.css'])assert.equal((await request(`${backend}/offer/${asset}`)).status,200);
+    const response=await request(`${backend}/api/offers/read`,{method:'POST',headers:{'Content-Type':'application/json',Origin:backend},body:'{}'});
+    assert.equal(response.status,503);assert.deepEqual(await response.json(),{error:'unavailable'});
+  });
   for (const client of clients) {
     await check(`${client}: shared URL and capture-off configuration`, async () => {
       const page = await request(`${backend}/demos/${client}?owner=1`);

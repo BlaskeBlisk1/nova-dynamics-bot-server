@@ -55,6 +55,7 @@ function answer(client, message) {
     // The demo answer still makes clear that the visitor must send the email.
     if (has(/demo/) && has(/gratis|mini.?demo|\b(?:fa|far|lage|be om|bestill(?:e|er)?|book(?:e|er)?|prove|teste)\b/)) return fact("demo");
     if (has(/bedriftsoversikt|arbeidsflyt|oppfolgingsoversikt|bookingdemo|booking.?demo/)) return fact("workflow");
+    if (has(/prisforslag|tilbudsoppfolging|tilbudssvar|kundesvar|folge opp tilbud|lovable/)) return fact("offers");
     if (has(/kontaktsteg|kontaktforesporsler|(?:kunder|besokende).*(?:be om kontakt|bli kontaktet)/)) return fact("contact-pilot");
     if (has(/book|bestill|reserver|kundeopplysn|lead.?capture|leadfangst|kundeinnsamling|samle.*(?:kunde|kontakt)|registrere.*(?:kunde|kontakt)|automatisk.*(?:booking|bestill|epost|e-post)|integrasjon|kalender|crm|airtable|sms|analyse|statistikk|dashboard|rapport/)) return fact("limits");
     if (has(/garanti|garanter|omsetning|flere kunder|salgstall|konvertering/)) return fact("results");

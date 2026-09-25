@@ -10,6 +10,8 @@
 - Durable sessions, CSRF/origin checks, rate limits, hashed access keys, revision conflicts and a field-change audit. No contact text or raw credentials in the audit.
 - Booking uncertainty remains visible even after closing an enquiry. Optional signed calendar synchronization handles verified cancellations and linked reschedules; unresolved cases remain an operator task. See `calendar-sync.md`.
 
+Price proposals, private customer response links and proposal follow-up are documented in `offer-workflow.md`. They require the additive workspace migration and separate global/per-business activation. Customer interest never records a won sale.
+
 ## Approved pilot setup
 
 1. Agree the pilot business, data controller/retention terms, staff with access and approved intake source. Existing prospect demos remain off. This release does not provision a customer or connect a calendar.

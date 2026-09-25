@@ -4,3 +4,5 @@
 header{background:transparent;color:var(--ink)}.intro{max-width:none;padding:0}.notice strong{white-space:normal}.metric strong{overflow-wrap:anywhere}.contact-links span{overflow-wrap:anywhere;max-width:100%}.row strong{overflow-wrap:anywhere}
 
 .demo-calendar{padding:14px;background:#edf3ff;border-radius:12px;margin:14px 0}.demo-calendar button{margin:4px 6px 4px 0;font-size:13px}
+
+.offer-panel{padding:18px;border:1px solid #c4d5ef;border-radius:14px;margin:20px 0;background:#f9fbff}.offer-panel h3{margin-top:0}.offer-panel .offer-title{font-weight:650}.offer-panel .offer-price{font-size:26px;font-weight:750;letter-spacing:-.035em}.offer-panel button{margin:8px 6px 0 0}.offer-panel a{display:block;margin-top:14px;color:#245edb}.offer-simulation{margin-top:20px;padding-top:14px;border-top:1px solid #c4d5ef}#offer-form .primary{margin-top:18px}#detail>h2{margin-top:18px}

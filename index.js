@@ -32,6 +32,12 @@ const calendarSync = require('./lib/calendar-sync/runtime').createCalendarSyncRu
 app.use('/api/calendar-sync', calendarSync.router);
 const workspace = require('./lib/workspace/runtime').createWorkspaceRuntime();
 app.use('/api/workspace', workspace.router);
+app.use('/api/offers', workspace.offerRouter);
+app.use(['/offer','/offer-demo'], (req,res,next)=>{
+  res.set({'Cache-Control':'no-store','X-Robots-Tag':'noindex, nofollow','Referrer-Policy':'no-referrer','X-Content-Type-Options':'nosniff'});
+  res.set('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src "+(req.baseUrl==='/offer-demo'?"'none'":"'self'")+"; form-action 'none'; frame-ancestors 'none'; base-uri 'none'");next();
+});
+app.get(['/offer','/offer/','/offer-demo','/offer-demo/'],(_req,res)=>res.sendFile(path.join(publicDir,'offer','index.html')));
 app.use(['/workspace', '/workspace-demo'], (req, res, next) => {
   res.set('Cache-Control', 'no-store'); res.set('X-Robots-Tag', 'noindex, nofollow');
   res.set('Referrer-Policy', 'no-referrer'); res.set('X-Content-Type-Options', 'nosniff');
