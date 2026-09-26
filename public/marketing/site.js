@@ -4,7 +4,7 @@
   const examples = {
     driving: { client: 'jemlio-driving-demo', title: 'Trafikkskoleassistent', industry: 'Trafikkskole', greeting: 'Hei! Jeg er assistenten til en fiktiv trafikkskole. Spør om kjøretimer eller booking. Du kan også spørre hvordan Jemlio hjelper bedriften med oppfølging etter en henvendelse.', questions: ['Hva koster en kjøretime?', 'Hvordan bestiller jeg time?', 'Hva skjer etter henvendelsen?'] },
     optician: { client: 'jemlio-optician-demo', title: 'Optikerassistent', industry: 'Optiker', greeting: 'Hei! Jeg er assistenten til en fiktiv optiker. Spør om synsundersøkelser eller booking. Du kan også spørre hvordan Jemlio hjelper bedriften med henvendelser og oppfølging.', questions: ['Hva koster en synsundersøkelse?', 'Hvordan bestiller jeg en synstest?', 'Hva skjer etter henvendelsen?'] },
-    workflow: { client: 'jemlio', title: 'Jemlios arbeidsflyt', greeting: 'Hva skjer etter kundens første spørsmål? Jeg kan forklare henvendelser, booking, prisforslag og personlig oppfølging. Spør meg, og prøv deretter arbeidsoversikten med fiktive data via lenkene under.', questions: ['Hvordan fungerer oppfølgingen?', 'Hvordan fungerer prisforslag?', 'Hva viser resultatrapporten?'] }
+    workflow: { client: 'jemlio', title: 'Jemlios arbeidsflyt', greeting: 'Hva skjer etter kundens første spørsmål? Jeg kan forklare henvendelser, booking, prisforslag og personlig oppfølging. Du kan stille spørsmål her og prøve arbeidsoversikten med fiktive data via lenkene under.', questions: ['Hvordan fungerer oppfølgingen?', 'Hvordan fungerer prisforslag?', 'Hva viser resultatrapporten?'] }
   };
   // On the marketing host, Netlify proxies only this endpoint to the stable API.
   const api = '/chat';
@@ -128,8 +128,8 @@
     $('demo-next').hidden = true;
     tabs.forEach(tab => { const active = tab.dataset.demo === kind; tab.setAttribute('aria-selected', String(active)); tab.tabIndex = active ? 0 : -1; if (active && focus) tab.focus(); });
     $('demo-title').textContent = examples[kind].title;
-    $('demo-badge').textContent = kind === 'workflow' ? 'JEMLIO' : 'EKSEMPEL';
-    $('demo-note').textContent = kind === 'workflow' ? 'Prøv med fiktive data. Ingen meldinger sendes.' : 'Fiktive priser og tjenester. Ingen bestillinger.';
+    $('demo-badge').textContent = kind === 'workflow' ? 'Jemlio' : 'Eksempel';
+    $('demo-note').textContent = kind === 'workflow' ? 'Prøv med fiktive data. Ingen meldinger sendes.' : 'Priser og tjenester er fiktive. Ingen bestillinger blir gjort.';
     $('demo-input').placeholder = kind === 'workflow' ? 'Spør om booking, prisforslag eller oppfølging …' : 'Hva ville kundene dine spurt om?';
     $('demo-panel').setAttribute('aria-labelledby', 'tab-' + kind);
     demo.reset(examples[kind].greeting, examples[kind].questions);
@@ -154,7 +154,7 @@
   document.querySelectorAll('[data-try]').forEach(button => button.addEventListener('click', () => { select(button.dataset.try); $('demo').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' }); $('demo-input').focus({ preventScroll: true }); }));
   const support = chat('support', () => 'jemlio');
   $('support-reset').addEventListener('click', () => {
-    support.reset('Hei! Spør meg om Jemlios chat, booking, prisforslag eller oppfølging. Jeg kan vise deg hvor du prøver funksjonene med fiktive data, eller hvordan du får en demo for din bedrift.',
+    support.reset('Hei! Spør meg om Jemlios chat, booking, prisforslag eller oppfølging. Jeg kan vise deg hvordan du prøver funksjonene med fiktive data eller ber om en demo for bedriften din.',
       ['Hvordan fungerer oppfølgingen?', 'Hvordan fungerer prisforslag?', 'Hvordan får jeg en gratis demo?']);
     $('support-input').focus();
   });
@@ -201,7 +201,7 @@
     try {
       if (!navigator.clipboard || !navigator.clipboard.writeText) throw new Error('Clipboard unavailable');
       await navigator.clipboard.writeText(text);
-      $('contact-copy-status').textContent = 'Kopiert. Lim inn i en e-post til hei@jemlio.com og send den selv. Kopieringen sender ingenting.';
+      $('contact-copy-status').textContent = 'Forespørselen er kopiert. Lim den inn i en e-post til hei@jemlio.com og send den selv. Kopieringen sender ingenting.';
     } catch {
       $('contact-copy-manual').hidden = false;
       $('contact-copy-text').value = text;
@@ -216,7 +216,7 @@
     if (!contactForm.reportValidity()) { event.preventDefault(); return; }
     if (navigator.onLine === false) {
       event.preventDefault();
-      contactStatus.textContent = 'Du ser ut til å være frakoblet. Ingen innsending er startet. Feltene er beholdt; koble til nettet eller kopier forespørselen til en e-post.';
+      contactStatus.textContent = 'Du ser ut til å være frakoblet. Ingen innsending er startet. Feltene er beholdt. Koble til nettet eller kopier forespørselen til en e-post.';
       $('contact-fallback').open = true;
       return;
     }
@@ -230,7 +230,7 @@
       // Keep the send guard until the browser restores the page, preserving all
       // fields and offering a different way to ask about the same request.
       contactForm.setAttribute('aria-busy', 'false');
-      contactStatus.textContent = 'Vi kan ikke bekrefte om forespørselen kom frem. Ikke send skjemaet på nytt nå. Feltene er beholdt; kontakt hei@jemlio.com og nevn at du allerede forsøkte skjemaet.';
+      contactStatus.textContent = 'Vi kan ikke bekrefte om forespørselen kom frem. Ikke send skjemaet på nytt nå. Feltene er beholdt. Kontakt hei@jemlio.com og nevn at du allerede forsøkte skjemaet.';
       $('contact-fallback').open = true;
     }, 20000);
     // Intentionally do not preventDefault(): the browser performs exactly one
