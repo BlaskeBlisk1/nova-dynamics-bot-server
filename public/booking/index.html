@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="nb">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer">
+  <title>Booking og oppfølging · Jemlio</title>
+  <link rel="stylesheet" href="/booking/styles.css"><script defer src="/booking/app.js"></script>
+</head>
+<body>
+<a class="skip" href="#main">Hopp til innhold</a>
+<header><a class="brand" href="https://www.jemlio.com"><span class="orbit" aria-hidden="true">◌</span> jemlio</a><span class="header-note">Booking · Oppfølging · Resultater</span></header>
+<main id="main">
+  <div id="preview-notice" class="notice" hidden><strong>Interaktiv demonstrasjon</strong><span>Alle personer, tider og resultater er eksempler. Ingen bestilling eller melding sendes. Alt nullstilles når siden lastes på nytt. <a href="/workspace-demo">Prøv den nye bedriftsoversikten ↗</a></span></div>
+  <section class="intro"><p class="eyebrow">EN SAMMENHENGENDE KUNDEREISE</p><h1 id="headline">Fra spørsmål<br>til avtale.</h1><p id="intro">Velg en tjeneste, finn et tidspunkt og se hvordan en henvendelse følges opp.</p></section>
+  <nav class="views" aria-label="Visning"><button id="customer-tab" aria-pressed="true">Kundereisen</button><button id="owner-tab" aria-pressed="false" hidden>Bedriftsoversikt · eksempel</button></nav>
+  <section id="customer-view" class="layout">
+    <div class="panel journey">
+      <ol class="steps" aria-label="Fremdrift"><li id="step-service" class="active">1 <span>Tjeneste</span></li><li id="step-time">2 <span>Tidspunkt</span></li><li id="step-review">3 <span>Bekreft</span></li></ol>
+      <p class="business" id="business">Laster virksomheten …</p>
+      <div id="service-step"><h2>Hva kan vi hjelpe deg med?</h2><div id="services" class="services"></div></div>
+      <section id="time-step" hidden><button class="text-button" id="back-services">← Endre tjeneste</button><h2 id="selected-service"></h2><p id="time-help">Velg blant tilgjengelige tider. Alle tider vises i norsk tid.</p><div id="slots" class="slots"></div><button id="retry-slots" class="secondary" hidden>Prøv å hente tider igjen</button><button id="request-contact" class="text-button">Passer ingen tider? Be om å bli kontaktet</button></section>
+      <section id="review-step" hidden><button class="text-button" id="back-time">← Endre tidspunkt</button><h2>Se over før du bekrefter</h2><div id="summary" class="summary"></div>
+        <form id="details" novalidate>
+          <label for="name">Navn</label><input id="name" name="name" autocomplete="name" minlength="2" maxlength="100" required>
+          <label for="email">E-post</label><input id="email" name="email" type="email" autocomplete="email" maxlength="254" required>
+          <label for="phone">Telefon <span>(valgfritt)</span></label><input id="phone" name="phone" type="tel" autocomplete="tel" maxlength="30">
+          <div class="trap" aria-hidden="true"><label for="website">Nettside</label><input id="website" tabindex="-1" autocomplete="off"></div>
+          <label class="consent"><input type="checkbox" id="consent" required><span>Jeg ber om denne avtalen eller oppfølging av forespørselen min. <a id="privacy" target="_blank" rel="noopener noreferrer" hidden>Personvern</a></span></label>
+          <p id="submit-help" class="muted">En henvendelse lagres først. Timen er bekreftet når bookingsystemet har godkjent den.</p>
+          <button id="submit" class="primary" type="submit">Bekreft tidspunkt</button>
+        </form>
+      </section>
+      <section id="result-step" hidden><div id="result-icon" class="result-icon" aria-hidden="true">✓</div><h2 id="result-title" tabindex="-1"></h2><p id="result-body"></p><div id="manage" class="manage"></div><button id="check-status" class="secondary" hidden>Sjekk bookingstatus</button><button id="new-example" class="secondary" hidden>Prøv en ny eksempelhenvendelse</button></section>
+      <p id="status" role="status" aria-live="polite"></p><p id="error" role="alert"></p>
+    </div>
+    <aside class="panel explainer"><p class="eyebrow">HELE VEIEN VIDERE</p><h2>En tydelig neste handling.</h2><p>Besøkeren får en avtale eller vet hvem som følger opp. Bedriften får oversikt over det som faktisk skjer.</p><div class="explain-item"><b>01</b><div><h3>Riktig tjeneste</h3><p>Avklar behovet før kunden velger tid.</p></div></div><div class="explain-item"><b>02</b><div><h3>Booking eller oppfølging</h3><p>En forespørsel og en bekreftet avtale har hver sin status.</p></div></div><div class="explain-item"><b>03</b><div><h3>Resultater som kan følges</h3><p>Se bestillinger, gjennomførte avtaler og registrerte salg hver for seg.</p></div></div>
+      <div id="scenarios" class="scenarios" hidden><label for="scenario">Prøv også et annet forløp</label><select id="scenario"><option value="normal">Ledig tid og bekreftet booking</option><option value="no-slots">Ingen ledige tider</option><option value="uncertain">Uklart svar fra bookingsystemet</option></select><p class="muted">Valget gjelder neste eksempelhenvendelse.</p></div>
+    </aside>
+  </section>
+  <section id="owner-view" hidden><div class="owner-heading"><div><p class="eyebrow">EKSEMPELDATA FRA DENNE ØKTEN</p><h2>Fra henvendelse til resultat</h2></div><button id="reset-demo" class="secondary">Nullstill alle eksempler</button></div><div class="metrics" id="metrics"></div><div class="panel"><h3>Oppfølging og avtaler</h3><p class="muted">Handlingene under simulerer bedriftens arbeid. Ingen kunder kontaktes.</p><div id="queue"></div></div><p class="report-note">Salg er manuelt registrerte eksempelbeløp, ikke innbetalinger, fortjeneste eller dokumentert meromsetning. En booking er ikke automatisk et salg.</p></section>
+  <noscript><p class="notice">Du må slå på JavaScript for å bruke bookingvisningen. Du kan også kontakte virksomheten direkte.</p></noscript>
+</main><footer>Jemlio <span>Gode samtaler. Tydelige neste steg.</span></footer>
+</body></html>

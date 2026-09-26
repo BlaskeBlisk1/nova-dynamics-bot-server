@@ -1,14 +1,16 @@
 <!doctype html>
-<html lang="no">
+<html lang="nb">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
+  <meta name="robots" content="noindex,nofollow">
   <title>Personlig demo | Jemlio</title>
   <link rel="stylesheet" href="/demo/styles.css">
   <script src="/demo/app.js" defer></script>
 </head>
 <body>
+  <a class="skip-link" href="#message-input">Hopp til chatten</a>
   <div class="ambient ambient-one"></div>
   <div class="ambient ambient-two"></div>
   <div class="route-lines" aria-hidden="true"></div>
@@ -30,6 +32,7 @@
       </div>
       <h1 id="business-name">Laster demo…</h1>
       <p id="business-description" class="description">Denne assistenten svarer med informasjon tilpasset virksomheten.</p>
+      <div id="demo-load-recovery" class="demo-load-recovery" hidden><button id="demo-load-retry" type="button">Prøv å laste igjen</button><a href="https://www.jemlio.com/#contact">Kontakt Jemlio</a></div>
       <div id="highlights" class="highlights" aria-label="Utvalgte fordeler"></div>
     </section>
 
@@ -60,12 +63,12 @@
           <div id="assistant-avatar" class="assistant-avatar">J</div>
           <div>
             <strong id="assistant-label">Digital assistent</strong>
-            <span><i></i> <span id="status-label" class="status-label">Tilgjengelig nå</span></span>
+            <span><i></i> <span id="status-label" class="status-label" role="status">Laster demoen…</span></span>
           </div>
           <a id="website-link" class="website-link" href="#" target="_blank" rel="noreferrer" hidden>Besøk nettsiden ↗</a>
         </div>
 
-        <div id="messages" class="messages" role="log" aria-live="polite" aria-relevant="additions"></div>
+        <div id="messages" class="messages" role="log" aria-label="Samtalen med assistenten" aria-live="polite" aria-relevant="additions" tabindex="0"></div>
 
         <div id="chat-tools" class="chat-tools" hidden>
           <button id="capture-open" class="text-action" type="button" hidden>Be om å bli kontaktet</button>
@@ -74,13 +77,13 @@
 
         <form id="chat-form" class="chat-form">
           <label class="sr-only" for="message-input">Skriv et spørsmål</label>
-          <input id="message-input" name="message" placeholder="Skriv et spørsmål…" autocomplete="off" maxlength="2000" required>
-          <button id="send-button" type="submit" aria-label="Send spørsmål">
+          <input id="message-input" name="message" placeholder="Skriv et spørsmål…" autocomplete="off" maxlength="2000" aria-describedby="chat-privacy" enterkeyhint="send" disabled required>
+          <button id="send-button" type="submit" aria-label="Send spørsmål" disabled>
             <span>Send</span>
             <span aria-hidden="true">↗</span>
           </button>
         </form>
-        <p class="privacy-note">Ikke skriv sensitive personopplysninger i demoen.</p>
+        <p id="chat-privacy" class="privacy-note">Ikke skriv sensitive personopplysninger i demoen.</p>
       </section>
     </section>
 
@@ -88,6 +91,7 @@
       <span>Demo levert av Jemlio</span>
       <span>Ingen møtebooking eller forpliktelse</span>
     </footer>
+    <noscript><p>Aktiver JavaScript for å prøve chatten. Du kan kontakte Jemlio på <a href="mailto:hei@jemlio.com">hei@jemlio.com</a> hvis du trenger hjelp med demoen.</p></noscript>
   </main>
 </body>
 </html>

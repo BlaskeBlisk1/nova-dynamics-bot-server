@@ -25,6 +25,24 @@ CREATE TABLE IF NOT EXISTS nova_capture_outbox (
 CREATE INDEX IF NOT EXISTS nova_capture_outbox_pending ON nova_capture_outbox (next_attempt_at)
   WHERE status IN ('pending','sending');
 
+-- Optional CRM replication shares the request transaction, but retries
+-- independently of email. Destination and visitor fields are frozen at capture.
+CREATE TABLE IF NOT EXISTS nova_capture_crm_outbox (
+  request_id uuid PRIMARY KEY REFERENCES nova_capture_requests(id) ON DELETE CASCADE,
+  payload jsonb NOT NULL,
+  status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','sending','synced','needs_review')),
+  attempts integer NOT NULL DEFAULT 0,
+  first_attempt_at timestamptz,
+  next_attempt_at timestamptz NOT NULL,
+  locked_until timestamptz,
+  lock_token uuid,
+  record_id text,
+  error_code text,
+  updated_at timestamptz NOT NULL
+);
+CREATE INDEX IF NOT EXISTS nova_capture_crm_pending ON nova_capture_crm_outbox (next_attempt_at)
+  WHERE status IN ('pending','sending');
+
 CREATE TABLE IF NOT EXISTS nova_capture_rate_limits (
   key text PRIMARY KEY,
   bucket bigint NOT NULL,

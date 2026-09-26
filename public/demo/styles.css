@@ -27,6 +27,12 @@ body {
 }
 
 button, input { font: inherit; }
+.skip-link { position: absolute; top: -100px; left: 20px; z-index: 20; padding: 12px 16px; color: #fff; background: #172b55; border-radius: 8px; }
+.skip-link:focus { top: 12px; }
+.demo-load-recovery { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-top: 20px; }
+.demo-load-recovery button { min-height: 44px; padding: 10px 16px; border: 1px solid currentColor; border-radius: 10px; font: inherit; color: inherit; background: transparent; cursor: pointer; }
+.demo-load-recovery a { color: inherit; text-underline-offset: 3px; }
+.demo-load-recovery :focus-visible, .messages:focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
 
 .ambient {
   position: fixed;
@@ -330,6 +336,9 @@ h1 {
 }
 
 .message {
+  flex-shrink: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
   max-width: min(82%, 470px);
   padding: 13px 15px;
   border-radius: 15px;
@@ -345,6 +354,8 @@ h1 {
   color: #dfe3ed;
   background: rgba(255, 255, 255, 0.045);
 }
+.message.bot a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.message.bot a:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
 
 .message.user {
   align-self: flex-end;
@@ -1492,6 +1503,7 @@ body[data-theme="optical"] .privacy-note {
 }
 
 body[data-theme="optical"] .website-link:focus-visible,
+body[data-theme="optical"] .text-action:focus-visible,
 body[data-theme="optical"] .chat-form input:focus-visible,
 body[data-theme="optical"] .chat-form button:focus-visible {
   outline-color: #0e6f68;
@@ -1565,10 +1577,10 @@ body[data-capture="enabled"] .chat-card { height: 740px; min-height: 540px; }
   padding: 4px 18px 10px;
 }
 .text-action {
-  min-height: 36px;
+  min-height: 44px;
   padding: 7px 0;
   border: 0;
-  color: var(--text);
+  color: inherit;
   background: transparent;
   font-size: 12px;
   text-decoration: underline;
@@ -1579,10 +1591,10 @@ body[data-capture="enabled"] .chat-card { height: 740px; min-height: 540px; }
 .text-action:disabled { opacity: 0.5; cursor: wait; }
 .chat-retry {
   display: block;
-  min-height: 40px;
+  min-height: 44px;
   margin-top: 12px;
   padding: 8px 12px;
-  border: 1px solid var(--line);
+  border: 1px solid currentColor;
   border-radius: 8px;
   color: inherit;
   background: transparent;
@@ -1591,6 +1603,26 @@ body[data-capture="enabled"] .chat-card { height: 740px; min-height: 540px; }
   cursor: pointer;
 }
 .chat-retry:focus-visible { outline: 3px solid var(--accent-secondary); outline-offset: 3px; }
+.chat-followups { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); white-space: normal; }
+.chat-followups-label { display: block; margin-bottom: 8px; font-size: 11px; color: inherit; }
+.chat-followup-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.chat-followup {
+  min-height: 44px;
+  max-width: 100%;
+  padding: 9px 12px;
+  border: 1px solid currentColor;
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: left;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.chat-followup:hover { text-decoration: underline; text-underline-offset: 3px; }
+.chat-followup:focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
 .capture-offer p { margin: 0 0 12px; }
 .capture-panel {
   flex: 0 0 auto;
@@ -1661,4 +1693,19 @@ body[data-capture="enabled"] .chat-card { height: 740px; min-height: 540px; }
   .capture-field-pair { grid-template-columns: 1fr; }
   .capture-actions > button { flex: 1 1 auto; }
   .chat-tools { gap: 10px; padding-inline: 14px; }
+}
+
+/* Keep the conversation usable on narrow screens and light chat panels. */
+body[data-theme="optical"] .chat-card, body[data-theme="roma"] .chat-card { color-scheme: light; }
+.chat-header, .chat-form, .privacy-note { flex-shrink: 0; }
+.chat-header[data-connection="offline"] i, .chat-header[data-connection="loading"] i { background: #8a929f; }
+@media (max-width: 900px) {
+  .demo-grid > .chat-card { order: -1; }
+  body[data-theme] .chat-card, body[data-capture="enabled"] .chat-card { height: clamp(480px, 78svh, 740px); min-height: 480px; }
+}
+@media (max-width: 560px) {
+  .chat-form input, body[data-theme="roma"] .chat-form input { font-size: 16px; }
+  .website-link { min-height: 44px; }
+  .chat-form { padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+  .demo-grid, .chat-card, .context-card { min-width: 0; }
 }

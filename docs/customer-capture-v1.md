@@ -1,5 +1,13 @@
 # Customer enquiry upgrade, first implementation
 
+Current setup, 22 September 2026: the private production PostgreSQL database and
+its schema, scoped Resend/Airtable credentials, and capture signing secret are
+installed. Customer-demo capture remains off pending pilot-specific routing and
+delivery verification. Jemlio's own website uses a separate
+[signed notification receiver](website-delivery.md); its intake, CRM copying and
+owner email alerts are active after the approved production test. This does not
+enable any school or optician capture form.
+
 This release adds a path from a visitor's question to a reviewed contact request.
 Contact collection defaults off. The first production configuration enables
 conversation context only for Tiller and Frank Olsen; every existing `/demos/:client`
@@ -33,9 +41,63 @@ link continues to answer questions without displaying contact collection.
 This slice does not include an owner dashboard, delivery/bounce webhook handling,
 calendar booking, SMS, automatic follow-up, new website crawling, or a self-service
 onboarding portal. The contact flow has operator-recorded outcome reports, but no public conversion
-dashboard. It does not copy business enquiries into Jemlio's outreach Airtable base.
+dashboard. Optional Airtable copying requires an explicitly approved destination
+per business; see `lib/capture/README.md`. No business inherits Jemlio's website
+CRM destination automatically.
 
 ## Local review
+
+### Guided follow-up questions, 22 September 2026
+
+Tiller and Frank Olsen now offer up to three **Spør videre** buttons after a
+supported answer. The choices ask about the selected service's price, contents
+or booking process. Frank Olsen's glasses and repair answers offer a contact
+question; they never inherit the routine eye-exam price. Contact-lens choices
+offer fitting information and booking guidance, not an unpublished price.
+
+The server constructs complete questions from bounded service/class enums and
+omits the intent just answered. Clicking a button uses the existing chat route;
+it does not book an appointment, submit a lead or send a message. A complete
+question still identifies its service if the conversation has expired.
+Unsupported answers, ambiguity, privacy/personal-data questions, and sensitive
+qualifiers offer no choices. Old buttons disappear when a new request starts,
+on reset, or after a superseded response. Labels render as text, keyboard focus
+is visible, and touch targets are at least 44 pixels high.
+
+The optional `followup_question_clicked` event contains only an allowlisted
+intent ID. Generated question text, conversation IDs and service names are not
+added to analytics. Owner/test/preview analytics suppression remains in force.
+Existing conversation switches limit this release to Tiller and Frank Olsen;
+no capture, recipient, CRM, preview or deployment environment setting changes.
+
+Verification includes every offered question through the real HTTP handlers,
+expiry and superseded-turn checks, DOM click/reset/late-response checks, plain
+text rendering, and the full existing regression suite. Live visual checks are
+recorded in the release handover after deployment.
+
+### Answer-quality update, 22 September 2026
+
+The Tiller conversation resolver now retains the selected Standardpakke or
+Superpakke and the numbered trinnvurdering. Bounded follow-ups about price,
+contents, duration and booking reuse that selection. Comparisons remain
+ambiguous; unknown answers, reset and expiry clear it. Only enum values remain
+in memory, with the same tenant/origin boundaries and feature switches.
+
+The direct Tiller handler distinguishes Norwegian `be om` from licence BE and
+does not assign an ordinary lesson price to a requested 60/90-minute lesson or
+double lesson. Frank Olsen keeps a repair follow-up separate from glasses and
+asks for business confirmation for unverified attestation/førerkort exams and
+durations. Optician clarification text no longer asks for a driving licence.
+The normal booking answers still point to the businesses' existing websites.
+
+Source review: [Tiller's published prices](https://tillertrafikkskole.no/priser)
+and [Frank Olsen's services](https://www.frankolsen.no/tjenester), checked
+22 September 2026. These changes reuse the existing published prices; they do
+not verify appointment availability or an additional attestation service.
+Focused HTTP and context tests cover complete multi-turn sequences, ambiguous
+selection, ordinary-versus-specific requests, reset/expiry, and unknown-answer
+invalidation. The legacy answer suites also exercise the handlers with context
+disabled. This release changes no intake, delivery or pilot activation settings.
 
 Use Node 24.15+ within the Node 24 release line for the development test dependencies
 (this release was tested on Node 24.19). jsdom also supports Node 22.22.2+ within
@@ -120,10 +182,11 @@ email delivery. Secrets are not read from `.env` automatically by these scripts.
    operator attention. Establish monitoring and a recovery owner before accepting
    real enquiries; a console warning alone is not an alerting system.
 
-No managed database, transactional sending credential or agreed pilot routing was
-provisioned by this implementation. Real in-chat collection and its worker remain
-off pending setup and verification; public synthetic preview routes also remain
-off. A connected Google Workspace mailbox does not supply a Resend API credential.
+The database and sending credential were provisioned after this implementation;
+see the current checkpoint above. Real in-chat collection and its worker remain
+off pending the delivery test and agreed pilot routing; public synthetic preview
+routes also remain off. A connected Google Workspace mailbox does not itself
+supply a Resend API credential.
 Jemlio's own marketing form uses Netlify Forms independently, with an email fallback.
 
 The release configuration is `NOVA_CONVERSATION_CLIENTS=tiller,frankolsen`,
@@ -133,9 +196,9 @@ Nova identifiers remain stable. Shared chat controls have bounded timeouts and
 reset protection; personal medical details cannot seed routine price followups.
 
 See `lib/capture/README.md` for the outcome/report/delete operator commands.
-Synthetic local PGlite tests verify the schema and retry behavior, but the
-concurrent deletion/insert case still needs multi-connection PostgreSQL staging
-verification before real capture is enabled.
+Synthetic local PGlite tests verify schema and retry behavior. The PostgreSQL CI
+job also tests actual concurrent inserts, claims, worker separation and deletion
+races using a disposable database; it does not send real notifications.
 
 ## Rollback and reconciliation
 

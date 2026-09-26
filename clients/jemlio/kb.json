@@ -2,12 +2,12 @@
   {
     "id": "identity",
     "q": "Hva er Jemlio?",
-    "a": "Jemlio lager en nettside-chat tilpasset bedriftens egen informasjon. Besøkende kan stille vanlige spørsmål og få hjelp til å finne riktig side, kontaktpunkt eller eksisterende bestillingsside."
+    "a": "Jemlio hjelper bedriften fra kundespørsmål til personlig oppfølging. Chatten svarer med bedriftens informasjon. I en avtalt pilot kan en privat arbeidsoversikt samle henvendelser, prisforslag, avtaler og neste handling. [Prøv arbeidsoversikten med fiktive data](https://nova-dynamics-bot-server.onrender.com/workspace-demo). Denne chatten gir informasjon og utfører ingen handlinger."
   },
   {
     "id": "features",
     "q": "Hva kan chatten hjelpe med?",
-    "a": "Chatten kan svare på spørsmål om for eksempel tjenester, publiserte priser og åpningstider ut fra informasjonen bedriften har gitt. Den kan vise kunden videre til bedriftens riktige side, kontaktpunkt eller eksisterende booking. Den utfører ikke bestillingen."
+    "a": "Chatten kan svare på spørsmål om tjenester, publiserte priser og åpningstider. Du kan også prøve hvordan Jemlio hjelper bedriften videre: [bookingreisen](https://nova-dynamics-bot-server.onrender.com/booking-demo), [henvendelser og oppfølging](https://nova-dynamics-bot-server.onrender.com/workspace-demo) og [kundens svar på prisforslag](https://nova-dynamics-bot-server.onrender.com/offer-demo). Eksemplene bruker fiktive data. For ekte bruk avtaler vi en avgrenset pilot og setter opp tilgang og eventuell støttet kalender først."
   },
   {
     "id": "tailoring",
@@ -42,7 +42,7 @@
   {
     "id": "limits",
     "q": "Kan chatten booke eller registrere kunder?",
-    "a": "Den tilgjengelige chatten svarer på spørsmål og viser videre til riktig informasjon eller eksisterende bestilling. Den gjennomfører ikke booking, registrerer ikke en kundehenvendelse, sender ikke meldinger og tar ikke betaling. Ikke legg inn personopplysninger her."
+    "a": "Denne chatten gjennomfører ikke booking, registrerer ikke en kundehenvendelse, sender ikke meldinger og tar ikke betaling. Ikke legg inn personopplysninger her. Den kan forklare oppfølging, prisforslag og booking og vise videre til [den interaktive arbeidsoversikten](https://nova-dynamics-bot-server.onrender.com/workspace-demo). Demonstrasjonene bruker fiktive data; ekte bruk krever et avtalt pilotoppsett."
   },
   {
     "id": "setup",
@@ -53,5 +53,40 @@
     "id": "contact-pilot",
     "q": "Kan kunder be om kontakt direkte i chatten?",
     "a": "Et frivillig kontaktsteg er under utprøving for en avgrenset pilot. Kunden skal velge selv om hen ønsker kontakt og se opplysningene før innsending. Funksjonen er ikke aktivert i de offentlige eksemplene eller eksisterende kundedemoer. Mottaker og behandling av opplysninger må avklares før aktivering. Denne chatten registrerer ingen kundehenvendelse."
+  },
+  {
+    "id": "workflow",
+    "q": "Hva med booking og bedriftsoversikt?",
+    "a": "Følg samme fiktive kunde gjennom henvendelse, booking, prisforslag, kundesvar og manuelt registrert resultat i [hele kundereisen](https://nova-dynamics-bot-server.onrender.com/journey-demo). Jemlio har egne demonstrasjoner av bookingreisen og bedriftsoversikten med fiktive data: [prøv booking](https://nova-dynamics-bot-server.onrender.com/booking-demo) og [prøv oppfølgingsoversikten](https://nova-dynamics-bot-server.onrender.com/workspace-demo). I en avtalt pilot kan henvendelser, notater, oppfølgingsdatoer og manuelt registrerte resultater samles i en privat oversikt. Tilgang, mottaker og eventuell støttet kalender må settes opp først. Demoene gjør ingen ekte bestillinger og sender ingen meldinger. Denne chatten utfører ingen handlinger."
+  },
+  {
+    "id": "offers",
+    "q": "Hva med prisforslag og tilbudsoppfølging?",
+    "a": "Jemlio har en demonstrasjon av prisforslag og kundesvar: [prøv kundens tilbudssvar](https://nova-dynamics-bot-server.onrender.com/offer-demo) og [prøv bedriftens oppfølging](https://nova-dynamics-bot-server.onrender.com/workspace-demo). I en avtalt pilot kan bedriften kontrollere et prisforslag og dele en privat lenke selv. Kunden kan ønske å gå videre, stille spørsmål eller takke nei. Svaret blir en oppfølgingsoppgave; det er ingen signering, betaling eller automatisk booking. Tilgang og behandling av opplysninger må avklares før aktivering. Eksemplene bruker fiktive data. Har du allerede en chat, vurder om oppfølgingen løser et faktisk behov."
+  },
+  {
+    "id": "manual-intake",
+    "q": "Kan vi registrere telefonhenvendelser og se pilotresultater?",
+    "a": "I en avtalt pilot kan bedriften selv legge inn mottatte henvendelser fra telefon, e-post eller andre kanaler og følge dem opp i en privat oversikt. Du kan beholde nettsiden og chatten du har. Dette er manuell registrering, ikke automatisk import eller utsending. Pilotrapporten viser registrerte henvendelser, oppgitte kilder, siste prisforslagssvar og manuelt bekreftede salg. Rapporten kan kopieres uten kontaktopplysninger; den dokumenterer ikke meromsetning. [Prøv arbeidsdagen med fiktive data](https://nova-dynamics-bot-server.onrender.com/workspace-demo). Tilgang og behandling av opplysninger avklares før aktivering. Denne chatten registrerer ingen henvendelse."
+  },
+  {
+    "id": "followup",
+    "q": "Hva skjer etter henvendelsen?",
+    "a": "I Jemlios arbeidsoversikt ser bedriften hvem som trenger oppfølging, hva kunden spør om og neste handling. Du kan legge inn en mottatt henvendelse, skrive et notat, sette oppfølgingsdato og lage et prisforslag. Et kundesvar blir et tydelig neste steg for bedriften. Prøv fanene Oppfølging, Henvendelser, Prisforslag, Avtaler og Resultater i [arbeidsoversikten](https://nova-dynamics-bot-server.onrender.com/workspace-demo). Datoene lager en arbeidsliste. I en avtalt pilot kan eieren få e-postvarsel om nye kundesvar på prisforslag og en daglig oversikt over oppgaver som trenger oppfølging. E-postmottaker og tidspunkt må settes opp først. Ingen automatiske meldinger sendes til kundene. Demoen er fiktiv. Ekte bruk krever avtalt tilgang og oppsett."
+  },
+  {
+    "id": "booking-pilot",
+    "q": "Hvordan fungerer booking?",
+    "a": "Prøv [bookingreisen med fiktive data](https://nova-dynamics-bot-server.onrender.com/booking-demo): velg tjeneste og tidspunkt, og se forskjellen på bekreftet time, full kalender og en booking som må kontrolleres. I en avtalt pilot kan et eget bookingsteg kobles til en støttet kalender. En ekte time regnes først som bekreftet når bookingsystemet har godkjent den. Vi sjekker bedriftens løsning før vi lover en integrasjon. Denne chatten gjennomfører ikke booking, og demoen bestiller ingen ekte timer."
+  },
+  {
+    "id": "results-report",
+    "q": "Hva viser resultatrapporten?",
+    "a": "Åpne Resultater i [arbeidsoversikten](https://nova-dynamics-bot-server.onrender.com/workspace-demo). Velg en periode og se registrerte henvendelser, oppgitte kilder, siste svar på prisforslag og manuelt bekreftede salg. Rapporten kan kopieres uten kontaktopplysninger. Beløpene er registrerte salgsverdier, ikke betalinger, fortjeneste eller dokumentert meromsetning. Demoen bruker fiktive tall; i en avtalt pilot vurderer dere nytten med deres egne kontrollerte registreringer."
+  },
+  {
+    "id": "owner-alerts",
+    "q": "Hvordan fungerer eierens varsler?",
+    "a": "I en avtalt pilot kan eieren få e-postvarsel om nye svar på prisforslag og én daglig oppsummering når henvendelser trenger oppfølging. Varslene lenker til den private arbeidsoversikten uten kundedetaljer i e-posten. Mottaker, avsender og tidspunkt må settes opp før aktivering. Dette er varsler til eieren, ikke automatiske kundemeldinger. [Se et fiktivt eksempel i hele kundereisen](https://nova-dynamics-bot-server.onrender.com/journey-demo). Demoen sender ingen e-post."
   }
 ]

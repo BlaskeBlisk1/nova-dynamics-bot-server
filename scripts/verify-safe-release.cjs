@@ -3,6 +3,7 @@
 // credentials, customer data or feature-flag changes are involved.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
+const { setTimeout: delay } = require('node:timers/promises');
 const backend = 'https://nova-dynamics-bot-server.onrender.com';
 const website = 'https://www.jemlio.com';
 const clients = ['fram', 'fyllingsdalen', 'onsoy', 'tiller', 'trafikk1', 'frankolsen', 'roma'];
@@ -24,6 +25,61 @@ async function ask(base, client, message, conversationId) {
 }
 async function main() {
   if (process.argv[2] !== '--live') throw new Error('Explicit live opt-in required');
+  const expectedRevision = process.env.JEMLIO_EXPECTED_COMMIT;
+  if (expectedRevision && !/^[a-f0-9]{40}$/.test(expectedRevision)) throw new Error('Invalid expected revision');
+  let deployedRevision = null;
+  await check('The intended backend release is live', async () => {
+    for (let attempt = 0; attempt < (expectedRevision ? 30 : 1); attempt++) {
+      try {
+        const response = await request(`${backend}/api/release`);
+        assert.equal(response.status, 200);
+        const release = await response.json();
+        assert.equal(release.service, 'jemlio');
+        assert.match(release.revision, /^[a-f0-9]{40}$/);
+        if (expectedRevision) assert.equal(release.revision, expectedRevision);
+        deployedRevision = release.revision; return;
+      } catch (error) {
+        if (!expectedRevision || attempt === 29) throw error;
+      }
+      await delay(10000);
+    }
+  });
+  // Fail before running chat checks against an old or unidentified deployment.
+  if (!deployedRevision) { writeReport(null); return; }
+  await check('Booking demonstration is isolated and its assets are available', async () => {
+    const page = await request(`${backend}/booking-demo`);
+    assert.equal(page.status, 200);
+    assert.match(page.headers.get('content-security-policy') || '', /connect-src 'none'/);
+    assert.match(await page.text(), /Alle personer, tider og resultater er eksempler/);
+    for (const asset of ['app.js', 'styles.css']) assert.equal((await request(`${backend}/booking/${asset}`)).status, 200);
+  });
+  await check('Workspace demo is isolated; private data remains gated', async () => {
+    const page=await request(`${backend}/workspace-demo`);
+    assert.equal(page.status,200);
+    assert.match(page.headers.get('content-security-policy') || '', /connect-src 'none'/);
+    const html=await page.text();
+    assert.match(html, /Prøv arbeidsdagen med eksempeldata/);
+    for(const label of ['Kommende avtaler','Avlyste avtaler','Kalender må avklares','Legg til henvendelse','Arbeidsoversikt'])assert.ok(html.includes(label));
+    for(const asset of ['app.js','styles.css']) assert.equal((await request(`${backend}/workspace/${asset}`)).status,200);
+    const privateResponse=await request(`${backend}/api/workspace/enquiries`);
+    assert.equal(privateResponse.status,503);
+    assert.deepEqual(await privateResponse.json(),{error:'unavailable'});
+    assert.equal(privateResponse.headers.get('cache-control'),'no-store');
+  });
+  await check('Manual intake and pilot results remain private until setup',async()=>{
+    for(const [path,options]of[['/results',{}],['/enquiries',{method:'POST',headers:{'Content-Type':'application/json',Origin:backend},body:'{}'}]]){const r=await request(backend+'/api/workspace'+path,options);assert.equal(r.status,503);assert.deepEqual(await r.json(),{error:'unavailable'});}
+  });
+  await check('Calendar updates remain inactive until an approved pilot is configured',async()=>{
+    const response=await request(`${backend}/api/calendar-sync/calendly/tiller`,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+    assert.equal(response.status,503);assert.deepEqual(await response.json(),{error:'sync_unavailable'});
+  });
+  await check('Customer offer demo is isolated and real proposal access remains gated',async()=>{
+    const page=await request(`${backend}/offer-demo`);assert.equal(page.status,200);
+    assert.match(page.headers.get('content-security-policy')||'',/connect-src 'none'/);assert.match(await page.text(),/Fiktivt eksempel/);
+    for(const asset of ['app.js','styles.css'])assert.equal((await request(`${backend}/offer/${asset}`)).status,200);
+    const response=await request(`${backend}/api/offers/read`,{method:'POST',headers:{'Content-Type':'application/json',Origin:backend},body:'{}'});
+    assert.equal(response.status,503);assert.deepEqual(await response.json(),{error:'unavailable'});
+  });
   for (const client of clients) {
     await check(`${client}: shared URL and capture-off configuration`, async () => {
       const page = await request(`${backend}/demos/${client}?owner=1`);
@@ -33,6 +89,9 @@ async function main() {
       const config = await response.json();
       assert.equal(config.client, client); assert.equal(config.features.capture.enabled, false);
       assert.equal(config.features.conversation, ['tiller', 'frankolsen'].includes(client));
+      const booking = await request(`${backend}/api/booking/config/${client}`);
+      assert.equal((await booking.json()).enabled, false);
+      assert.equal((await request(`${backend}/book/${client}`)).status, 404);
     });
     await check(`${client}: synthetic answer`, () => ask(backend, client, 'Hva tilbyr dere?'));
   }
@@ -42,6 +101,11 @@ async function main() {
       assert.equal(typeof first.conversationId, 'string');
       const second = await ask(backend, client, 'Hva koster det?', first.conversationId);
       assert.equal(second.contextApplied, true); assert.equal(second.unsure, false);
+      assert.ok(Array.isArray(second.followUps) && second.followUps.length > 0);
+      const choice = second.followUps.find(choice => choice.id === 'booking');
+      assert.ok(choice);
+      const next = await ask(backend, client, choice.message);
+      assert.equal(next.unsure, false);
     });
   }
   for (const [client, message] of [['jemlio', 'Hvordan får jeg en gratis demo?'],
@@ -53,16 +117,37 @@ async function main() {
     assert.equal(response.status, 200);
     assert.deepEqual(await response.json(), { enabled: false, capability: 'webhook-forwarding', storageVerified: false });
   });
+  await check('The signed website enquiry receiver remains enabled', async () => {
+    const response = await request(`${backend}/api/website-enquiries/netlify/status`);
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), { enabled: true, capability: 'signed-netlify-intake' });
+  });
+  await check('The public website retains its native form and privacy page', async () => {
+    const page = await request(website);
+    assert.equal(page.status, 200);
+    const html = await page.text();
+    assert.match(html, /workspace-demo/);
+    assert.match(html, /booking-demo/);
+    assert.match(html, /name="jemlio-demo-request"/);
+    assert.match(html, /data-netlify="true"/);
+    assert.match(html, /action="https:\/\/www\.jemlio\.com\/demo-requested"/);
+    const privacy = await request(`${website}/privacy`);
+    assert.equal(privacy.status, 200);
+    assert.match(await privacy.text(), /hei@jemlio\.com/);
+  });
   await check('Unrelated chat origin remains refused', async () => {
     const response = await request(`${backend}/chat`, { method: 'POST',
       headers: { Origin: 'https://unrelated.example', 'Content-Type': 'application/json' },
       body: JSON.stringify({ client: 'jemlio', message: 'Hei' }) });
     assert.equal(response.status, 403); assert.equal(response.headers.get('access-control-allow-origin'), null);
   });
-  const report = { checkedAt: new Date().toISOString(), verificationCommit: process.env.GITHUB_SHA || null,
+  writeReport(deployedRevision);
+}
+function writeReport(deployedRevision) {
+  const report = { checkedAt: new Date().toISOString(), verificationCommit: process.env.GITHUB_SHA || null, deployedRevision,
     results, passed: results.filter(x => x.passed).length, failed: results.filter(x => !x.passed).length,
     limits: ['No marketing or capture submission was made.', 'Does not verify saved enquiries, Airtable action execution or email delivery.',
-      'Does not prove the deployed backend commit; compare Render deployment metadata separately.', 'No visual/browser review.'] };
+      'Configuration checks do not prove worker execution or provider delivery.', 'No real appointment was made or Calendly credentials tested.', 'No visual/browser review.'] };
   fs.mkdirSync('release-verification', { recursive: true });
   fs.writeFileSync('release-verification/safe-live.json', JSON.stringify(report, null, 2));
   console.log(`RESULT ${report.passed} passed; ${report.failed} failed.`);

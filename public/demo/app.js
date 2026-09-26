@@ -91,6 +91,8 @@ const chatTools = document.getElementById("chat-tools");
 const captureOpen = document.getElementById("capture-open");
 const conversationReset = document.getElementById("conversation-reset");
 const previewNotice = document.getElementById("preview-notice");
+const loadRecovery = document.getElementById("demo-load-recovery");
+const loadRetry = document.getElementById("demo-load-retry");
 
 let config;
 let conversationId;
@@ -106,6 +108,45 @@ let suggestedService = "";
 let chatGeneration = 0;
 let activeChatRequest;
 const CHAT_TIMEOUT_MS = 25000;
+let configLoading = false;
+let chatReady = false;
+let composing = false;
+let chatStatus = "";
+sendButton.disabled = input.disabled = true;
+
+function updateConnectionStatus() {
+  const header = statusLabel.closest(".chat-header");
+  if (header) header.dataset.connection = navigator.onLine === false ? "offline" : chatReady ? "ready" : "loading";
+  statusLabel.textContent = navigator.onLine === false ? "Frakoblet"
+    : configLoading ? "Laster demoen…"
+    : !chatReady ? "Demoen er ikke klar"
+    : activeChatRequest ? "Henter svar…"
+    : chatStatus || config.statusLabel || "Tilgjengelig nå";
+}
+
+function clearRetries() {
+  messages.querySelectorAll(".chat-retry").forEach(node => node.remove());
+}
+
+function showChatFailure(text, source, error = {}) {
+  clearRetries();
+  const offline = navigator.onLine === false;
+  const limited = error.httpStatus === 429;
+  chatStatus = limited ? "Vent litt før neste spørsmål" : "Prøv spørsmålet igjen";
+  const notice = addMessage(offline
+    ? "Du ser ut til å være frakoblet. Koble til nettet og prøv igjen."
+    : limited ? "Det kom mange spørsmål på kort tid. Vent litt og prøv det samme spørsmålet igjen."
+    : error.name === "AbortError" ? "Svaret tok for lang tid. Du kan prøve spørsmålet igjen."
+    : "Beklager – forbindelsen til demoen sviktet. Du kan prøve spørsmålet igjen.", "bot");
+  const retry = element("button", "chat-retry", "Prøv spørsmålet igjen");
+  retry.type = "button";
+  retry.addEventListener("click", () => {
+    if (retry.isConnected) ask(text, source, true);
+  });
+  notice.append(retry);
+  updateConnectionStatus();
+  scrollMessages();
+}
 
 function captureEnabled() {
   // Tenant-specific legacy pages can reuse this script without upgrade controls.
@@ -190,16 +231,58 @@ function element(tag, className, text) {
   return node;
 }
 
+function clearFollowUps() {
+  messages.querySelectorAll(".chat-followups").forEach(node => node.remove());
+}
+
+function renderFollowUps(message, payload) {
+  if (config?.features?.conversation !== true || payload.unsure !== false || payload.captureIntent) return;
+  if (!Array.isArray(payload.followUps)) return;
+  const allowed = new Set(["price", "contents", "booking", "contact"]);
+  const seen = new Set();
+  const choices = payload.followUps.slice(0, 3).filter(choice => {
+    if (!choice || !allowed.has(choice.id) || seen.has(choice.id) ||
+        typeof choice.label !== "string" || !choice.label.trim() || choice.label.length > 60 ||
+        typeof choice.message !== "string" || !choice.message.trim() || choice.message.length > 200) return false;
+    seen.add(choice.id);
+    return true;
+  });
+  if (!choices.length) return;
+  const group = element("div", "chat-followups");
+  group.setAttribute("role", "group");
+  group.setAttribute("aria-label", "Spør videre");
+  group.append(element("span", "chat-followups-label", "Spør videre"));
+  const actions = element("div", "chat-followup-actions");
+  for (const choice of choices) {
+    const button = element("button", "chat-followup", choice.label);
+    button.type = "button";
+    button.setAttribute("aria-label", choice.message);
+    button.addEventListener("click", () => {
+      if (!button.isConnected || sendButton.disabled) return;
+      captureAnalytics("followup_question_clicked", { followup_id: choice.id });
+      ask(choice.message, "followup");
+    });
+    actions.append(button);
+  }
+  group.append(actions);
+  message.append(group);
+  scrollMessages();
+}
+
 function cancelChatRequest() {
   chatGeneration++;
+  clearFollowUps();
+  clearRetries();
   if (activeChatRequest) {
     clearTimeout(activeChatRequest.timer);
     activeChatRequest.controller.abort();
     activeChatRequest = undefined;
   }
   messages.querySelectorAll(".message.pending").forEach(node => node.remove());
-  sendButton.disabled = false;
+  sendButton.disabled = !chatReady;
   form.setAttribute("aria-busy", "false");
+  chatStatus = "";
+  updateConnectionStatus();
 }
 
 // A useful answer may invite a next step. Greetings, uncertain answers and
@@ -485,9 +568,15 @@ async function submitCapture(submit, edit, status) {
   }
 }
 
-async function ask(question, source = "typed") {
+async function ask(question, source = "typed", retrying = false) {
   const text = String(question || "").trim();
-  if (!text || sendButton.disabled) return;
+  if (!text || !chatReady || sendButton.disabled) return;
+  clearFollowUps();
+  clearRetries();
+  if (navigator.onLine === false) {
+    showChatFailure(text, source);
+    return;
+  }
 
   const questionCategory = classifyQuestion(text);
   const startedAt = performance.now();
@@ -499,8 +588,9 @@ async function ask(question, source = "typed") {
   });
 
   addMessage(text, "user");
-  input.value = "";
-  input.focus();
+  // A suggestion or retry must not erase a different question being drafted.
+  if (source === "typed" && (!retrying || input.value.trim() === text)) input.value = "";
+  if (source === "typed" && !retrying) input.focus({ preventScroll: true });
   sendButton.disabled = true;
   form.setAttribute("aria-busy", "true");
   if (conversationReset) conversationReset.disabled = captureBusy || submissionUncertain;
@@ -509,6 +599,8 @@ async function ask(question, source = "typed") {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), CHAT_TIMEOUT_MS);
   activeChatRequest = { controller, timer, generation };
+  chatStatus = "";
+  updateConnectionStatus();
 
   try {
     const response = await fetch("/chat", {
@@ -519,19 +611,21 @@ async function ask(question, source = "typed") {
         ...(config?.features?.conversation && conversationId ? { conversationId } : {}),
         ...(previewRoute ? { preview: true } : {}) })
     });
-    const payload = await response.json();
-    if (generation !== chatGeneration) return;
-
+    // Preserve the HTTP status even when an upstream error is HTML, not JSON.
     if (!response.ok) {
-      const requestError = new Error(payload.reply || "Kunne ikke hente svar.");
+      const requestError = new Error("Chat unavailable");
       requestError.httpStatus = response.status;
       throw requestError;
     }
+    const payload = await response.json();
+    if (generation !== chatGeneration) return;
+
     if (typeof payload.reply !== "string" || !payload.reply.trim()) throw new Error("Missing chat reply");
 
     typing.remove();
     if (config?.features?.conversation && typeof payload.conversationId === "string") conversationId = payload.conversationId;
-    addMessage(payload.reply, "bot");
+    const answer = addMessage(payload.reply, "bot");
+    renderFollowUps(answer, payload);
     const interested = captureInterest(text, payload);
     if (interested) suggestCaptureService(text);
     else suggestedService = "";
@@ -548,13 +642,9 @@ async function ask(question, source = "typed") {
   } catch (error) {
     if (generation !== chatGeneration) return;
     typing.remove();
-    const notice = addMessage(error.name === "AbortError"
-      ? "Svaret tok for lang tid. Du kan prøve spørsmålet igjen."
-      : "Beklager – forbindelsen til demoen sviktet. Du kan prøve spørsmålet igjen.", "bot");
-    const retry = element("button", "chat-retry", "Prøv spørsmålet igjen");
-    retry.type = "button";
-    retry.addEventListener("click", () => ask(text, source));
-    notice.append(retry);
+    // The server may have handled a timed-out turn. Do not reuse uncertain context.
+    conversationId = undefined;
+    showChatFailure(text, source, error);
 
     captureAnalytics("answer_error", {
       source,
@@ -571,15 +661,22 @@ async function ask(question, source = "typed") {
       sendButton.disabled = false;
       form.setAttribute("aria-busy", "false");
       if (conversationReset) conversationReset.disabled = captureBusy || submissionUncertain;
+      updateConnectionStatus();
     }
   }
 }
 
 function renderConfig(payload) {
+  if (!payload || typeof payload.name !== "string" || !payload.name.trim() ||
+      typeof payload.greeting !== "string" || !payload.greeting.trim()) throw new Error("Invalid demo configuration");
   config = payload;
+  messages.replaceChildren();
+  highlights.replaceChildren();
+  suggestions.replaceChildren();
   document.body.dataset.capture = captureEnabled() ? "enabled" : "disabled";
   if (previewNotice) previewNotice.hidden = !previewRoute;
-  if (conversationReset) conversationReset.hidden = config.features?.conversation !== true;
+  // Clearing the visible conversation is useful even without server context.
+  if (conversationReset) conversationReset.hidden = false;
   if (captureOpen) captureOpen.hidden = !captureEnabled();
   if (chatTools) chatTools.hidden = (!conversationReset || conversationReset.hidden) && (!captureOpen || captureOpen.hidden);
   if (config.fictional === true) {
@@ -600,7 +697,7 @@ function renderConfig(payload) {
   contextDescription.textContent = config.contextDescription || "Prøv et forslag eller skriv spørsmålet slik en ekte kunde ville formulert det.";
   assistantLabel.textContent = config.assistantLabel || "Digital assistent";
   assistantAvatar.textContent = config.assistantInitial || "J";
-  statusLabel.textContent = config.statusLabel || "Tilgjengelig nå";
+  chatStatus = "";
   sourceTitle.textContent = config.sourceTitle || "Bygget fra virksomhetens informasjon";
   sourceDescription.textContent = config.sourceDescription || "Dette er en uforpliktende demonstrasjon.";
 
@@ -609,7 +706,7 @@ function renderConfig(payload) {
     locationLabel.hidden = false;
   }
 
-  for (const highlight of config.highlights || []) {
+  for (const highlight of Array.isArray(config.highlights) ? config.highlights : []) {
     const item = document.createElement("span");
     item.textContent = highlight;
     highlights.appendChild(item);
@@ -626,7 +723,8 @@ function renderConfig(payload) {
 
   addMessage(config.greeting, "bot");
 
-  for (const question of config.suggestedQuestions || []) {
+  for (const question of Array.isArray(config.suggestedQuestions) ? config.suggestedQuestions : []) {
+    if (typeof question !== "string" || !question.trim()) continue;
     const button = document.createElement("button");
     button.type = "button";
     button.className = "suggestion";
@@ -655,25 +753,51 @@ function renderConfig(payload) {
 }
 
 async function initialize() {
+  if (configLoading || chatReady) return;
   if (!client) {
     businessName.textContent = "Ugyldig demo";
     businessDescription.textContent = "Demo-adressen mangler et kundenavn.";
     form.hidden = true;
+    updateConnectionStatus();
     return;
   }
-
+  configLoading = true;
+  if (loadRetry) loadRetry.disabled = true;
+  updateConnectionStatus();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), CHAT_TIMEOUT_MS);
   try {
-    const response = await fetch(`/api/demo-config/${encodeURIComponent(client)}${previewRoute ? "?preview=1" : ""}`);
-    if (!response.ok) throw new Error("Demo not found.");
+    const response = await fetch(`/api/demo-config/${encodeURIComponent(client)}${previewRoute ? "?preview=1" : ""}`, { signal: controller.signal });
+    if (!response.ok) {
+      const error = new Error("Demo unavailable"); error.httpStatus = response.status; throw error;
+    }
     renderConfig(await response.json());
+    chatReady = true;
+    form.hidden = false;
+    sendButton.disabled = input.disabled = false;
+    if (loadRecovery) loadRecovery.hidden = true;
   } catch (error) {
-    businessName.textContent = "Demoen ble ikke funnet";
-    businessDescription.textContent = "Kontroller lenken eller be Jemlio om en ny demo-adresse.";
+    const missing = error.httpStatus === 404;
+    businessName.textContent = missing ? "Demoen ble ikke funnet" : "Demoen kunne ikke lastes akkurat nå";
+    businessDescription.textContent = missing
+      ? "Kontroller demo-adressen eller kontakt Jemlio."
+      : "Sjekk nettforbindelsen og prøv å laste demoen igjen.";
     form.hidden = true;
+    if (loadRecovery) loadRecovery.hidden = false;
+    if (loadRetry) loadRetry.hidden = missing;
     captureAnalytics("demo_config_error");
-    console.error(error);
+  } finally {
+    clearTimeout(timer);
+    configLoading = false;
+    if (loadRetry) loadRetry.disabled = false;
+    updateConnectionStatus();
   }
 }
+loadRetry?.addEventListener("click", initialize);
+window.addEventListener("online", updateConnectionStatus);
+window.addEventListener("offline", updateConnectionStatus);
+input.addEventListener("compositionstart", () => { composing = true; });
+input.addEventListener("compositionend", () => { composing = false; });
 
 websiteLink.addEventListener("click", () => {
   captureAnalytics("business_website_clicked");
@@ -693,6 +817,7 @@ messages.addEventListener("click", (event) => {
 
 form.addEventListener("submit", (event) => {
   event.preventDefault();
+  if (composing || event.isComposing) return;
   ask(input.value, "typed");
 });
 
@@ -712,6 +837,8 @@ conversationReset?.addEventListener("click", () => {
   submissionUncertain = false;
   suggestedService = "";
   offeredCapture = false;
+  composing = false;
+  input.value = "";
   messages.replaceChildren();
   addMessage(config.greeting, "bot");
   if (captureOpen) captureOpen.hidden = !captureEnabled();
