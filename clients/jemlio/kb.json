@@ -57,7 +57,7 @@
   {
     "id": "workflow",
     "q": "Hva med booking og bedriftsoversikt?",
-    "a": "Jemlio har egne demonstrasjoner av bookingreisen og bedriftsoversikten med fiktive data: [prøv booking](https://nova-dynamics-bot-server.onrender.com/booking-demo) og [prøv oppfølgingsoversikten](https://nova-dynamics-bot-server.onrender.com/workspace-demo). I en avtalt pilot kan henvendelser, notater, oppfølgingsdatoer og manuelt registrerte resultater samles i en privat oversikt. Tilgang, mottaker og eventuell støttet kalender må settes opp først. Demoene gjør ingen ekte bestillinger og sender ingen meldinger. Denne chatten utfører ingen handlinger."
+    "a": "Følg samme fiktive kunde gjennom henvendelse, booking, prisforslag, kundesvar og manuelt registrert resultat i [hele kundereisen](https://nova-dynamics-bot-server.onrender.com/journey-demo). Jemlio har egne demonstrasjoner av bookingreisen og bedriftsoversikten med fiktive data: [prøv booking](https://nova-dynamics-bot-server.onrender.com/booking-demo) og [prøv oppfølgingsoversikten](https://nova-dynamics-bot-server.onrender.com/workspace-demo). I en avtalt pilot kan henvendelser, notater, oppfølgingsdatoer og manuelt registrerte resultater samles i en privat oversikt. Tilgang, mottaker og eventuell støttet kalender må settes opp først. Demoene gjør ingen ekte bestillinger og sender ingen meldinger. Denne chatten utfører ingen handlinger."
   },
   {
     "id": "offers",
@@ -72,7 +72,7 @@
   {
     "id": "followup",
     "q": "Hva skjer etter henvendelsen?",
-    "a": "I Jemlios arbeidsoversikt ser bedriften hvem som trenger oppfølging, hva kunden spør om og neste handling. Du kan legge inn en mottatt henvendelse, skrive et notat, sette oppfølgingsdato og lage et prisforslag. Et kundesvar blir et tydelig neste steg for bedriften. Prøv fanene Oppfølging, Henvendelser, Prisforslag, Avtaler og Resultater i [arbeidsoversikten](https://nova-dynamics-bot-server.onrender.com/workspace-demo). Datoene lager en arbeidsliste; de sender ikke påminnelser eller meldinger automatisk. Demoen er fiktiv. Ekte bruk krever avtalt tilgang og oppsett."
+    "a": "I Jemlios arbeidsoversikt ser bedriften hvem som trenger oppfølging, hva kunden spør om og neste handling. Du kan legge inn en mottatt henvendelse, skrive et notat, sette oppfølgingsdato og lage et prisforslag. Et kundesvar blir et tydelig neste steg for bedriften. Prøv fanene Oppfølging, Henvendelser, Prisforslag, Avtaler og Resultater i [arbeidsoversikten](https://nova-dynamics-bot-server.onrender.com/workspace-demo). Datoene lager en arbeidsliste. I en avtalt pilot kan eieren få e-postvarsel om nye kundesvar på prisforslag og en daglig oversikt over oppgaver som trenger oppfølging. E-postmottaker og tidspunkt må settes opp først. Ingen automatiske meldinger sendes til kundene. Demoen er fiktiv. Ekte bruk krever avtalt tilgang og oppsett."
   },
   {
     "id": "booking-pilot",
@@ -83,5 +83,10 @@
     "id": "results-report",
     "q": "Hva viser resultatrapporten?",
     "a": "Åpne Resultater i [arbeidsoversikten](https://nova-dynamics-bot-server.onrender.com/workspace-demo). Velg en periode og se registrerte henvendelser, oppgitte kilder, siste svar på prisforslag og manuelt bekreftede salg. Rapporten kan kopieres uten kontaktopplysninger. Beløpene er registrerte salgsverdier, ikke betalinger, fortjeneste eller dokumentert meromsetning. Demoen bruker fiktive tall; i en avtalt pilot vurderer dere nytten med deres egne kontrollerte registreringer."
+  },
+  {
+    "id": "owner-alerts",
+    "q": "Hvordan fungerer eierens varsler?",
+    "a": "I en avtalt pilot kan eieren få e-postvarsel om nye svar på prisforslag og én daglig oppsummering når henvendelser trenger oppfølging. Varslene lenker til den private arbeidsoversikten uten kundedetaljer i e-posten. Mottaker, avsender og tidspunkt må settes opp før aktivering. Dette er varsler til eieren, ikke automatiske kundemeldinger. [Se et fiktivt eksempel i hele kundereisen](https://nova-dynamics-bot-server.onrender.com/journey-demo). Demoen sender ingen e-post."
   }
 ]

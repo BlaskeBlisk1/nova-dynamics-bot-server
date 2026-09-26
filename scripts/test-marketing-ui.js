@@ -239,7 +239,7 @@ function harness({ url = 'https://www.jemlio.com/', online = true, clipboard = '
     assert.equal(h.get('#contact-industry').value, 'Optiker', 'product tab must not invent a driving-school category');
     assert.equal(h.get('#contact-message').value, 'Spørsmål om åpningstider & linser');
     assert.equal(h.get('#demo-next').hidden, false);
-    assert.equal(h.document.querySelectorAll('.demo-journey a').length, 3);
+    assert.equal(h.document.querySelectorAll('.demo-journey a').length, 4);
     for (const link of h.document.querySelectorAll('.demo-journey a')) {
       assert.equal(new URL(link.href).search, '');
       assert.equal(link.target, '_blank');

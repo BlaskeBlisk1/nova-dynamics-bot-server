@@ -33,6 +33,11 @@ app.use('/api/calendar-sync', calendarSync.router);
 const workspace = require('./lib/workspace/runtime').createWorkspaceRuntime();
 app.use('/api/workspace', workspace.router);
 app.use('/api/offers', workspace.offerRouter);
+app.use(['/journey-demo','/journey'],(_req,res,next)=>{
+  res.set({'Cache-Control':'no-store','X-Robots-Tag':'noindex, nofollow','Referrer-Policy':'no-referrer','X-Content-Type-Options':'nosniff',
+    'Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'none'; form-action 'none'; frame-ancestors 'none'; base-uri 'none'"});next();
+});
+app.get(['/journey-demo','/journey-demo/'],(_req,res)=>res.sendFile(path.join(publicDir,'journey','index.html')));
 app.use(['/offer','/offer-demo'], (req,res,next)=>{
   res.set({'Cache-Control':'no-store','X-Robots-Tag':'noindex, nofollow','Referrer-Policy':'no-referrer','X-Content-Type-Options':'nosniff'});
   res.set('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src "+(req.baseUrl==='/offer-demo'?"'none'":"'self'")+"; form-action 'none'; frame-ancestors 'none'; base-uri 'none'");next();
@@ -4518,6 +4523,7 @@ if (require.main === module) {
     upgrades.startWorker();
     websiteEnquiries.startWorker();
     calendarSync.startWorker();
+    workspace.startWorker();
   });
   for (const signal of ["SIGTERM", "SIGINT"]) {
     process.once(signal, () => {

@@ -27,6 +27,8 @@ jobs:
       NOVA_CAPTURE_CRM_ENABLED: 'false'
       JEMLIO_CALENDAR_SYNC_ENABLED: 'false'
       JEMLIO_CALENDAR_SYNC_CONFIG: ''
+      JEMLIO_OWNER_ALERTS_ENABLED: 'false'
+      JEMLIO_OWNER_ALERTS_CONFIG: ''
       JEMLIO_OFFERS_ENABLED: 'false'
       JEMLIO_WORKSPACE_ENABLED: 'false'
       JEMLIO_WORKSPACE_CONFIG: ''
@@ -84,6 +86,8 @@ jobs:
       NOVA_CAPTURE_CRM_ENABLED: 'false'
       JEMLIO_CALENDAR_SYNC_ENABLED: 'false'
       JEMLIO_CALENDAR_SYNC_CONFIG: ''
+      JEMLIO_OWNER_ALERTS_ENABLED: 'false'
+      JEMLIO_OWNER_ALERTS_CONFIG: ''
       JEMLIO_OFFERS_ENABLED: 'false'
       JEMLIO_WORKSPACE_ENABLED: 'false'
       JEMLIO_WORKSPACE_CONFIG: ''
@@ -104,3 +108,5 @@ jobs:
         run: node scripts/test-capture-postgres.js
       - name: Test booking, offers, calendar, workspace and deletion races
         run: node scripts/test-booking-postgres.js
+      - name: Test owner alert collection and worker leases concurrently
+        run: node scripts/test-owner-alerts.js --postgres

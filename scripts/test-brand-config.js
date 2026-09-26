@@ -62,7 +62,7 @@ assert.equal(answer("roma", "Hva koster en kjøretime?"), null, "Public demo han
 // fictional business's ordinary service facts keep their own answer path.
 for (const client of ["jemlio", "jemlio-driving-demo", "jemlio-optician-demo"]) {
   for (const [question, expected] of [
-    ["Hva skjer etter henvendelsen?", /arbeidsoversikt.*workspace-demo.*sender ikke/s],
+    ["Hva skjer etter henvendelsen?", /arbeidsoversikt.*workspace-demo.*avtalt pilot.*e-postvarsel.*Ingen automatiske meldinger sendes til kundene/s],
     ["Kan jeg legge inn en henvendelse fra e-post?", /manuell registrering/],
     ["Hvordan fungerer prisforslag?", /offer-demo.*ingen signering, betaling eller automatisk booking/s],
     ["Hva viser resultatrapporten?", /Resultater.*ikke betalinger, fortjeneste eller dokumentert meromsetning/s],

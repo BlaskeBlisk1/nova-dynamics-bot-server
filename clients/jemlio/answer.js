@@ -62,6 +62,8 @@ function answer(client, message) {
   const productContext = client === "jemlio" || has(/jemlio|oppgradering|arbeidsflyt|bedriftsoversikt|arbeidsoversikt|oppfolging|prisforslag|pilot/);
   if (productContext && has(/garanter/)) return productFact("results");
   if (productContext && has(/koster|kostnad|hvor mye|how much|price|abonnement/)) return productFact("pricing");
+  if (has(/eiervarsel|varsler|varsel|daglig.*(?:oversikt|oppsummering)|paminnelse/)) return productFact("owner-alerts");
+  if (has(/hele.*(?:reise|demo)|kundereis|samme kunde|sammenhengende.*demo/)) return productFact("workflow");
   if (has(/telefonhenvend|eposthenvend|e-posthenvend|manuell.*(?:henvend|registr)|(?:registrere|legge inn).*(?:telefon|e-post|epost)|allerede.*chat|beholde.*chat|lovable/)) return productFact("manual-intake");
   if (has(/pilotresultat|pilotrapport|resultatrapport|rapport|statistikk|resultater|resultatene/)) return productFact("results-report");
   if (has(/prisforslag|tilbudsoppfolging|tilbudssvar|kundesvar|folge opp tilbud/)) return productFact("offers");
