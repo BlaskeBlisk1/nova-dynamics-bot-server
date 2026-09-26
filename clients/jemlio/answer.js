@@ -57,14 +57,30 @@ function answer(client, message) {
   if (client === "jemlio-optician-demo" && has(/symptom|smerte|vondt|rode? oye|rodt oye|rodhet|torr|svie|klor|kloring|synstap|uklar|takete|dobbeltsyn|lysblink|floater|ser.*(?:darlig|prikk|flekk)|diagnos|behandl|medisin|sykdom|migrene|hodepine|helse|akutt|blind|glaukom|staer|hva feiler|(?:kan|bor).*jeg.*(?:bruke|ha|velge).*(?:brill|linse)|(?:trenger jeg|bor jeg ta|ma jeg ta).*(?:undersok|brill|linse)|vurder.*(?:syn|oy)/)) return { ...fact("health"), unsure: true };
   if (has(/hva kan du|hvem er du|hva.*demo.*(?:gjore|kan)|er du.*(?:bot|robot)/)) return fact("limits");
 
+  const productContext = client === "jemlio" || has(/jemlio|oppgradering|arbeidsflyt|bedriftsoversikt|arbeidsoversikt|oppfolging|prisforslag|pilot/);
+  if (productContext && has(/garanti|garanter/)) return productFact("results");
+  if (productContext && has(/koster|kostnad|hvor mye|how much|price|abonnement/)) return productFact("pricing");
+
+  // Answer common buying questions from the public offer, without guessing a
+  // delivery deadline, compatibility, customer reference or commercial result.
+  if (client === "jemlio") {
+    if (has(/hvem.*(?:star bak|driver|laget|utvikl)|hvem er matteus/))
+      return make("Jemlio er det nye navnet til Nova Dynamics. Matteus følger opp demoforespørsler personlig. Be om en gratis mini-demo i [kontaktskjemaet](https://www.jemlio.com/#contact), eller skriv til hei@jemlio.com.");
+    if (has(/(?:etter|nar).*(?:sendt|sender|sendte|fyller|fylt).*(?:skjema|foresporsel)|etter.*(?:innsending|demoforesporsel)/))
+      return make("Etter at du har sendt kontaktskjemaet, følger Matteus opp på e-post for å avklare en gratis mini-demo. Dere ser på bedriftens informasjon, behovet og hva demoen skal vise. Du vurderer demoen før videre bruk og eventuell pris avtales. Denne chatten sender ingen forespørsel; bruk [kontaktskjemaet](https://www.jemlio.com/#contact).");
+    if (has(/demo/) && has(/hvor rask|hvor lang|\bnar\b|leveringstid|ventetid/))
+      return make("Jeg har ingen bekreftet leveringstid for en tilpasset mini-demo å oppgi. Matteus avklarer innhold og tidspunkt med deg når han følger opp forespørselen. Be om den gratis mini-demoen i [kontaktskjemaet](https://www.jemlio.com/#contact).");
+    if (has(/\bcrm\b/) && has(/skiller|forskjell|sammenlign|allerede|erstatte|trenger/))
+      return make("Jemlios demo viser en avgrenset arbeidsflyt: mottatt henvendelse, prisforslag, kundesvar og neste personlige oppfølging. Har dere allerede et CRM som dekker dette godt, bør vi først avklare hvilket behov som gjenstår. Manuell registrering krever ikke at dere bytter chat eller nettside, og er ikke automatisk import fra CRM. [Prøv hele kundereisen med fiktive data](https://nova-dynamics-bot-server.onrender.com/journey-demo). Ekte bruk krever en avtalt pilot.");
+    if (has(/bilpleie|flytting|transport|tjenestebedrift/) && has(/passer|egnet|fungerer|bruke/))
+      return make("Jemlio kan være relevant når bedriften mottar henvendelser, sender prisforslag og trenger oversikt over neste oppfølging. [Prøv hele kundereisen hos en fiktiv bilpleiebedrift](https://nova-dynamics-bot-server.onrender.com/journey-demo). Eksemplet dokumenterer ikke en kunde eller et resultat. Vi avklarer om arbeidsflyten løser et konkret behov hos dere før en pilot. [Se dette med min bedrift](https://www.jemlio.com/#contact).");
+  }
+
   // Shared product explanations are public Jemlio facts, never another tenant's data.
   // Keep ordinary lesson/eye-exam questions on their existing fictional path.
-  const productContext = client === "jemlio" || has(/jemlio|oppgradering|arbeidsflyt|bedriftsoversikt|arbeidsoversikt|oppfolging|prisforslag|pilot/);
-  if (productContext && has(/garanter/)) return productFact("results");
-  if (productContext && has(/koster|kostnad|hvor mye|how much|price|abonnement/)) return productFact("pricing");
-  if (has(/eiervarsel|varsler|varsel|daglig.*(?:oversikt|oppsummering)|paminnelse/)) return productFact("owner-alerts");
+  if (has(/eiervarsel|varsl|varsel|daglig.*(?:oversikt|oppsummering)|paminnelse/)) return productFact("owner-alerts");
   if (has(/hele.*(?:reise|demo)|kundereis|samme kunde|sammenhengende.*demo/)) return productFact("workflow");
-  if (has(/telefonhenvend|eposthenvend|e-posthenvend|manuell.*(?:henvend|registr)|(?:registrere|legge inn).*(?:telefon|e-post|epost)|allerede.*chat|beholde.*chat|lovable/)) return productFact("manual-intake");
+  if (has(/telefonhenvend|eposthenvend|e-posthenvend|manuell.*(?:henvend|registr)|(?:registrere|legge inn).*(?:telefon|e-post|epost)|allerede.*chat|beholde.*chat|(?:uten|bytte).*chat|ma.*(?:ha|bruke).*chat|lovable/)) return productFact("manual-intake");
   if (has(/pilotresultat|pilotrapport|resultatrapport|rapport|statistikk|resultater|resultatene/)) return productFact("results-report");
   if (has(/prisforslag|tilbudsoppfolging|tilbudssvar|kundesvar|folge opp tilbud/)) return productFact("offers");
   if (has(/etter.*henvendelse|oppfolging|folge opp|henvendels|arbeidsliste/)) return productFact("followup");

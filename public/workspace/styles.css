@@ -177,3 +177,5 @@ footer{display:flex;align-items:center;justify-content:space-between;gap:24px;pa
   footer{gap:12px;font-size:11px}
 }
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+
+#demo-notice a.primary{display:inline-flex;align-items:center;min-height:44px;text-decoration:none;margin:4px 6px 4px 0}
