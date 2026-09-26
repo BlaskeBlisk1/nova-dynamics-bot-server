@@ -11,6 +11,7 @@ async function main(){
  const a=require('../clients/jemlio/answer').answer('jemlio','Kan vi registrere telefonhenvendelser og se pilotresultater?');assert.match(a.reply,/manuell registrering/);assert.match(a.reply,/workspace-demo/);assert.match(a.reply,/ikke meromsetning/);console.log('ok - sales chat explains manual intake and report limits');
  let calls=0;const demo=build('/workspace-demo',async()=>{calls++;throw new Error('Demo must never call network');});const w=demo.window,d=w.document;await tick();
  assert.equal(d.getElementById('app').hidden,false);assert.equal(d.querySelectorAll('#list button').length,2);
+ const demoNext=d.querySelector('#demo-notice a[href="https://www.jemlio.com/#contact"]');assert.equal(demoNext.textContent,'Se dette med min bedrift ↗');assert.equal(demoNext.closest('details'),null);assert.equal(d.getElementById('demo-notice').hidden,false);
  [...d.querySelectorAll('#list button')].find(b=>b.textContent.includes('Nora')).click();assert.ok(d.getElementById('detail').textContent.includes('Eksempel: Nora'));
  change(w,'outcome','won');change(w,'amount','1250,50');d.getElementById('edit-form').dispatchEvent(new w.Event('submit',{cancelable:true,bubbles:true}));await tick();assert.match(d.getElementById('error').textContent,/Bekreft/);
  d.getElementById('verified').checked=true;d.getElementById('edit-form').dispatchEvent(new w.Event('submit',{cancelable:true,bubbles:true}));await tick();
@@ -35,6 +36,7 @@ async function main(){
  let expired=false,conflict=false,posts=0;
  const entry={id:'11111111-1111-4111-8111-111111111111',revision:'a'.repeat(64),createdAt:new Date().toISOString(),name:'Synthetic',email:'nobody@example.invalid',phone:'',service:'Visit',message:'',outcome:'new',note:'',booking:{status:'not_booked',slot:null},followup:{action:'callback',due:new Date().toISOString(),overdue:true},amountOre:null};
  const live=build('/workspace',async(url,opts)=>{if(opts.method==='POST')posts++;const error=expired?'unauthorized':conflict&&opts.method==='POST'?'conflict':null;return {ok:!error,json:async()=>error?{error}:url.endsWith('/session')?{name:'Synthetic',csrf:'test'}:url.includes('/enquiries?')?{items:[entry],hasMore:false}:{enquiries:1,confirmed:0,needs_review:0,won:0,sales_ore:'0'}};});await tick();const lw=live.window,ld=lw.document;ld.querySelector('#list button').click();conflict=true;change(lw,'note','Keep this unsaved note');ld.getElementById('edit-form').dispatchEvent(new lw.Event('submit',{cancelable:true,bubbles:true}));await tick();assert.equal(posts,1);assert.equal(ld.getElementById('note').value,'Keep this unsaved note');assert.match(ld.getElementById('error').textContent,/endret/);
+ assert.equal(ld.getElementById('demo-notice').hidden,true);
  expired=true;ld.getElementById('refresh').click();await tick();assert.equal(ld.getElementById('app').hidden,true);assert.equal(ld.getElementById('login').hidden,false);for(const id of ['list','detail','metrics'])assert.equal(ld.getElementById(id).textContent,'');live.window.close();
  console.log('ok - conflicts preserve edits without retry; session expiry removes private data');
 }

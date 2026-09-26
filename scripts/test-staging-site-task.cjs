@@ -46,14 +46,38 @@ function allFiles(directory, prefix = '') {
         assert.throws(() => configuration({ ...base, JEMLIO_NETLIFY_DEPLOY_PROXY: url }, at));
       }
     });
-    await test('the publish bundle contains only ten allowlisted public assets and a static publish config', () => {
+    await test('the publish bundle contains only twelve allowlisted public assets and a static publish config', () => {
       const directory = path.join(temp, 'bundle'); fs.mkdirSync(directory);
       prepareBundle(root, directory);
-      assert.equal(FILES.length, 10);
+      assert.equal(FILES.length, 12);
       assert.deepEqual(allFiles(directory), ['netlify.toml', ...FILES.map(file => path.join('public', 'marketing', file))].sort());
       assert.match(fs.readFileSync(path.join(directory, 'public/marketing/index.html'), 'utf8'), /data-netlify="true"/);
       assert.equal(fs.existsSync(path.join(directory, '.git')), false);
       assert.equal(fs.existsSync(path.join(directory, 'lib')), false);
+    });
+    await test('published crawl discovery includes only the canonical marketing homepage', () => {
+      const source = path.join(temp, 'bundle', 'public', 'marketing');
+      const robots = fs.readFileSync(path.join(source, 'robots.txt'), 'utf8');
+      const directives = robots.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+      assert.deepEqual(directives, ['User-agent: *', 'Allow: /', 'Sitemap: https://www.jemlio.com/sitemap.xml']);
+      const sitemap = new JSDOM(fs.readFileSync(path.join(source, 'sitemap.xml'), 'utf8'), { contentType: 'application/xml' });
+      const homepage = new JSDOM(fs.readFileSync(path.join(source, 'index.html'), 'utf8'));
+      try {
+        const document = sitemap.window.document;
+        assert.equal(document.documentElement.localName, 'urlset');
+        assert.equal(document.documentElement.namespaceURI, 'http://www.sitemaps.org/schemas/sitemap/0.9');
+        const urls = [...document.getElementsByTagName('loc')].map(node => node.textContent.trim());
+        assert.deepEqual(urls, ['https://www.jemlio.com/']);
+        assert.equal(urls[0], homepage.window.document.querySelector('link[rel="canonical"]').href);
+        assert.equal(homepage.window.document.querySelector('meta[name="robots"]')?.content.includes('noindex') || false, false);
+        // Excluding confirmation/definition pages from a sitemap is not itself
+        // an indexing directive. Preserve their existing explicit noindex too.
+        for (const file of ['demo-requested.html', 'form-definition.html', 'privacy.html']) {
+          const page = new JSDOM(fs.readFileSync(path.join(source, file), 'utf8'));
+          try { assert.match(page.window.document.querySelector('meta[name="robots"]').content, /\bnoindex\b/); }
+          finally { page.window.close(); }
+        }
+      } finally { sitemap.window.close(); homepage.window.close(); }
     });
     await test('the relative static definition matches visible fields, limits, choices, consent and canonical destination', () => {
       const visible = new JSDOM(fs.readFileSync(path.join(root, 'public/marketing/index.html'), 'utf8'));
@@ -95,6 +119,7 @@ function allFiles(directory, prefix = '') {
       } };
       const first = await runSiteTask(options);
       assert.equal(first.state, 'command-completed'); assert.equal(first.deploymentVerified, false);
+      assert.equal(first.files, 12);
       assert.equal((await runSiteTask(options)).state, 'already-attempted'); assert.equal(calls, 1);
       assert.doesNotMatch(JSON.stringify(first), /synthetic-test-only|must-not-leave-parent/);
     });

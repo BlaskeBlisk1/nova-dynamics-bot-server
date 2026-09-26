@@ -11,6 +11,7 @@ for(const response of ['interested','changes','declined']){
  d.getElementById('verified').checked=true;if(response==='changes')d.querySelector('[value=followup]').checked=true;act();
  assert.match(d.getElementById('summary').textContent,response==='interested'?/8 900 kr · manuelt registrert/:response==='changes'?/avtalt tidspunkt/:/Avsluttet/);
  assert.equal(d.querySelectorAll('#timeline li').length,5);assert.ok([...d.querySelectorAll('.person h2')].every(e=>e.textContent==='Nora Eksempel'));
+ const conversion=d.querySelector('#actions a');assert.equal(conversion.textContent,'Se dette med min bedrift ↗');assert.equal(conversion.href,'https://www.jemlio.com/#contact');
  d.querySelector('#steps button').click();assert.match(d.getElementById('actions').textContent,/Neste/);assert.equal(d.querySelectorAll('#timeline li').length,5);
  d.getElementById('reset').click();assert.equal(d.querySelectorAll('#steps button:disabled').length,4);assert.match(d.getElementById('summary').textContent,/Ikke registrert/);assert.equal(w.localStorage.length,0);assert.equal(w.sessionStorage.length,0);assert.equal(calls,0);w.close();
  console.log('ok - one connected customer, guarded outcome, reset and zero network: '+response);
