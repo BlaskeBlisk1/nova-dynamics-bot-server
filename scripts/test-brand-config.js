@@ -87,6 +87,32 @@ for (const client of ["jemlio", "jemlio-driving-demo", "jemlio-optician-demo"]) 
 assert.equal(answer('jemlio-optician-demo', 'Jeg har vondt i øyet. Hvordan fungerer oppfølgingen?').unsure, true);
 assert.doesNotMatch(answer('jemlio-optician-demo', 'Jeg har vondt i øyet. Hvordan fungerer oppfølgingen?').reply, /workspace-demo/);
 
+// Ordinary buying questions should answer the question using approved public
+// information, while commercial unknowns and safety retain their boundaries.
+for (const [question, expected, forbidden] of [
+  ['Hvordan fungerer varsling på e-post?', /e-postvarsel.*avtalt pilot|avtalt pilot.*e-postvarsel/s, /Bruk.*kontaktskjemaet.*be om en demo/s],
+  ['Kan jeg bruke dette uten chatbot?', /manuell registrering.*ikke automatisk import/s],
+  ['Må jeg ha en chat for å bruke oppfølgingen?', /beholde nettsiden og chatten.*manuell registrering/s],
+  ['Hvem står bak Jemlio?', /Matteus følger opp demoforespørsler personlig/],
+  ['Hva skjer etter at jeg sender skjemaet?', /Matteus opp på e-post.*gratis mini-demo/s],
+  ['Passer det for bilpleie?', /fiktiv bilpleiebedrift.*før en pilot/s],
+  ['Hvor raskt kan jeg få demoen?', /ingen bekreftet leveringstid/, /24 timer|innen.*dag/],
+  ['Hva skiller dere fra et CRM?', /CRM som dekker dette godt.*ikke automatisk import fra CRM/s],
+  ['Passer dette for bilpleie, og garanterer dere flere salg?', /ingen garanti/],
+  ['Passer dette for bilpleie, og hva koster det?', /ingen bekreftet offentlig pris/]
+]) {
+  const result = answer('jemlio', question);
+  assert.equal(result.unsure, false, question);
+  assert.match(result.reply, expected, question);
+  if (forbidden) assert.doesNotMatch(result.reply, forbidden, question);
+}
+for (const client of ['jemlio', 'jemlio-driving-demo', 'jemlio-optician-demo']) {
+  assert.match(answer(client, 'Hvordan fungerer varsling på e-post?').reply, /ikke automatiske kundemeldinger/);
+  const personal = answer(client, 'Jeg heter Kari. Hvordan fungerer varsling på e-post?');
+  assert.equal(personal.unsure, true);
+  assert.doesNotMatch(personal.reply, /Kari|journey-demo/);
+}
+
 async function run() {
   const server = app.listen(0, "127.0.0.1");
   await new Promise(resolve => server.once("listening", resolve));

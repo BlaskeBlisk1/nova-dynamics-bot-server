@@ -14,7 +14,7 @@
  async function refresh(){if(busy)return;busy=true;$('send').disabled=true;try{render(demo?seed():await api('read',{}));message('');$('send').disabled=false;}catch(e){$('proposal').hidden=true;message(e.message,true);}finally{busy=false;}}
  $('response-form').addEventListener('submit',async e=>{e.preventDefault();if(busy||$('send').disabled||current?.state!=='open')return;const response=document.querySelector('input[name=response]:checked')?.value,note=$('note').value.trim();if(!response||response==='changes'&&!note){message('Velg et svar og skriv hva du ønsker å endre.',true);return;}busy=true;$('send').disabled=true;try{const data=demo?{offer:{...current,state:'responded',response,responseNote:note}}:await api('respond',{response,note});render({business:$('business').textContent,offer:data.offer});message(demo?'Eksempelsvaret er registrert kun på denne siden.':'Tilbakemeldingen er lagret.');}catch(e){message(e.message,true);$('refresh').hidden=false;}finally{busy=false;/* After an uncertain send, re-read before enabling another submission. */}});
  $('refresh').addEventListener('click',refresh);$('reset').addEventListener('click',()=>{render(seed());$('response-form').reset();$('send').disabled=false;message('Eksemplet er nullstilt.');});
- if(demo){$('demo-notice').hidden=false;$('reset').hidden=false;$('workspace-link').hidden=false;render(seed());message('');}
+ if(demo){$('demo-notice').hidden=false;$('demo-next').hidden=false;$('reset').hidden=false;$('workspace-link').hidden=false;render(seed());message('');}
  else if(!/^[a-f0-9]{64}$/.test(token)){message(errors.offer_unavailable,true);}
  else{$('refresh').hidden=false;refresh();}
 })();

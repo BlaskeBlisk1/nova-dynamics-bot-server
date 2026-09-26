@@ -47,6 +47,7 @@
         const r=box('Fra første spørsmål til avklart neste steg',{won:'Eieren har registrert et eksempel på et avklart salg.',lost:'Noras henvendelse er avsluttet uten salg.',followup:'Nora skal følges opp igjen. Saken er fortsatt åpen.'}[state.outcome],'result');
         r.append(text('p',state.outcome==='won'?'8 900 kr':'0 kr','price'),text('small','Registrert eksempelverdi. Ikke betaling, fortjeneste eller dokumentert meromsetning.'));
         paragraph('Spørsmålet, befaringen, prisforslaget, kundesvaret og resultatet hører fortsatt til samme henvendelse.');
+        const tailor=text('a','Se dette med min bedrift ↗','button');tailor.href='https://www.jemlio.com/#contact';$('actions').append(tailor);
         button('Prøv reisen på nytt',reset,true);
       }
     }
