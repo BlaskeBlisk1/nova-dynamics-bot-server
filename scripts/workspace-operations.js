@@ -18,9 +18,9 @@ async function main(){
  try{const store=new WorkspaceStore({pool});
   if(command==='migrate'){
    if(args[0]!=='--apply'){console.log('Migration not applied. Use --apply on the intended database after capture and booking migrations.');return;}
-   await store.transaction(db=>db.query(readFileSync(join(__dirname,'../lib/workspace/schema.sql'),'utf8')));
+   await store.transaction(async db=>{await db.query(readFileSync(join(__dirname,'../lib/workspace/schema.sql'),'utf8'));await db.query(readFileSync(join(__dirname,'../lib/owner-alerts/schema.sql'),'utf8'));});
    console.log('Workspace schema applied. No business enabled.');
-  }else console.log(JSON.stringify({schemaReady:await store.ready()}));
+  }else console.log(JSON.stringify({schemaReady:await store.ready(),alertsSchemaReady:await new(require('../lib/owner-alerts/store').AlertStore)({pool}).ready()}));
  }finally{await pool.end();}
 }
 if(require.main===module)main().catch(()=>{console.error('Command failed. Use key --out ABSOLUTE_PRIVATE_FILE, status, or migrate --apply. Key output must not exist; database commands require NOVA_DATABASE_URL.');process.exitCode=1;});

@@ -5,7 +5,7 @@
   "scripts": {
     "start": "node index.js",
     "new-client": "node new-client.js",
-    "test": "npm run test:legacy && npm run test:brand && npm run test:conversation && npm run test:capture && npm run test:capture-crm && npm run test:website-enquiries && npm run test:capture-operations && npm run test:upgrade && npm run test:live-context && npm run test:capture-ui && npm run test:marketing-ui && npm run test:marketing-enquiries && npm run test:staging-site && npm run test:booking && npm run test:booking-ui && npm run test:workspace && npm run test:workspace-ui && npm run test:calendar && npm run test:offers && npm run test:offer-ui",
+    "test": "npm run test:legacy && npm run test:brand && npm run test:conversation && npm run test:capture && npm run test:capture-crm && npm run test:website-enquiries && npm run test:capture-operations && npm run test:upgrade && npm run test:live-context && npm run test:capture-ui && npm run test:marketing-ui && npm run test:marketing-enquiries && npm run test:staging-site && npm run test:booking && npm run test:booking-ui && npm run test:workspace && npm run test:workspace-ui && npm run test:calendar && npm run test:offers && npm run test:offer-ui && npm run test:owner-alerts && npm run test:journey",
     "test:legacy": "node scripts/smoke-demo.js && node scripts/smoke-fram.js && node scripts/smoke-fyllingsdalen.js && node scripts/smoke-onsoy.js && node scripts/smoke-tiller.js && node scripts/smoke-trafikk1.js && node scripts/smoke-frankolsen.js && node scripts/smoke-analytics.js && node scripts/smoke-roma.js",
     "test:conversation": "node scripts/test-conversation.js",
     "test:capture": "node scripts/test-capture.js",
@@ -41,7 +41,9 @@
     "test:calendar": "node scripts/test-calendar-sync.js",
     "calendar:operations": "node scripts/calendar-operations.js",
     "test:offers": "node scripts/test-offers.js",
-    "test:offer-ui": "node scripts/test-offer-ui.js"
+    "test:offer-ui": "node scripts/test-offer-ui.js",
+    "test:owner-alerts": "node scripts/test-owner-alerts.js",
+    "test:journey": "node scripts/test-journey.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
