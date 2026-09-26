@@ -232,7 +232,7 @@ function harness({ url = 'https://www.jemlio.com/', online = true, clipboard = '
       assert.match(link.rel, /noopener/);
       assert.equal(h.get('#demo-panel').getAttribute('aria-labelledby'), 'tab-' + tab);
     }
-    assert.equal(h.get('#demo-badge').textContent, 'JEMLIO');
+    assert.equal(h.get('#demo-badge').textContent, 'Jemlio');
     assert.equal(h.get('#demo-note').textContent.includes('Ingen meldinger sendes'), true);
     h.fill();
     h.get('#demo-tailor').click();
@@ -246,7 +246,7 @@ function harness({ url = 'https://www.jemlio.com/', online = true, clipboard = '
     }
     h.get('#tab-workflow').dispatchEvent(new h.window.KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
     assert.equal(h.get('#tab-driving').getAttribute('aria-selected'), 'true');
-    assert.equal(h.get('#demo-badge').textContent, 'EKSEMPEL');
+    assert.equal(h.get('#demo-badge').textContent, 'Eksempel');
     assert.equal(h.window.localStorage.length, 0);
     h.finish();
   });
