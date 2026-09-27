@@ -33,6 +33,7 @@ for(const response of ['interested','changes','declined']){
   assert.match(d.getElementById('content').textContent,/Volvo V60/);
   assert.match(d.getElementById('summary').textContent,/Trenger oppfølging/);
   assert.match(d.getElementById('alert-title').textContent,/Nytt svar i henvendelsen/);
+  assert.match(d.getElementById('alert-copy').textContent,/arbeidsoversikten/);assert.doesNotMatch(d.getElementById('alert-copy').textContent,/e-post/);
   assert.match(d.getElementById('summary').textContent,/Salgsverdi0 kr/);
   act();act();act();
   d.querySelector(`[value=${response}]`).checked=true;act();act();

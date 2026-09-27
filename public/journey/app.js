@@ -77,7 +77,7 @@
     $('summary').replaceChildren(...summary.map(([k,v])=>{const d=text('div','');d.append(text('dt',k),text('dd',v));return d;}));
     $('timeline').replaceChildren(...(state.events.length?state.events:['Reisen starter med Noras spørsmål.']).map(v=>text('li',v)));
     $('alert-title').textContent=state.response?'Nytt svar på et prisforslag':state.clarification?'Nytt svar i henvendelsen':'Ingen varsler ennå';
-    $('alert-copy').textContent=state.response||state.clarification?'Eksempel på e-post til eieren: «Et nytt kundesvar trenger personlig oppfølging. Åpne arbeidsoversikten.» Ingen kundedetaljer i e-posten.':journey==='booking'?'Når Nora svarer på prisforslaget, vises eierens eksempelvarsel her.':'Når Nora kommer med en avklaring, vises eierens eksempelvarsel her.';
+    $('alert-copy').textContent=state.response?'Eksempel på e-post til eieren: «Et nytt kundesvar trenger personlig oppfølging. Åpne arbeidsoversikten.» Ingen kundedetaljer i e-posten.':state.clarification?'Noras avklaring ligger i samme henvendelse og er markert for oppfølging i arbeidsoversikten.':journey==='booking'?'Når Nora svarer på prisforslaget, vises eierens eksempelvarsel her.':'Når Nora kommer med en avklaring, blir henvendelsen markert for oppfølging.';
     if(state.response&&!state.outcome){$('alert-copy').append(text('br',''),text('span','Hvis oppgaven fortsatt er forfalt ved dagens oppsummering: «1 henvendelse trenger oppfølging».'));}
   }
   function reset(){state={enquiry:false,booking:null,replyDraft:initialReply,ownerReply:null,clarification:false,offer:false,response:null,outcome:null,events:[]};step=0;unlocked=0;render();}
