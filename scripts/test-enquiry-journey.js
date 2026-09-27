@@ -42,6 +42,7 @@ for(const response of ['interested','changes','declined']){
   if(response==='changes')d.querySelector('[value=followup]').checked=true;
   act();
   assert.match(d.getElementById('summary').textContent,response==='interested'?/8 900 kr · manuelt registrert/:response==='changes'?/avtalt tidspunkt/:/Avsluttet/);
+  assert.match(d.getElementById('summary').textContent,response==='changes'?/SamtaleTrenger oppfølging/:/SamtaleAvsluttet/);
   assert.equal(d.querySelectorAll('#timeline li').length,6);
   assert.ok(d.querySelector('#actions a[href="/workspace-demo"]'));
   d.querySelectorAll('#steps button')[1].click();
