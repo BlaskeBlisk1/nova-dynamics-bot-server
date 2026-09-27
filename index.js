@@ -33,6 +33,15 @@ app.use('/api/calendar-sync', calendarSync.router);
 const workspace = require('./lib/workspace/runtime').createWorkspaceRuntime();
 app.use('/api/workspace', workspace.router);
 app.use('/api/offers', workspace.offerRouter);
+app.use('/api/replies', workspace.replyRouter);
+// Signed adapters verify raw request bytes before any shared body parser.
+app.use('/api/conversation-events', workspace.conversationEventsRouter);
+app.use('/api/enquiry-intake', workspace.intakeRouter);
+app.use(['/reply','/reply-demo'], (req,res,next)=>{
+  res.set({'Cache-Control':'no-store','X-Robots-Tag':'noindex, nofollow','Referrer-Policy':'no-referrer','X-Content-Type-Options':'nosniff'});
+  res.set('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src "+(req.baseUrl==='/reply-demo'?"'none'":"'self'")+"; form-action 'none'; frame-ancestors 'none'; base-uri 'none'");next();
+});
+app.get(['/reply','/reply/','/reply-demo','/reply-demo/'],(_req,res)=>res.sendFile(path.join(publicDir,'reply','index.html')));
 app.use(['/journey-demo','/journey'],(_req,res,next)=>{
   res.set({'Cache-Control':'no-store','X-Robots-Tag':'noindex, nofollow','Referrer-Policy':'no-referrer','X-Content-Type-Options':'nosniff',
     'Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'none'; form-action 'none'; frame-ancestors 'none'; base-uri 'none'"});next();

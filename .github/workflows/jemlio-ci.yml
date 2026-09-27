@@ -23,6 +23,13 @@ jobs:
       OPENAI_API_KEY: ''
       NOVA_DATABASE_URL: ''
       RESEND_API_KEY: ''
+      JEMLIO_CONVERSATIONS_ENABLED: 'false'
+      JEMLIO_CONVERSATION_SEND_ENABLED: 'false'
+      JEMLIO_CONVERSATION_SEND_CONFIG: ''
+      JEMLIO_CONVERSATION_ENCRYPTION_KEY: ''
+      JEMLIO_CONVERSATION_WEBHOOK_SECRET: ''
+      JEMLIO_ENQUIRY_INTAKE_ENABLED: 'false'
+      JEMLIO_ENQUIRY_INTAKE_SOURCES: ''
       AIRTABLE_PERSONAL_ACCESS_TOKEN: ''
       NOVA_CAPTURE_CRM_ENABLED: 'false'
       JEMLIO_CALENDAR_SYNC_ENABLED: 'false'
@@ -82,6 +89,13 @@ jobs:
       NOVA_DATABASE_URL: ''
       OPENAI_API_KEY: ''
       RESEND_API_KEY: ''
+      JEMLIO_CONVERSATIONS_ENABLED: 'false'
+      JEMLIO_CONVERSATION_SEND_ENABLED: 'false'
+      JEMLIO_CONVERSATION_SEND_CONFIG: ''
+      JEMLIO_CONVERSATION_ENCRYPTION_KEY: ''
+      JEMLIO_CONVERSATION_WEBHOOK_SECRET: ''
+      JEMLIO_ENQUIRY_INTAKE_ENABLED: 'false'
+      JEMLIO_ENQUIRY_INTAKE_SOURCES: ''
       AIRTABLE_PERSONAL_ACCESS_TOKEN: ''
       NOVA_CAPTURE_CRM_ENABLED: 'false'
       JEMLIO_CALENDAR_SYNC_ENABLED: 'false'
@@ -110,3 +124,7 @@ jobs:
         run: node scripts/test-booking-postgres.js
       - name: Test owner alert collection and worker leases concurrently
         run: node scripts/test-owner-alerts.js --postgres
+      - name: Test enquiry reply approval, delivery leases and deletion races
+        run: node scripts/test-enquiry-conversations-postgres.js
+      - name: Test signed form intake replay and deletion concurrently
+        run: node scripts/test-enquiry-intake.js --postgres

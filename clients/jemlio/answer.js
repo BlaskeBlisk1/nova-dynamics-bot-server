@@ -78,6 +78,7 @@ function answer(client, message) {
 
   // Shared product explanations are public Jemlio facts, never another tenant's data.
   // Keep ordinary lesson/eye-exam questions on their existing fictional path.
+  if (has(/netlify|nettsideskjema|svarutkast|godkjent.*svar|godkjenne.*svar|privat.*svarside|skjema.*(?:import|oppfolging|kobles|kobling)/)) return productFact("enquiry-conversations");
   if (has(/eiervarsel|varsl|varsel|daglig.*(?:oversikt|oppsummering)|paminnelse/)) return productFact("owner-alerts");
   if (has(/hele.*(?:reise|demo)|kundereis|samme kunde|sammenhengende.*demo/)) return productFact("workflow");
   if (has(/telefonhenvend|eposthenvend|e-posthenvend|manuell.*(?:henvend|registr)|(?:registrere|legge inn).*(?:telefon|e-post|epost)|allerede.*chat|beholde.*chat|(?:uten|bytte).*chat|ma.*(?:ha|bruke).*chat|lovable/)) return productFact("manual-intake");
