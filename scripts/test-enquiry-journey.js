@@ -33,6 +33,7 @@ for(const response of ['interested','changes','declined']){
   assert.match(d.getElementById('content').textContent,/Volvo V60/);
   assert.match(d.getElementById('summary').textContent,/Trenger oppfølging/);
   assert.match(d.getElementById('alert-title').textContent,/Nytt svar i henvendelsen/);
+  assert.match(d.getElementById('alert-copy').textContent,/arbeidsoversikten/);assert.doesNotMatch(d.getElementById('alert-copy').textContent,/e-post/);
   assert.match(d.getElementById('summary').textContent,/Salgsverdi0 kr/);
   act();act();act();
   d.querySelector(`[value=${response}]`).checked=true;act();act();
@@ -41,6 +42,7 @@ for(const response of ['interested','changes','declined']){
   if(response==='changes')d.querySelector('[value=followup]').checked=true;
   act();
   assert.match(d.getElementById('summary').textContent,response==='interested'?/8 900 kr · manuelt registrert/:response==='changes'?/avtalt tidspunkt/:/Avsluttet/);
+  assert.match(d.getElementById('summary').textContent,response==='changes'?/SamtaleTrenger oppfølging/:/SamtaleAvsluttet/);
   assert.equal(d.querySelectorAll('#timeline li').length,6);
   assert.ok(d.querySelector('#actions a[href="/workspace-demo"]'));
   d.querySelectorAll('#steps button')[1].click();
