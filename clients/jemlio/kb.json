@@ -57,7 +57,7 @@
   {
     "id": "workflow",
     "q": "Hva med booking og bedriftsoversikt?",
-    "a": "Følg samme fiktive kunde gjennom henvendelse, booking, prisforslag, kundesvar og manuelt registrert resultat i [hele kundereisen](https://nova-dynamics-bot-server.onrender.com/journey-demo). Jemlio har egne demonstrasjoner av bookingreisen og bedriftsoversikten med fiktive data: [prøv booking](https://nova-dynamics-bot-server.onrender.com/booking-demo) og [prøv oppfølgingsoversikten](https://nova-dynamics-bot-server.onrender.com/workspace-demo). I en avtalt pilot kan henvendelser, notater, oppfølgingsdatoer og manuelt registrerte resultater samles i en privat oversikt. Tilgang, mottaker og eventuell støttet kalender må settes opp først. Demoene gjør ingen ekte bestillinger og sender ingen meldinger. Denne chatten utfører ingen handlinger."
+    "a": "Prøv en sammenhengende kundereise med fiktive data: nettsideskjema → svarutkast som bedriften redigerer og godkjenner → kundesvar på en privat svarside → prisforslag → neste oppfølging. [Åpne hele kundereisen](https://nova-dynamics-bot-server.onrender.com/journey-demo). Du kan også velge reisen med booking eller [prøve bedriftens arbeidsoversikt](https://nova-dynamics-bot-server.onrender.com/workspace-demo). Demoen sender ingen meldinger og registrerer ingen virkelige salg. Ekte bruk krever en avtalt pilot, et støttet skjema, avsenderoppsett og tilgang for bedriften."
   },
   {
     "id": "offers",
@@ -88,5 +88,10 @@
     "id": "owner-alerts",
     "q": "Hvordan fungerer eierens varsler?",
     "a": "I en avtalt pilot kan eieren få e-postvarsel om nye svar på prisforslag og én daglig oppsummering når henvendelser trenger oppfølging. Varslene lenker til den private arbeidsoversikten uten kundedetaljer i e-posten. Mottaker, avsender og tidspunkt må settes opp før aktivering. Dette er varsler til eieren, ikke automatiske kundemeldinger. [Se et fiktivt eksempel i hele kundereisen](https://nova-dynamics-bot-server.onrender.com/journey-demo). Demoen sender ingen e-post."
+  },
+  {
+    "id": "enquiry-conversations",
+    "q": "Kan henvendelser fra nettsideskjema følges opp med et godkjent svar?",
+    "a": "Ja, arbeidsflyten er bygget for ett avtalt Netlify-skjema: henvendelsen kommer inn i arbeidsoversikten, bedriften redigerer og godkjenner svaret, og kunden kan svare via en privat lenke. Svaret legges tilbake på samme henvendelse for videre oppfølging. Oppsett og avsender må aktiveres for hver bedrift først. Dette er ikke generell import fra e-post, CRM eller alle nettsideskjemaer. [Prøv hele forløpet med fiktive data](https://nova-dynamics-bot-server.onrender.com/journey-demo). Denne chatten sender ingen meldinger."
   }
 ]

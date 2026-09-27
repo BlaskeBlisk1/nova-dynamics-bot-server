@@ -3,6 +3,7 @@ const assert=require('node:assert/strict'),{readFileSync}=require('node:fs'),{jo
 const html=readFileSync(join(__dirname,'../public/journey/index.html'),'utf8'),js=readFileSync(join(__dirname,'../public/journey/app.js'),'utf8');
 for(const response of ['interested','changes','declined']){
  const dom=new JSDOM(html,{url:'https://example.invalid/journey-demo',runScripts:'outside-only'}),w=dom.window,d=w.document;let calls=0;w.fetch=()=>{calls++;throw Error('network forbidden');};w.eval(js);
+ d.getElementById('journey-booking').click();
  const act=()=>d.querySelector('#actions button').click(),next=()=>act();
  assert.equal(d.querySelectorAll('#steps button:disabled').length,4);act();next();assert.match(d.getElementById('summary').textContent,/Registrert/);
  d.querySelector('[value="Onsdag kl. 10:30"]').checked=true;act();next();assert.match(d.getElementById('summary').textContent,/Onsdag kl. 10:30/);
@@ -17,4 +18,5 @@ for(const response of ['interested','changes','declined']){
  console.log('ok - one connected customer, guarded outcome, reset and zero network: '+response);
 }
 const {answer}=require('../clients/jemlio/answer');for(const tenant of ['jemlio','jemlio-driving-demo','jemlio-optician-demo']){assert.match(answer(tenant,'Kan jeg prøve hele kundereisen?').reply,/journey-demo/);assert.match(answer(tenant,'Hvordan fungerer eiervarsler?').reply,/mottaker|Mottaker/);}
+for(const tenant of ['jemlio','jemlio-driving-demo','jemlio-optician-demo']){const r=answer(tenant,'Hvordan fungerer svarutkast fra nettsideskjema?').reply;assert.match(r,/Netlify/);assert.match(r,/godkjenner/);assert.match(r,/fiktive/);}
 console.log('ok - public product explanations link to journey and qualify alert activation');

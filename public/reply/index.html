@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="nb">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#171b21">
+  <title>Din samtale · Jemlio</title>
+  <link rel="icon" href="/marketing/assets/jemlio-orbit.webp" type="image/webp">
+  <link rel="stylesheet" href="/reply/styles.css">
+  <script defer src="/reply/app.js"></script>
+</head>
+<body>
+  <main>
+    <header class="page-header"><a class="brand" href="https://www.jemlio.com" aria-label="Jemlio, til hovedsiden"><img src="/marketing/assets/jemlio-wordmark.webp" alt="Jemlio" width="180" height="54"></a><span class="private-label">Privat samtale</span></header>
+    <aside id="demo-notice" class="demo-notice" hidden><strong>Prøv et fiktivt eksempel</strong><p>Les meldingen fra bedriften og skriv et svar. Alt skjer bare på denne siden. Ingen melding sendes til en bedrift.</p></aside>
+    <div class="page-intro"><p class="eyebrow" id="business">Din henvendelse</p><h1 id="subject">Fortsett samtalen</h1><p class="intro">Les meldingen fra bedriften og svar når det passer deg.</p></div>
+    <div class="feedback"><p id="status" role="status" aria-live="polite">Henter samtalen …</p><p id="error" role="alert"></p></div>
+    <section id="conversation" aria-labelledby="history-title" hidden>
+      <div class="section-heading"><h2 id="history-title">Samtalen deres</h2><span id="message-count" class="muted"></span></div>
+      <ol id="messages" class="messages"></ol>
+      <form id="reply-form" autocomplete="off">
+        <label for="reply-message">Ditt svar til bedriften</label>
+        <textarea id="reply-message" name="message" rows="5" maxlength="2000" required autocomplete="off" aria-describedby="message-hint message-length" placeholder="Skriv det bedriften trenger for å hjelpe deg videre"></textarea>
+        <div class="composer-hints"><p id="message-hint" class="muted">Unngå sensitive opplysninger.</p><p id="message-length" class="muted">0 av 2000 tegn</p></div>
+        <p class="notice">Svaret ditt legges til i denne samtalen. Et svar oppretter ingen booking, kjøpsavtale eller betaling.</p>
+        <button id="send" type="submit" disabled>Send svar</button>
+      </form>
+    </section>
+    <div class="recovery-actions"><button id="retry" type="button" hidden>Prøv samme svar igjen</button><button id="refresh" type="button" class="secondary" hidden>Hent samtalen på nytt</button><button id="reset" type="button" class="secondary" hidden>Nullstill eksemplet</button></div>
+    <footer>
+      <p id="expires" class="muted"></p>
+      <p>Lenken er privat. Alle som har lenken kan lese og svare i samtalen. Åpne den opprinnelige lenken igjen hvis du laster siden på nytt. Uferdige svar lagres ikke.</p>
+      <a id="workspace-link" href="/workspace-demo" hidden>Se bedriftens arbeidsoversikt ↗</a>
+    </footer>
+  </main>
+</body>
+</html>

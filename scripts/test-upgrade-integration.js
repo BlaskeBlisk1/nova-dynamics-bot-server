@@ -23,6 +23,9 @@ if (process.env.NOVA_TEST_CHILD === "true") {
       NOVA_CAPTURE_ENABLED: "false", NOVA_CAPTURE_WORKER_ENABLED: "false",
       JEMLIO_BOOKING_ENABLED: "false", JEMLIO_BOOKING_CONFIG: "",
       NOVA_CAPTURE_CONFIG: "", NOVA_DATABASE_URL: "", RESEND_API_KEY: "",
+      JEMLIO_WORKSPACE_ENABLED: "false", JEMLIO_WORKSPACE_CONFIG: "",
+      JEMLIO_CONVERSATIONS_ENABLED: "false", JEMLIO_CONVERSATION_SEND_ENABLED: "false",
+      JEMLIO_ENQUIRY_INTAKE_ENABLED: "false", JEMLIO_ENQUIRY_INTAKE_SOURCES: "",
       JEMLIO_WEBSITE_ENQUIRY_ENABLED: "false", JEMLIO_WEBSITE_EMAIL_ENABLED: "false", JEMLIO_WEBSITE_CRM_ENABLED: "false",
       NOVA_CAPTURE_SECRET: "", NOVA_CAPTURE_FROM: "", NOVA_CONVERSATION_CLIENTS: "", ...extra
     }, stdio: ["ignore", "pipe", "pipe", "ipc"] });
@@ -69,6 +72,25 @@ if (process.env.NOVA_TEST_CHILD === "true") {
       assert.equal(unsupported.conversationEnabled("tiller"), true);
     });
     await withServer({}, async request => {
+      for (const path of ['/reply', '/reply-demo', '/reply/app.js']) {
+        const page = await request(path);
+        check(`${path}: private page assets have no caching, referrer or third-party access`, () => {
+          assert.equal(page.status, 200);
+          assert.equal(page.headers.get('cache-control'), 'no-store');
+          assert.equal(page.headers.get('referrer-policy'), 'no-referrer');
+          assert.match(page.headers.get('x-robots-tag'), /noindex/);
+          assert.match(page.headers.get('content-security-policy'), /frame-ancestors 'none'/);
+          assert.match(page.headers.get('content-security-policy'), path === '/reply-demo' ? /connect-src 'none'/ : /connect-src 'self'/);
+        });
+      }
+      for (const path of ['/api/replies/read', '/api/replies/respond', '/api/conversation-events', '/api/enquiry-intake/netlify/fictional_source_id_000001']) {
+        const result = await request(path, {});
+        check(`${path}: customer actions are unavailable before business activation`, () => {
+          assert.equal(result.status, 503);
+          assert.equal(result.headers.get('access-control-allow-origin'), null);
+          assert.equal(result.headers.get('cache-control'), 'no-store');
+        });
+      }
       const bookingDemo = await request('/booking-demo');
       const bookingConfig = await request('/api/booking/config/tiller');
       const bookingPage = await request('/book/tiller');
