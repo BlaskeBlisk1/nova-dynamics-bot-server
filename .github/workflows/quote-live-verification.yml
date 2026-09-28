@@ -1,0 +1,59 @@
+name: Quote release read-only verification
+on:
+  push:
+    branches: ['jemlio/quote-workflow-20260928']
+    paths: ['.github/workflows/quote-live-verification.yml']
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Verify public quote assets and preserved demo routes
+        run: |
+          python3 - <<'PY'
+          import json,hashlib,time,urllib.request
+          from pathlib import Path
+          expected={'quote-schema.js':'1c4a6e67730801674d5049d949c693a01400a8afb46eb10e67792fe16dcb6d9d','quote-flow.js':'08511439c46271ad146420790251dbc90e0976b95611a4e57e2e48bc026b2a08','quote-flow.css':'eacd4ae47a40abce1548941e8d4563b4fe78b421bf96bbb86baef7e2e0994513'}
+          def get(url):
+              with urllib.request.urlopen(urllib.request.Request(url,headers={'Cache-Control':'no-cache'}),timeout=20) as r:
+                  assert r.status==200
+                  return r.read()
+          report={'render':{},'website':{},'staging':{},'errors':[]}
+          render='https://nova-dynamics-bot-server.onrender.com'
+          report['render']['revision']=json.loads(get(render+'/api/release'))['revision']
+          assert report['render']['revision']=='c9ff53d1ad432503ed9357ae4fffe449549ac99e'
+          for f,digest in expected.items():
+              report['render'][f]=hashlib.sha256(get(render+'/marketing/'+f)).hexdigest()==digest
+          for client in ['fram','fyllingsdalen','onsoy','tiller','trafikk1','frankolsen','roma']:
+              report['render'][client]=b'/marketing/quote-flow.js' in get(render+'/demos/'+client)
+          for attempt in range(8):
+              try:
+                  html=get('https://www.jemlio.com/').decode('utf-8')
+                  report['website']['launcher']='id="quote-flow-launcher"' in html
+                  report['website']['nativeForm']='name="jemlio-demo-request"' in html and 'data-netlify="true"' in html
+                  if not report['website']['launcher']:raise ValueError('new_launcher_not_live')
+                  for f,digest in expected.items():report['website'][f]=hashlib.sha256(get('https://www.jemlio.com/'+f)).hexdigest()==digest
+                  break
+              except Exception as e:
+                  if attempt==7:report['errors'].append(type(e).__name__)
+                  else:time.sleep(10)
+          try:report['staging']=json.loads(get('https://jemlio-integration-staging.onrender.com/healthz'))
+          except Exception as e:report['errors'].append('staging_'+type(e).__name__)
+          Path('quote-live-report.json').write_text(json.dumps(report,indent=2))
+          print(json.dumps(report,indent=2))
+          assert all(v is True for k,v in report['render'].items() if k!='revision')
+          assert report['website'].get('launcher') and all(v is True for v in report['website'].values())
+          assert not report['errors']
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: quote-live-report
+          path: quote-live-report.json
+          retention-days: 7
+          if-no-files-found: warn
