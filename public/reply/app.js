@@ -1,9 +1,15 @@
 (() => {
   'use strict';
-  const $ = id => document.getElementById(id);
-  const demo = /^\/reply-demo\/?$/.test(location.pathname);
-  let token = demo ? '' : location.hash.slice(1);
-  if (location.hash) history.replaceState(null, '', location.pathname);
+  function mount({ root, token = '', demo = false, client = '', embedded = false, onBusiness = () => {} }) {
+  if (embedded) {
+    root.innerHTML = INLINE_MARKUP;
+    root.querySelector('.page-header').remove();
+    root.querySelectorAll('[id]').forEach(node => { node.dataset.reply = node.id; node.id = 'private-' + node.id; });
+    for (const node of root.querySelectorAll('[for], [aria-describedby], [aria-labelledby]')) {
+      for (const attr of ['for', 'aria-describedby', 'aria-labelledby']) if (node.hasAttribute(attr)) node.setAttribute(attr, node.getAttribute(attr).split(' ').map(id => 'private-' + id).join(' '));
+    }
+  }
+  const $ = id => embedded ? root.querySelector('[data-reply="' + id + '"]') : root.querySelector('#' + id);
   const tokenValid = value => /^[A-Za-z0-9_-]{43}$/.test(value);
   let current = null, busy = false, pending = null, uncertain = false, canReply = false, active = true, activeRequest = null;
   const errors = {
@@ -87,6 +93,7 @@
   function render(data) {
     current = data;
     $('business').textContent = data.businessName;
+    onBusiness(data.businessName);
     $('subject').textContent = data.subject || 'Din samtale med bedriften';
     $('conversation').hidden = false;
     $('messages').replaceChildren();
@@ -115,7 +122,7 @@
     if (busy || uncertain || !tokenValid(token)) return;
     busy = true; canReply = false; controls();
     try {
-      const data = await api('read', { token });
+      const data = await api('read', { token, ...(client ? { client } : {}) });
       if (!active) return;
       if (!snapshotValid(data)) throw new Error('Invalid response');
       message(''); render(data);
@@ -163,7 +170,7 @@
     const text = $('reply-message').value.trim();
     if (!text || text.length > 2000) { message(errors.invalid_request, true); return; }
     if (typeof crypto.randomUUID !== 'function') { message('Nettleseren kan ikke sende svaret sikkert. Bruk en oppdatert nettleser eller kontakt bedriften direkte.', true); return; }
-    pending = Object.freeze({ token, submissionId: crypto.randomUUID(), message: text, revision: current.revision });
+    pending = Object.freeze({ token, ...(client ? { client } : {}), submissionId: crypto.randomUUID(), message: text, revision: current.revision });
     send(pending);
   });
   $('retry').addEventListener('click', () => { if (uncertain && pending && !busy) send(pending); });
@@ -189,4 +196,13 @@
     message(''); render(seed());
   } else if (!tokenValid(token)) unavailable('not_found');
   else refresh();
+  }
+  const INLINE_MARKUP = "\n    <header class=\"page-header\"><a class=\"brand\" href=\"https://www.jemlio.com\" aria-label=\"Jemlio, til hovedsiden\"><img src=\"/marketing/assets/jemlio-wordmark.webp\" alt=\"Jemlio\" width=\"180\" height=\"54\"></a><span class=\"private-label\">Privat samtale</span></header>\n    <aside id=\"demo-notice\" class=\"demo-notice\" hidden><strong>Prøv et fiktivt eksempel</strong><p>Les meldingen fra bedriften og skriv et svar. Alt skjer bare på denne siden. Ingen melding sendes til en bedrift.</p></aside>\n    <div class=\"page-intro\"><p class=\"eyebrow\" id=\"business\">Din henvendelse</p><h1 id=\"subject\">Fortsett samtalen</h1><p class=\"intro\">Les meldingen fra bedriften og svar når det passer deg.</p></div>\n    <div class=\"feedback\"><p id=\"status\" role=\"status\" aria-live=\"polite\">Henter samtalen …</p><p id=\"error\" role=\"alert\"></p></div>\n    <section id=\"conversation\" aria-labelledby=\"history-title\" hidden>\n      <div class=\"section-heading\"><h2 id=\"history-title\">Samtalen deres</h2><span id=\"message-count\" class=\"muted\"></span></div>\n      <ol id=\"messages\" class=\"messages\"></ol>\n      <form id=\"reply-form\" autocomplete=\"off\">\n        <label for=\"reply-message\">Ditt svar til bedriften</label>\n        <textarea id=\"reply-message\" name=\"message\" rows=\"5\" maxlength=\"2000\" required autocomplete=\"off\" aria-describedby=\"message-hint message-length\" placeholder=\"Skriv det bedriften trenger for å hjelpe deg videre\"></textarea>\n        <div class=\"composer-hints\"><p id=\"message-hint\" class=\"muted\">Unngå sensitive opplysninger.</p><p id=\"message-length\" class=\"muted\">0 av 2000 tegn</p></div>\n        <p class=\"notice\">Svaret ditt legges til i denne samtalen. Et svar oppretter ingen booking, kjøpsavtale eller betaling.</p>\n        <button id=\"send\" type=\"submit\" disabled>Send svar</button>\n      </form>\n    </section>\n    <div class=\"recovery-actions\"><button id=\"retry\" type=\"button\" hidden>Prøv samme svar igjen</button><button id=\"refresh\" type=\"button\" class=\"secondary\" hidden>Hent samtalen på nytt</button><button id=\"reset\" type=\"button\" class=\"secondary\" hidden>Nullstill eksemplet</button></div>\n    <footer>\n      <p id=\"expires\" class=\"muted\"></p>\n      <p>Lenken er privat. Alle som har lenken kan lese og svare i samtalen. Åpne den opprinnelige lenken igjen hvis du laster siden på nytt. Uferdige svar lagres ikke.</p>\n      <a id=\"workspace-link\" href=\"/workspace-demo\" hidden>Se bedriftens arbeidsoversikt ↗</a>\n    </footer>\n  ";
+  window.JemlioReply = Object.freeze({ mount });
+  if (document.getElementById('reply-root')) {
+    const demo = /^\/reply-demo\/?$/.test(location.pathname);
+    const token = demo ? '' : location.hash.slice(1);
+    if (location.hash) history.replaceState(null, '', location.pathname);
+    mount({ root: document.getElementById('reply-root'), token, demo });
+  }
 })();

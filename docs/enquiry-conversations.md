@@ -164,3 +164,24 @@ availability and absence of network/storage side effects. The existing
 `scripts/test-journey.js` continues to exercise the booking journey by selecting
 **Med booking** first. Backend and adapter tests provide separate evidence for
 their own boundaries; these demo checks do not exercise external providers.
+
+## Inline chat experience (28 September 2026)
+
+The homepage examples now demonstrate enquiry → review → fictional business reply
+→ customer clarification inside the existing chat. All fields remain in memory;
+no demo form, clarification, message, booking or sale is submitted. FAQ requests
+are paused during this exercise, so entered contact details never reach `/chat`.
+The owner's workspace and the existing detailed demos remain available.
+
+For shared chatbot tenants (the `UPGRADE_UI_CLIENTS` allowlist), newly approved
+emails use `/demos/<client>?reply=1#reply=<token>`. The same reply controller mounts
+inside that chatbot. It removes the fragment immediately, uses no analytics or
+browser storage, sends only to `/api/replies`, binds requests to the route tenant,
+and retains identical retry payloads after an ambiguous submission. Reloading a
+scrubbed link fails closed; the customer must reopen the original email link.
+The private route uses a same-origin CSP, no-referrer and no-store headers.
+
+Old `/reply/#<token>` links, previously frozen emails and tenants without a shared
+chatbot keep the standalone fallback. This change does not migrate schemas,
+activate tenants, collect a new enquiry automatically, or enable email delivery.
+Booking and proposal controls are still separate in this first integration.
