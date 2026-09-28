@@ -1,0 +1,56 @@
+name: Prepare quote UI for isolated website publication
+on:
+  push:
+    branches: ['codex/enquiry-readiness']
+    paths: ['.github/workflows/quote-publish-prep.yml']
+permissions:
+  contents: write
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: codex/enquiry-readiness
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '>=24.15.0 <25'
+          package-manager-cache: false
+      - run: |
+          git fetch origin 47c2fa0548c5516ce9607e70e52fe416f38ce4e6
+          python3 - <<'PY'
+          import subprocess,hashlib
+          from pathlib import Path
+          source='47c2fa0548c5516ce9607e70e52fe416f38ce4e6'
+          expected={'quote-schema.js':'1c4a6e67730801674d5049d949c693a01400a8afb46eb10e67792fe16dcb6d9d','quote-flow.js':'08511439c46271ad146420790251dbc90e0976b95611a4e57e2e48bc026b2a08','quote-flow.css':'eacd4ae47a40abce1548941e8d4563b4fe78b421bf96bbb86baef7e2e0994513'}
+          for name,digest in expected.items():
+              path='public/marketing/'+name
+              data=subprocess.check_output(['git','show',source+':'+path])
+              assert hashlib.sha256(data).hexdigest()==digest
+              Path(path).write_bytes(data)
+          p=Path('public/marketing/index.html');s=p.read_text()
+          anchor='  <script src="./site.js" defer></script>'
+          assert s.count(anchor)==1 and 'quote-flow-launcher' not in s
+          s=s.replace(anchor,'  <link rel="stylesheet" href="./quote-flow.css">\n  <script src="./quote-schema.js" defer></script>\n  <script src="./quote-flow.js" defer></script>\n'+anchor)
+          anchor='          <div class="chat-foot">'
+          assert s.count(anchor)==1
+          s=s.replace(anchor,'          <div class="qf-entry"><button id="quote-flow-launcher" class="qf-launch" type="button">Prøv henvendelse → prisforslag → kundesvar</button><small>Du prøver kundens og bedriftens side. Ingen e-post sendes.</small></div>\n'+anchor)
+          s=s.replace('Følg én kunde gjennom hele reisen','Prøv prisforslaget i chatten over – eller utforsk de eldre eksemplene')
+          p.write_text(s)
+          p=Path('scripts/staging-site-task.cjs');s=p.read_text();old="'robots.txt', 'site.js', 'sitemap.xml', 'styles.css']);"
+          assert s.count(old)==1
+          p.write_text(s.replace(old,"'robots.txt', 'site.js', 'sitemap.xml', 'styles.css', 'quote-schema.js', 'quote-flow.js', 'quote-flow.css']);"))
+          p=Path('scripts/test-staging-site-task.cjs');s=p.read_text()
+          assert 'assert.equal(FILES.length, 12)' in s and 'assert.equal(first.files, 12)' in s
+          p.write_text(s.replace('assert.equal(FILES.length, 12)','assert.equal(FILES.length, 15)').replace('assert.equal(first.files, 12)','assert.equal(first.files, 15)').replace('only twelve allowlisted','only fifteen allowlisted'))
+          PY
+      - run: npm ci --ignore-scripts
+      - run: npm run test:staging-site
+      - run: |
+          git config user.name 'Jemlio implementation'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/quote-publish-prep.yml
+          git add public/marketing scripts/staging-site-task.cjs scripts/test-staging-site-task.cjs
+          git commit -m 'Prepare tested request-to-quote demo while preserving the current marketing site'
+          git push origin HEAD:codex/enquiry-readiness
