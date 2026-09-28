@@ -2,7 +2,7 @@ const pathParts = window.location.pathname.split("/").filter(Boolean);
 const previewRoute = pathParts[0] === "previews";
 const client = ["demos", "previews"].includes(pathParts[0]) ? pathParts[1] : "";
 const query = new URLSearchParams(window.location.search);
-const analyticsSuppressed = previewRoute || query.get("test") === "1" || query.get("owner") === "1" || ["localhost", "127.0.0.1", "[::1]"].includes(window.location.hostname);
+const analyticsSuppressed = window.JemlioQuoteFlow?.privateMode === true || previewRoute || query.get("test") === "1" || query.get("owner") === "1" || ["localhost", "127.0.0.1", "[::1]"].includes(window.location.hostname);
 
 const POSTHOG_CAPTURE_URL = "https://eu.i.posthog.com/i/v0/e/";
 const POSTHOG_PROJECT_TOKEN = "phc_pYeGcMEga5PbjhCqKHThphPCi4mdXFmnZMNov2NiZiRa";
@@ -233,117 +233,16 @@ function element(tag, className, text) {
 }
 
 function clearDemoFlow() {
-  messages.querySelectorAll(".demo-flow-card").forEach(node => node.remove());
+  messages.querySelectorAll(".demo-flow-card,.quote-flow").forEach(node => node.remove());
 }
-
-function demoFlowCard(kicker, title, copy) {
-  clearDemoFlow();
-  const card = element("section", "demo-flow-card");
-  card.setAttribute("aria-label", title);
-  card.append(
-    element("span", "demo-flow-kicker", kicker),
-    element("strong", "demo-flow-title", title),
-    element("p", "demo-flow-copy", copy)
-  );
-  messages.append(card);
-  scrollMessages();
-  return card;
-}
-
-function finishDemoFlow(slotLabel) {
-  const card = demoFlowCard("FERDIG", "Én chat. Én kunde. Én neste handling.",
-    `Eksemplet valgte ${slotLabel}. I en aktiv løsning bekreftes tiden mot bedriftens bookingoppsett. Eieren ser fortsatt bare én henvendelse med riktig neste steg.`);
-  const summary = element("div", "demo-flow-summary");
-  for (const value of ["Spørsmål besvart", "Kontakt fanget", "Tid valgt"]) {
-    const item = element("span", "", "✓ " + value);
-    summary.append(item);
-  }
-  const actions = element("div", "demo-flow-actions");
-  const again = element("button", "capture-secondary", "Vis flyten på nytt");
-  const chat = element("button", "capture-primary", "Fortsett i chatten");
-  again.type = chat.type = "button";
-  again.addEventListener("click", () => startDemoFlow());
-  chat.addEventListener("click", () => {
-    clearDemoFlow();
-    renderDemoFlowLauncher();
-    input.focus();
-  });
-  actions.append(chat, again);
-  card.append(summary, actions);
-  captureAnalytics("demo_flow_completed");
-  scrollMessages();
-}
-
-function showDemoBooking() {
-  const card = demoFlowCard("3 / NESTE STEG", "Book når booking faktisk er riktig neste steg",
-    "Kunden trenger ikke åpne en ny side. Jemlio kan vise ledige tider her når bedriftens booking er koblet til. Dette er bare eksempelknapper.");
-  const slots = element("div", "demo-flow-slots");
-  for (const label of ["Eksempeltid 10:30", "Eksempeltid 14:00", "Eksempeltid 16:30"]) {
-    const button = element("button", "demo-flow-slot", label);
-    button.type = "button";
-    button.addEventListener("click", () => finishDemoFlow(label.replace("Eksempeltid ", "kl. ")));
-    slots.append(button);
-  }
-  const note = element("small", "demo-flow-note", "Ingen booking gjøres og ingen opplysninger sendes i denne visningen.");
-  card.append(slots, note);
-  captureAnalytics("demo_flow_booking_shown");
-  scrollMessages();
-}
-
-function showDemoLead() {
-  const card = demoFlowCard("2 / HENVENDELSE", "Bare spør om det som mangler",
-    "Jemlio bruker det kunden allerede har fortalt. Kunden fyller inn navn og én kontaktmåte; tjenesten kan følge automatisk fra samtalen.");
-  const fields = element("div", "demo-flow-fields");
-  for (const [label, value] of [["Navn", "Kari Eksempel"], ["Kontakt", "kari@example.com"], ["Gjelder", "Fra samtalen"]]) {
-    const item = element("div", "demo-flow-field");
-    item.append(element("span", "", label), element("strong", "", value));
-    fields.append(item);
-  }
-  const actions = element("div", "demo-flow-actions");
-  const save = element("button", "capture-primary", "Registrer eksempelhenvendelse");
-  const back = element("button", "capture-secondary", "Tilbake til chatten");
-  save.type = back.type = "button";
-  save.addEventListener("click", showDemoBooking);
-  back.addEventListener("click", () => {
-    clearDemoFlow();
-    renderDemoFlowLauncher();
-    input.focus();
-  });
-  actions.append(save, back);
-  card.append(fields, actions, element("small", "demo-flow-note", "Kun eksempeldata. Ingenting lagres eller sendes."));
-  captureAnalytics("demo_flow_lead_shown");
-  scrollMessages();
-}
-
-function startDemoFlow() {
-  const card = demoFlowCard("1 / INTENSJON", "Svar først. Be om kontakt først når kunden vil videre.",
-    "Det er hele systemet: assistenten svarer, forstår at kunden vil videre og åpner neste steg i samme chat. Ingen unødvendig side, meny eller nytt skjema.");
-  const actions = element("div", "demo-flow-actions");
-  const next = element("button", "capture-primary", "Vis kontaktsteget");
-  const stop = element("button", "capture-secondary", "Bare test chatten");
-  next.type = stop.type = "button";
-  next.addEventListener("click", showDemoLead);
-  stop.addEventListener("click", () => {
-    clearDemoFlow();
-    renderDemoFlowLauncher();
-    input.focus();
-  });
-  actions.append(next, stop);
-  card.append(actions, element("small", "demo-flow-note", "Dette er en interaktiv produktvisning. Ingen handling utføres."));
-  captureAnalytics("demo_flow_started");
-  scrollMessages();
-}
-
 function renderDemoFlowLauncher() {
-  if (!config || messages.querySelector(".demo-flow-card")) return;
+  if (!config || window.JemlioQuoteFlow?.privateMode || messages.querySelector(".demo-flow-card")) return;
   const card = element("section", "demo-flow-card demo-flow-launcher");
-  card.setAttribute("aria-label", "Vis hele Jemlio-flyten");
-  const copy = element("p", "demo-flow-copy", "Vil du se mer enn spørsmål og svar? Prøv hele kundereisen i denne chatten.");
-  const button = element("button", "demo-flow-start", "Vis spørsmål → kunde → booking");
-  button.type = "button";
-  button.addEventListener("click", startDemoFlow);
-  card.append(copy, button);
-  messages.append(card);
+  card.append(element("p", "demo-flow-copy", "Prøv hvordan en kunde ber om pris, bedriften lager forslaget og kunden svarer – i samme chat."));
+  const start = element("button", "demo-flow-start", "Prøv henvendelse → prisforslag → svar");
+  start.type = "button";
+  start.addEventListener("click", () => window.JemlioQuoteFlow?.launch(messages, { business: config.name }));
+  card.append(start);messages.append(card);
 }
 
 function clearFollowUps() {
@@ -440,9 +339,9 @@ function offerCapture() {
   if (!captureEnabled() || offeredCapture || capturePanel) return;
   offeredCapture = true;
   const offer = element("div", "message bot capture-offer");
-  offer.append(element("p", "", "Vil du be om å bli kontaktet? Du kan også fortsette å stille spørsmål her."));
+  offer.append(element("p", "", quoteCapture() ? "Vil du be bedriften om et prisforslag? Du kan også fortsette å stille spørsmål her." : "Vil du be om å bli kontaktet? Du kan også fortsette å stille spørsmål her."));
   const actions = element("div", "capture-actions");
-  const yes = element("button", "capture-primary", "Ja, bli kontaktet");
+  const yes = element("button", "capture-primary", quoteCapture() ? "Be om prisforslag" : "Ja, bli kontaktet");
   const no = element("button", "capture-secondary", "Ikke nå");
   yes.type = no.type = "button";
   yes.addEventListener("click", () => { offer.remove(); openCapture(); });
@@ -452,6 +351,8 @@ function offerCapture() {
   messages.append(offer);
   scrollMessages();
 }
+
+function quoteCapture() { return config?.features?.capture?.form?.kind === "quote"; }
 
 function openCapture() {
   if (!captureEnabled() || captureBusy) return;
@@ -468,11 +369,11 @@ function openCapture() {
   capturePanel.setAttribute("aria-labelledby", "capture-title");
   // Form editing is not a live announcement of the visitor's private details.
   capturePanel.setAttribute("aria-live", "off");
-  const heading = element("h3", "", isPreviewCapture() ? "Prøv en kontaktforespørsel" : "Be om å bli kontaktet");
+  const heading = element("h3", "", isPreviewCapture() ? "Prøv en kontaktforespørsel" : quoteCapture() ? "Be om et prisforslag" : "Be om å bli kontaktet");
   heading.id = "capture-title";
   const description = element("p", "capture-description", isPreviewCapture()
     ? "Bare en test: Bruk oppdiktet navn og eksempeladresse. Ingenting sendes til virksomheten."
-    : `Send en kort forespørsel til ${config.features.capture.name || config.name}. Dette bestiller ikke en time.`);
+    : quoteCapture() ? "Bedriften vurderer behovet og setter prisen. Ingen bestilling eller betaling gjøres nå." : `Send en kort forespørsel til ${config.features.capture.name || config.name}. Dette bestiller ikke en time.`);
   captureForm = element("form", "capture-form");
   captureForm.innerHTML = `
     <label for="capture-name">Navn <span aria-hidden="true">*</span></label>
@@ -507,6 +408,9 @@ function openCapture() {
     serviceSelect.hidden = true;
     const chosen = element("p", "capture-selected-service", `Gjelder: ${selectedService.label}`);
     serviceSelect.insertAdjacentElement("afterend", chosen);
+    const change = element("button", "text-action", "Endre tjeneste");change.type = "button";
+    change.addEventListener("click", () => { if(label)label.hidden=false;serviceSelect.hidden=false;chosen.remove();change.remove();serviceSelect.focus(); });
+    chosen.append(change);
   }
   const consentCopy = captureForm.querySelector("#capture-consent-copy");
   consentCopy.textContent = isPreviewCapture()
@@ -524,11 +428,19 @@ function openCapture() {
       }
     } catch { /* An invalid URL must never become a clickable link. */ }
   }
+  let readAnswers = () => ({});
+  if (quoteCapture() && window.JemlioQuoteFlow) {
+    const area=element("div", "capture-quote-fields");captureForm.querySelector(".capture-consent").before(area);
+    const renderFields=()=>{const old=readAnswers();readAnswers=window.JemlioQuoteFlow.mountFields(area,config.features.capture.form,serviceSelect.value,old);};
+    renderFields();serviceSelect.addEventListener("change",renderFields);
+    captureForm.elements.email.required=true;captureForm.elements.phone.required=config.features.capture.form.requirePhone===true;
+    captureForm.querySelector("#capture-contact-help").textContent="E-post brukes for svar og et privat prisforslag.";
+  }
   const email = captureForm.elements.email;
   const phone = captureForm.elements.phone;
   const name = captureForm.elements.name;
   const validateContact = () => {
-    email.setCustomValidity(email.value.trim() || phone.value.trim() ? "" : "Fyll inn e-post eller telefon.");
+    email.setCustomValidity(quoteCapture() ? (email.value.trim() ? "" : "Oppgi e-post for prisforslaget.") : (email.value.trim() || phone.value.trim() ? "" : "Fyll inn e-post eller telefon."));
     const number = phone.value.trim();
     const digits = number.replace(/\D/g, "").length;
     phone.setCustomValidity(number && (!/^[+\d ()-]{6,30}$/.test(number) || digits < 6 || digits > 15) ? "Oppgi et gyldig telefonnummer med 6–15 sifre." : "");
@@ -555,7 +467,8 @@ function openCapture() {
       service: String(values.get("service") || ""),
       preferredTime: String(values.get("preferredTime") || "").trim(),
       consent: values.get("consent") === "on",
-      website: String(values.get("website") || "")
+      website: String(values.get("website") || ""),
+      ...(quoteCapture() ? { answers: readAnswers() } : {})
     };
     if (JSON.stringify(payload) !== JSON.stringify(reviewedPayload)) submissionId = newId();
     reviewedPayload = payload;
@@ -580,6 +493,9 @@ function renderCaptureReview() {
   for (const [label, value] of fields) {
     if (!value) continue;
     summary.append(element("dt", "", label), element("dd", "", value));
+  }
+  if (quoteCapture() && window.JemlioQuoteSchema) {
+    for (const detail of window.JemlioQuoteSchema.validateAnswers(config.features.capture.form, reviewedPayload.service, reviewedPayload.answers)) summary.append(element("dt", "", detail.label), element("dd", "", detail.value));
   }
   review.append(summary, element("p", "capture-help", isPreviewCapture()
     ? "Testforespørselen sendes ikke til virksomheten."
@@ -752,7 +668,7 @@ async function submitCapture(submit, edit, status) {
     const receipt = element("p", "capture-help", `Referanse: ${result.receipt}`);
     const actions = element("div", "capture-actions");
     const capturedService = reviewedPayload.service;
-    if (typeof result.bookingAccess === "string" && result.bookingAccess) {
+    if (!quoteCapture() && typeof result.bookingAccess === "string" && result.bookingAccess) {
       const book = element("button", "capture-primary", "Se ledige tider");
       book.type = "button";
       book.addEventListener("click", () => openInlineBooking(result.receipt, result.bookingAccess, capturedService));
@@ -793,7 +709,7 @@ async function submitCapture(submit, edit, status) {
 
 async function ask(question, source = "typed", retrying = false) {
   const text = String(question || "").trim();
-  if (!text || !chatReady || sendButton.disabled) return;
+  if (window.JemlioQuoteFlow?.privateMode || !text || !chatReady || sendButton.disabled) return;
   clearFollowUps();
   clearRetries();
   if (navigator.onLine === false) {
@@ -900,7 +816,7 @@ function renderConfig(payload) {
   if (previewNotice) previewNotice.hidden = !previewRoute;
   // Clearing the visible conversation is useful even without server context.
   if (conversationReset) conversationReset.hidden = false;
-  if (captureOpen) captureOpen.hidden = !captureEnabled();
+  if (captureOpen) { captureOpen.hidden = !captureEnabled(); captureOpen.textContent = quoteCapture() ? "Be om prisforslag" : "Be om å bli kontaktet"; }
   if (chatTools) chatTools.hidden = (!conversationReset || conversationReset.hidden) && (!captureOpen || captureOpen.hidden);
   if (config.fictional === true) {
     const pill = document.querySelector(".demo-pill");
@@ -977,6 +893,7 @@ function renderConfig(payload) {
 }
 
 async function initialize() {
+  if (window.JemlioQuoteFlow?.privateMode) { await window.JemlioQuoteFlow.mountPrivate(messages); return; }
   if (configLoading || chatReady) return;
   if (!client) {
     businessName.textContent = "Ugyldig demo";
