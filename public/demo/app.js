@@ -232,6 +232,120 @@ function element(tag, className, text) {
   return node;
 }
 
+function clearDemoFlow() {
+  messages.querySelectorAll(".demo-flow-card").forEach(node => node.remove());
+}
+
+function demoFlowCard(kicker, title, copy) {
+  clearDemoFlow();
+  const card = element("section", "demo-flow-card");
+  card.setAttribute("aria-label", title);
+  card.append(
+    element("span", "demo-flow-kicker", kicker),
+    element("strong", "demo-flow-title", title),
+    element("p", "demo-flow-copy", copy)
+  );
+  messages.append(card);
+  scrollMessages();
+  return card;
+}
+
+function finishDemoFlow(slotLabel) {
+  const card = demoFlowCard("FERDIG", "Én chat. Én kunde. Én neste handling.",
+    `Eksemplet valgte ${slotLabel}. I en aktiv løsning bekreftes tiden mot bedriftens bookingoppsett. Eieren ser fortsatt bare én henvendelse med riktig neste steg.`);
+  const summary = element("div", "demo-flow-summary");
+  for (const value of ["Spørsmål besvart", "Kontakt fanget", "Tid valgt"]) {
+    const item = element("span", "", "✓ " + value);
+    summary.append(item);
+  }
+  const actions = element("div", "demo-flow-actions");
+  const again = element("button", "capture-secondary", "Vis flyten på nytt");
+  const chat = element("button", "capture-primary", "Fortsett i chatten");
+  again.type = chat.type = "button";
+  again.addEventListener("click", () => startDemoFlow());
+  chat.addEventListener("click", () => {
+    clearDemoFlow();
+    renderDemoFlowLauncher();
+    input.focus();
+  });
+  actions.append(chat, again);
+  card.append(summary, actions);
+  captureAnalytics("demo_flow_completed");
+  scrollMessages();
+}
+
+function showDemoBooking() {
+  const card = demoFlowCard("3 / NESTE STEG", "Book når booking faktisk er riktig neste steg",
+    "Kunden trenger ikke åpne en ny side. Jemlio kan vise ledige tider her når bedriftens booking er koblet til. Dette er bare eksempelknapper.");
+  const slots = element("div", "demo-flow-slots");
+  for (const label of ["Eksempeltid 10:30", "Eksempeltid 14:00", "Eksempeltid 16:30"]) {
+    const button = element("button", "demo-flow-slot", label);
+    button.type = "button";
+    button.addEventListener("click", () => finishDemoFlow(label.replace("Eksempeltid ", "kl. ")));
+    slots.append(button);
+  }
+  const note = element("small", "demo-flow-note", "Ingen booking gjøres og ingen opplysninger sendes i denne visningen.");
+  card.append(slots, note);
+  captureAnalytics("demo_flow_booking_shown");
+  scrollMessages();
+}
+
+function showDemoLead() {
+  const card = demoFlowCard("2 / HENVENDELSE", "Bare spør om det som mangler",
+    "Jemlio bruker det kunden allerede har fortalt. Kunden fyller inn navn og én kontaktmåte; tjenesten kan følge automatisk fra samtalen.");
+  const fields = element("div", "demo-flow-fields");
+  for (const [label, value] of [["Navn", "Kari Eksempel"], ["Kontakt", "kari@example.com"], ["Gjelder", "Fra samtalen"]]) {
+    const item = element("div", "demo-flow-field");
+    item.append(element("span", "", label), element("strong", "", value));
+    fields.append(item);
+  }
+  const actions = element("div", "demo-flow-actions");
+  const save = element("button", "capture-primary", "Registrer eksempelhenvendelse");
+  const back = element("button", "capture-secondary", "Tilbake til chatten");
+  save.type = back.type = "button";
+  save.addEventListener("click", showDemoBooking);
+  back.addEventListener("click", () => {
+    clearDemoFlow();
+    renderDemoFlowLauncher();
+    input.focus();
+  });
+  actions.append(save, back);
+  card.append(fields, actions, element("small", "demo-flow-note", "Kun eksempeldata. Ingenting lagres eller sendes."));
+  captureAnalytics("demo_flow_lead_shown");
+  scrollMessages();
+}
+
+function startDemoFlow() {
+  const card = demoFlowCard("1 / INTENSJON", "Svar først. Be om kontakt først når kunden vil videre.",
+    "Det er hele systemet: assistenten svarer, forstår at kunden vil videre og åpner neste steg i samme chat. Ingen unødvendig side, meny eller nytt skjema.");
+  const actions = element("div", "demo-flow-actions");
+  const next = element("button", "capture-primary", "Vis kontaktsteget");
+  const stop = element("button", "capture-secondary", "Bare test chatten");
+  next.type = stop.type = "button";
+  next.addEventListener("click", showDemoLead);
+  stop.addEventListener("click", () => {
+    clearDemoFlow();
+    renderDemoFlowLauncher();
+    input.focus();
+  });
+  actions.append(next, stop);
+  card.append(actions, element("small", "demo-flow-note", "Dette er en interaktiv produktvisning. Ingen handling utføres."));
+  captureAnalytics("demo_flow_started");
+  scrollMessages();
+}
+
+function renderDemoFlowLauncher() {
+  if (!config || messages.querySelector(".demo-flow-card")) return;
+  const card = element("section", "demo-flow-card demo-flow-launcher");
+  card.setAttribute("aria-label", "Vis hele Jemlio-flyten");
+  const copy = element("p", "demo-flow-copy", "Vil du se mer enn spørsmål og svar? Prøv hele kundereisen i denne chatten.");
+  const button = element("button", "demo-flow-start", "Vis spørsmål → kunde → booking");
+  button.type = "button";
+  button.addEventListener("click", startDemoFlow);
+  card.append(copy, button);
+  messages.append(card);
+}
+
 function clearFollowUps() {
   messages.querySelectorAll(".chat-followups").forEach(node => node.remove());
 }
@@ -384,7 +498,16 @@ function openCapture() {
     option.value = service.id;
     serviceSelect.append(option);
   }
-  serviceSelect.value = suggestedService;
+  const services = config.features.capture.services || [];
+  const selectedService = services.find(service => service.id === suggestedService) || (services.length === 1 ? services[0] : null);
+  serviceSelect.value = selectedService?.id || "";
+  if (selectedService) {
+    const label = captureForm.querySelector('label[for="capture-service"]');
+    if (label) label.hidden = true;
+    serviceSelect.hidden = true;
+    const chosen = element("p", "capture-selected-service", `Gjelder: ${selectedService.label}`);
+    serviceSelect.insertAdjacentElement("afterend", chosen);
+  }
   const consentCopy = captureForm.querySelector("#capture-consent-copy");
   consentCopy.textContent = isPreviewCapture()
     ? "Jeg bruker bare oppdiktede opplysninger og vil lagre denne testforespørselen."
@@ -822,6 +945,7 @@ function renderConfig(payload) {
   }
 
   addMessage(config.greeting, "bot");
+  renderDemoFlowLauncher();
 
   for (const question of Array.isArray(config.suggestedQuestions) ? config.suggestedQuestions : []) {
     if (typeof question !== "string" || !question.trim()) continue;
@@ -941,6 +1065,7 @@ conversationReset?.addEventListener("click", () => {
   input.value = "";
   messages.replaceChildren();
   addMessage(config.greeting, "bot");
+  renderDemoFlowLauncher();
   if (captureOpen) captureOpen.hidden = !captureEnabled();
   input.focus();
 });
