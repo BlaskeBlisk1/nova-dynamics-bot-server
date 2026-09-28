@@ -1,0 +1,68 @@
+name: Verify and apply reviewed quote implementation
+on:
+  push:
+    branches: ['jemlio/quote-workflow-20260928']
+    paths: ['.github/workflows/quote-apply.yml', '.github/quote-patch.json', '.github/quote-expected.json']
+permissions:
+  contents: write
+concurrency:
+  group: quote-implementation-apply
+  cancel-in-progress: false
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NODE_ENV: test
+      OPENAI_API_KEY: ''
+      NOVA_DATABASE_URL: ''
+      RESEND_API_KEY: ''
+      JEMLIO_OFFER_SEND_ENABLED: 'false'
+      JEMLIO_WORKSPACE_ENABLED: 'false'
+      JEMLIO_CONVERSATIONS_ENABLED: 'false'
+      NOVA_CAPTURE_ENABLED: 'false'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: jemlio/quote-workflow-20260928
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '>=24.15.0 <25'
+          package-manager-cache: false
+      - name: Verify base and apply exact reviewed source
+        run: |
+          python3 - <<'PY'
+          import json,hashlib,os
+          from pathlib import Path
+          assert os.environ['GITHUB_REF']=='refs/heads/jemlio/quote-workflow-20260928'
+          expected=json.loads(Path('.github/quote-expected.json').read_text())
+          edits=json.loads(Path('.github/quote-patch.json').read_text())
+          prepared={}
+          for name,edit in edits.items():
+              assert name in expected and '..' not in Path(name).parts and not Path(name).is_absolute()
+              p=Path(name);raw=p.read_bytes()
+              assert hashlib.sha256(raw).hexdigest()==edit['sha256'], 'Base changed: '+name
+              value=raw.decode('utf-8')
+              end=len(value)
+              for start,stop,replacement in reversed(edit['updates']):
+                  assert 0<=start<=stop<=end
+                  value=value[:start]+replacement+value[stop:]
+                  end=start
+              prepared[name]=value.encode('utf-8')
+          for name,digest in expected.items():
+              assert '..' not in Path(name).parts and not Path(name).is_absolute()
+              value=prepared.get(name,Path(name).read_bytes())
+              assert hashlib.sha256(value).hexdigest()==digest, 'Target mismatch: '+name
+          for name,value in prepared.items():Path(name).write_bytes(value)
+          print('Verified all 21 implementation files against locally tested content.')
+          PY
+      - run: npm ci --ignore-scripts
+      - run: npm test
+      - name: Commit tested implementation on development branch only
+        run: |
+          git config user.name 'Jemlio implementation'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/quote-patch.json .github/quote-expected.json .github/workflows/quote-apply.yml .github/workflows/quote-development-source.yml
+          git add lib public scripts docs package.json
+          git commit -m 'Implement reviewed request-to-quote workflow with guarded delivery and tests'
+          git push origin HEAD:jemlio/quote-workflow-20260928
