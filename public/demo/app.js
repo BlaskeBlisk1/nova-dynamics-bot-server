@@ -99,6 +99,7 @@ let conversationId;
 let capturePanel;
 let captureForm;
 let captureBusy = false;
+let bookingBusy = false;
 let offeredCapture = false;
 let captureToken;
 let reviewedPayload;
@@ -507,6 +508,96 @@ async function obtainCaptureToken() {
   captureToken = session.token;
 }
 
+function formatBookingSlot(value) {
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return "";
+  return new Intl.DateTimeFormat("nb-NO", {
+    weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
+    timeZone: "Europe/Oslo"
+  }).format(date);
+}
+
+async function confirmInlineBooking(receiptId, access, slot, controls) {
+  if (bookingBusy) return;
+  bookingBusy = true;
+  for (const control of controls) control.disabled = true;
+  const status = element("p", "capture-status", "Bekrefter timen…");
+  status.setAttribute("role", "status");
+  capturePanel.append(status);
+  scrollMessages();
+  try {
+    const result = await captureRequest("/api/booking/confirm", {
+      client, receipt: receiptId, access, slot, confirmed: true
+    });
+    const title = element("h3", "", result.status === "confirmed" ? "Timen er bekreftet" : "Bestillingen trenger en kontroll");
+    title.id = "capture-title";
+    title.tabIndex = -1;
+    const copy = element("p", "capture-description",
+      result.status === "confirmed"
+        ? `Du er satt opp ${formatBookingSlot(result.slot || slot)}. Bedriften har fått den samme avtalen i oversikten sin.`
+        : "Vi kunne ikke bekrefte timen sikkert. Forespørselen er lagret, og bedriften kan følge den opp uten at du bestiller på nytt.");
+    const done = element("button", "capture-secondary", "Fortsett å chatte");
+    done.type = "button";
+    done.addEventListener("click", () => input.focus());
+    capturePanel.replaceChildren(title, copy, done);
+    captureAnalytics("booking_inline_result", { status: String(result.status || "unknown") });
+    title.focus({ preventScroll: true });
+  } catch {
+    status.textContent = "Timen ble ikke bekreftet. Forespørselen din er fortsatt lagret, så du kan prøve en annen tid eller fortsette å chatte.";
+    status.classList.add("capture-status-error");
+    for (const control of controls) control.disabled = false;
+  } finally {
+    bookingBusy = false;
+    scrollMessages();
+  }
+}
+
+async function openInlineBooking(receiptId, access, service) {
+  if (bookingBusy || !receiptId || !access || !service) return;
+  bookingBusy = true;
+  const heading = element("h3", "", "Velg en ledig tid");
+  heading.id = "capture-title";
+  heading.tabIndex = -1;
+  const status = element("p", "capture-description", "Henter tilgjengelige tider…");
+  status.setAttribute("role", "status");
+  const cancel = element("button", "capture-secondary", "Ikke nå");
+  cancel.type = "button";
+  cancel.addEventListener("click", () => input.focus());
+  capturePanel.replaceChildren(heading, status, cancel);
+  heading.focus({ preventScroll: true });
+  scrollMessages();
+  try {
+    const result = await captureRequest(`/api/booking/slots/${encodeURIComponent(client)}`, { service });
+    const slots = Array.isArray(result.slots) ? result.slots.filter(slot => formatBookingSlot(slot)).slice(0, 8) : [];
+    if (!slots.length) {
+      status.textContent = "Det er ingen ledige nettider å vise akkurat nå. Forespørselen er registrert, og bedriften kan fortsatt følge deg opp.";
+      return;
+    }
+    status.textContent = "Velg tidspunktet du ønsker å bekrefte:";
+    const actions = element("div", "capture-actions");
+    const controls = [];
+    for (const slot of slots) {
+      const button = element("button", "capture-secondary", formatBookingSlot(slot));
+      button.type = "button";
+      button.addEventListener("click", () => confirmInlineBooking(receiptId, access, slot, controls));
+      controls.push(button);
+      actions.append(button);
+    }
+    const later = element("button", "capture-secondary", "Velg senere");
+    later.type = "button";
+    later.addEventListener("click", () => input.focus());
+    controls.push(later);
+    capturePanel.replaceChildren(heading, status, actions, later);
+    captureAnalytics("booking_inline_opened", { slot_count: slots.length });
+  } catch {
+    status.textContent = "Vi kunne ikke hente ledige tider nå. Forespørselen er fortsatt registrert, så ingenting er tapt.";
+    status.classList.add("capture-status-error");
+  } finally {
+    bookingBusy = false;
+    scrollMessages();
+  }
+}
+
 async function submitCapture(submit, edit, status) {
   if (captureBusy || !reviewedPayload || !submissionId) return;
   let requestAttempted = false;
@@ -536,10 +627,19 @@ async function submitCapture(submit, edit, status) {
     const message = element("p", "capture-description", result.message);
     message.setAttribute("role", "status");
     const receipt = element("p", "capture-help", `Referanse: ${result.receipt}`);
+    const actions = element("div", "capture-actions");
+    const capturedService = reviewedPayload.service;
+    if (typeof result.bookingAccess === "string" && result.bookingAccess) {
+      const book = element("button", "capture-primary", "Se ledige tider");
+      book.type = "button";
+      book.addEventListener("click", () => openInlineBooking(result.receipt, result.bookingAccess, capturedService));
+      actions.append(book);
+    }
     const done = element("button", "capture-secondary", "Fortsett å chatte");
     done.type = "button";
     done.addEventListener("click", () => input.focus());
-    capturePanel.replaceChildren(heading, message, receipt, done);
+    actions.append(done);
+    capturePanel.replaceChildren(heading, message, receipt, actions);
     captureForm.reset();
     captureForm = undefined;
     reviewedPayload = undefined;
