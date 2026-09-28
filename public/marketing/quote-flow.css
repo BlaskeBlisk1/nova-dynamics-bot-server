@@ -1,0 +1,25 @@
+/* A compact shared conversation card, used in the website and customer demos. */
+.quote-flow{--qf-text:#edf2fa;--qf-muted:#c3cbd9;box-sizing:border-box;color:var(--qf-text);background:#18212e;border:1px solid #435269;border-radius:16px;width:100%;max-width:660px;padding:20px;margin:12px 0;font-family:inherit;font-size:14px;line-height:1.55;box-shadow:0 10px 28px #0002;flex-shrink:0;overflow-wrap:anywhere}
+.quote-flow *{box-sizing:border-box}.quote-flow h3{font-size:21px;line-height:1.3;margin:6px 0 10px;letter-spacing:-.02em;color:var(--qf-text)}
+.quote-flow .qf-role{font-size:10px;font-weight:800;letter-spacing:.12em;color:#9fbfff;margin:0 0 6px}.qf-copy{margin:0 0 12px;color:var(--qf-muted)}
+.quote-flow .qf-notice{font-size:12px;padding:9px 11px;border-left:2px solid #8297b3;background:#ffffff08;margin:10px 0 16px;color:var(--qf-muted)}
+.qf-form,.qf-custom-fields{display:grid;gap:12px}.quote-flow .qf-field,.capture-form .qf-field{display:grid;gap:5px;margin:0;color:inherit;font-size:13px}.qf-field>span{font-weight:650}
+.quote-flow input:not([type=checkbox]),.quote-flow select,.quote-flow textarea,.capture-form .qf-custom-fields input,.capture-form .qf-custom-fields select{background:#0f1722;border:1px solid #65738a;border-radius:8px;color:#f3f6fd;font:inherit;padding:10px 12px;min-width:0;width:100%;margin:0;min-height:44px}
+.quote-flow textarea{resize:vertical}.quote-flow .qf-check{display:flex;gap:10px;align-items:flex-start;color:var(--qf-muted);font-size:12px;margin:3px 0}
+.quote-flow input[type=checkbox]{width:18px;height:18px;margin:3px 0;flex:0 0 18px;accent-color:#9dbfff}
+.quote-flow button,.qf-launch{font:inherit;min-height:44px;padding:10px 15px;border-radius:9px;cursor:pointer;line-height:1.4;white-space:normal}
+.qf-primary,.qf-launch{background:#b9d2ff;color:#11223b;border:1px solid #b9d2ff;font-weight:750}.qf-secondary{background:transparent;border:1px solid #667b98;color:#e5ecf8}
+.quote-flow button:hover:not(:disabled),.qf-launch:hover{filter:brightness(1.1)}.quote-flow :focus-visible,.qf-launch:focus-visible{outline:3px solid #c9ddff;outline-offset:3px}.quote-flow :disabled{opacity:.65;cursor:default}
+.qf-actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:16px}.qf-summary{display:grid;grid-template-columns:minmax(85px,.32fr) minmax(0,1fr);gap:9px 14px;margin:16px 0;padding:14px 0;border-block:1px solid #435269}
+.qf-summary dt{color:var(--qf-muted);font-size:12px}.qf-summary dd{margin:0;white-space:pre-wrap;font-weight:550;color:var(--qf-text)}.qf-error{color:#ffd0c8;background:#8c292933;border-radius:8px;padding:10px}.qf-success{color:#c4ebd3}
+.qf-entry{display:flex;justify-content:flex-start;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 16px;border-top:1px solid #ffffff16}.qf-entry small{font-size:11px;color:inherit;opacity:.8}
+body[data-private-offer=true] .context-card,body[data-private-offer=true] .website-link,body[data-private-offer=true] .chat-info,body[data-private-offer=true] .next-steps,body[data-private-offer=true] .highlights,body[data-private-offer=true] .road-card,body[data-private-offer=true] #chat-form,body[data-private-offer=true] #chat-tools,body[data-private-offer=true] .reset-chat{display:none!important}
+body[data-private-offer=true] .demo-grid{display:block}body[data-private-offer=true] .messages{height:auto;min-height:320px;max-height:none}body[data-private-offer=true] .chat-card{max-width:760px;margin:auto}body[data-private-offer=true] .demo-pill{visibility:hidden}
+@media(max-width:600px){.quote-flow{padding:15px}.quote-flow h3{font-size:19px}.qf-actions{display:grid;grid-template-columns:1fr}.qf-summary{grid-template-columns:1fr;gap:3px}.qf-summary dd{margin-bottom:8px}.qf-entry{align-items:stretch;flex-direction:column}.quote-flow input:not([type=checkbox]),.quote-flow select,.quote-flow textarea{font-size:16px}}
+
+/* A long request or offer uses the page scroll, not a second tiny scroll area. */
+.messages:has(> .quote-flow){height:auto!important;max-height:none!important;overflow:visible;flex-basis:auto!important}
+.chat-card:has(.quote-flow)>#chat-form,.chat-card:has(.quote-flow)>#chat-tools,.chat-surface:has(.quote-flow)>.chat-form,.chat-surface:has(.quote-flow)>.suggestions{display:none}
+.quote-flow .qf-close{min-height:36px;font-size:12px;margin:0 0 14px;padding:7px 10px}
+.chat-card:has(.quote-flow),.chat-surface:has(.quote-flow){height:auto!important;max-height:none!important}
+.messages:has(> .quote-flow){flex:0 0 auto!important}
