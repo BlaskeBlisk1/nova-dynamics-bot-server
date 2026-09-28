@@ -1,8 +1,29 @@
+const isPrivateReply = new URLSearchParams(location.search).get('reply') === '1' || location.hash.startsWith('#reply=');
+if (isPrivateReply) {
+  const token = location.hash.slice(7);
+  history.replaceState(null, '', location.pathname + '?reply=1');
+  const client = location.pathname.split('/').filter(Boolean)[1] || '';
+  document.body.dataset.privateReply = 'true';
+  document.title = 'Din samtale | Jemlio';
+  document.getElementById('business-name').textContent = 'Fortsett samtalen';
+  document.getElementById('business-description').textContent = 'Les bedriftens svar og svar direkte her i chatten.';
+  document.querySelector('.demo-pill').textContent = 'PRIVAT SAMTALE';
+  document.getElementById('assistant-label').textContent = 'Din henvendelse';
+  document.getElementById('status-label').textContent = 'Privat svarlenke';
+  const log = document.getElementById('messages');
+  log.removeAttribute('role'); log.setAttribute('aria-live', 'off');
+  const root = document.createElement('div'); root.className = 'inline-reply'; log.append(root);
+  if (window.JemlioReply) window.JemlioReply.mount({ root, token, client, embedded: true, onBusiness(name) {
+    document.getElementById('business-name').textContent = name;
+    document.getElementById('assistant-label').textContent = name;
+  }});
+  else root.textContent = 'Samtalen kunne ikke lastes. Åpne den opprinnelige svarlenken igjen.';
+}
 const pathParts = window.location.pathname.split("/").filter(Boolean);
 const previewRoute = pathParts[0] === "previews";
 const client = ["demos", "previews"].includes(pathParts[0]) ? pathParts[1] : "";
 const query = new URLSearchParams(window.location.search);
-const analyticsSuppressed = previewRoute || query.get("test") === "1" || query.get("owner") === "1" || ["localhost", "127.0.0.1", "[::1]"].includes(window.location.hostname);
+const analyticsSuppressed = isPrivateReply || previewRoute || query.get("test") === "1" || query.get("owner") === "1" || ["localhost", "127.0.0.1", "[::1]"].includes(window.location.hostname);
 
 const POSTHOG_CAPTURE_URL = "https://eu.i.posthog.com/i/v0/e/";
 const POSTHOG_PROJECT_TOKEN = "phc_pYeGcMEga5PbjhCqKHThphPCi4mdXFmnZMNov2NiZiRa";
@@ -24,7 +45,7 @@ function analyticsSessionId() {
   } catch { /* Restricted storage must not break the chat. */ }
   return fallback;
 }
-const analyticsDistinctId = analyticsSessionId();
+const analyticsDistinctId = isPrivateReply ? '' : analyticsSessionId();
 
 function captureAnalytics(event, properties = {}) {
   if (analyticsSuppressed) return;
@@ -854,4 +875,4 @@ document.getElementById("reset-chat")?.addEventListener("click", () => {
   }
 });
 
-initialize();
+if (!isPrivateReply) initialize();

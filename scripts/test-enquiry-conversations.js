@@ -81,9 +81,24 @@ async function runTests({pool,realPostgres=false}){
       const secondRuntime=createConversations({env,pool,cfg,now,sendMessage:send});await Promise.all([runtime.tick(),secondRuntime.tick()]);await secondRuntime.close();assert.equal(calls.length,1);
       const snapshot=await store.read(alpha,first.id);assert.equal(snapshot.messages.find(m=>m.id===approved.draftId).state,'accepted');
       const token=tokenFor(approved.draftId);assert.ok(token);const publicData=await store.publicRead(token);assert.equal(typeof publicData.revision,'string');assert.equal(publicData.messages.length,2);
+      await denied(()=>store.publicRead(token,beta),'reply_unavailable');
+      assert.equal((await store.publicRead(token,alpha)).businessName,'Alpha bedrift');
+      await denied(()=>store.respond({token,client:beta,submissionId:randomUUID(),message:'wrong tenant',revision:publicData.revision}),'reply_unavailable');
       const serialized=JSON.stringify(publicData);assert.equal(serialized.includes(first.input.email),false);assert.equal(serialized.includes(token),false);assert.equal(serialized.includes('approved_by'),false);
       const d=await draft(first,'INTERNAL UNSENT DRAFT');assert.equal(JSON.stringify(await store.publicRead(token)).includes('INTERNAL UNSENT DRAFT'),false);
       await store.cancel(alpha,first.id,{revision:d.revision,messageId:d.draftId},'owner');await runtime.tick();assert.equal(calls.length,1);
+    });
+    await check('shared chatbot tenants get a secure same-chat link; fallback links remain supported',async()=>{
+      const client='tiller';cfg.tenants[client]={enabled:true,name:'Synthetic tiller',conversationsEnabled:true};
+      const scoped=createConversations({env:{...env,JEMLIO_CONVERSATION_SEND_CONFIG:JSON.stringify({[client]:{enabled:true,from:'tiller@example.invalid'}})},pool,cfg,now,sendMessage:send});
+      const row=await entry({client}),current=await scoped.store.read(client,row.id);
+      const d=await scoped.store.draft(client,row.id,{revision:current.revision,template:'question',body:'Synthetic reply'},'test-owner');
+      await scoped.store.send(client,row.id,approval(d),'test-owner');await scoped.tick();
+      const notification=calls.find(c=>c.idempotencyKey===`jemlio-conversation/${d.draftId}`).notification;
+      const token=notification.text.match(/\/demos\/tiller\?reply=1#reply=([A-Za-z0-9_-]{43})/)?.[1];assert.ok(token);
+      assert.equal((await scoped.store.publicRead(token,client)).businessName,'Synthetic tiller');
+      await denied(()=>scoped.store.publicRead(token,alpha),'reply_unavailable');
+      await scoped.close();delete cfg.tenants[client];
     });
     await check('customer reply retries persist once, invalidate stale draft and workspace revision, and mark due review',async()=>{
       const token=tokenFor(approved.draftId),pending=await draft(first),before=await ws.row(alpha,first.id);const oldRevision=require('../lib/workspace/store').present(before,clock).revision;

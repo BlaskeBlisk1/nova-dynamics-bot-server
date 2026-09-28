@@ -208,6 +208,11 @@ app.get(["/demos/:client", "/demos/:client/"], (req, res) => {
     return res.status(404).send("Demo not found.");
   }
 
+  res.set({"Cache-Control":"no-store", "Referrer-Policy":"no-referrer", "X-Robots-Tag":"noindex, nofollow"});
+  if (req.query.reply === '1') res.set({
+    'X-Content-Type-Options':'nosniff',
+    'Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; form-action 'none'; frame-ancestors 'none'; base-uri 'none'"
+  });
   return res.sendFile(path.join(publicDir, client === "roma" ? "roma" : "demo", "index.html"));
 });
 
