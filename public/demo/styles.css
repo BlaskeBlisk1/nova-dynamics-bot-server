@@ -1709,3 +1709,131 @@ body[data-theme="optical"] .chat-card, body[data-theme="roma"] .chat-card { colo
   .chat-form { padding-bottom: max(12px, env(safe-area-inset-bottom)); }
   .demo-grid, .chat-card, .context-card { min-width: 0; }
 }
+
+
+/* Jemlio's simplest demo path: question -> intent -> enquiry -> booking. */
+.demo-flow-card {
+  align-self: stretch;
+  width: min(100%, 560px);
+  margin: 6px 0 10px;
+  padding: 16px;
+  border: 1px solid color-mix(in srgb, var(--accent, #4f7cff) 34%, rgba(255,255,255,.12));
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.035));
+  box-shadow: 0 18px 44px rgba(0,0,0,.18);
+}
+.demo-flow-launcher {
+  padding: 12px 14px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+.demo-flow-kicker {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  color: var(--accent-secondary, var(--accent, #7c5cff));
+}
+.demo-flow-title {
+  display: block;
+  font-size: 16px;
+  line-height: 1.35;
+}
+.demo-flow-copy {
+  margin: 7px 0 0;
+  color: var(--muted, #a9afc3);
+  line-height: 1.55;
+  font-size: 14px;
+}
+.demo-flow-launcher .demo-flow-copy {
+  margin: 0;
+  max-width: 340px;
+}
+.demo-flow-start,
+.demo-flow-slot {
+  appearance: none;
+  border: 1px solid color-mix(in srgb, var(--accent, #4f7cff) 48%, rgba(255,255,255,.12));
+  background: color-mix(in srgb, var(--accent, #4f7cff) 16%, rgba(255,255,255,.04));
+  color: inherit;
+  border-radius: 999px;
+  padding: 10px 13px;
+  font: inherit;
+  font-weight: 750;
+  cursor: pointer;
+}
+.demo-flow-start:hover,
+.demo-flow-slot:hover {
+  border-color: var(--accent, #4f7cff);
+  transform: translateY(-1px);
+}
+.demo-flow-actions,
+.demo-flow-slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-top: 14px;
+}
+.demo-flow-fields {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+.demo-flow-field {
+  display: grid;
+  grid-template-columns: 84px 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 9px 11px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.045);
+}
+.demo-flow-field span {
+  color: var(--muted, #a9afc3);
+  font-size: 12px;
+}
+.demo-flow-field strong {
+  font-size: 13px;
+}
+.demo-flow-note {
+  display: block;
+  margin-top: 11px;
+  color: var(--muted, #a9afc3);
+  line-height: 1.45;
+}
+.demo-flow-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 14px;
+}
+.demo-flow-summary span,
+.capture-selected-service {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  border-radius: 999px;
+  padding: 7px 10px;
+  background: color-mix(in srgb, var(--accent, #4f7cff) 13%, rgba(255,255,255,.04));
+  border: 1px solid color-mix(in srgb, var(--accent, #4f7cff) 25%, rgba(255,255,255,.08));
+  font-size: 12px;
+  font-weight: 700;
+}
+.capture-selected-service {
+  margin: 4px 0 2px;
+}
+
+@media (max-width: 640px) {
+  .demo-flow-launcher {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .demo-flow-start {
+    width: 100%;
+  }
+  .demo-flow-field {
+    grid-template-columns: 72px 1fr;
+  }
+}
