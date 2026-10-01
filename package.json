@@ -5,7 +5,7 @@
   "scripts": {
     "start": "node index.js",
     "new-client": "node new-client.js",
-    "test": "npm run test:legacy && npm run test:brand && npm run test:conversation && npm run test:capture && npm run test:capture-crm && npm run test:website-enquiries && npm run test:capture-operations && npm run test:upgrade && npm run test:live-context && npm run test:capture-ui && npm run test:marketing-ui && npm run test:marketing-enquiries && npm run test:staging-site && npm run test:booking && npm run test:booking-ui && npm run test:workspace && npm run test:workspace-ui && npm run test:calendar && npm run test:offers && npm run test:offer-ui && npm run test:owner-alerts && npm run test:journey && npm run test:enquiry-intake && npm run test:enquiry-conversations && npm run test:enquiry-conversation-ui && npm run test:enquiry-journey && npm run test:reply-ui && npm run test:quotes",
+    "test": "npm run test:legacy && npm run test:brand && npm run test:conversation && npm run test:capture && npm run test:capture-crm && npm run test:website-enquiries && npm run test:capture-operations && npm run test:upgrade && npm run test:live-context && npm run test:capture-ui && npm run test:marketing-ui && npm run test:marketing-enquiries && npm run test:staging-site && npm run test:booking && npm run test:booking-ui && npm run test:workspace && npm run test:workspace-ui && npm run test:calendar && npm run test:offers && npm run test:offer-ui && npm run test:owner-alerts && npm run test:journey && npm run test:enquiry-intake && npm run test:enquiry-conversations && npm run test:enquiry-conversation-ui && npm run test:enquiry-journey && npm run test:reply-ui && npm run test:quotes && npm run test:followup",
     "test:legacy": "node scripts/smoke-demo.js && node scripts/smoke-fram.js && node scripts/smoke-fyllingsdalen.js && node scripts/smoke-onsoy.js && node scripts/smoke-tiller.js && node scripts/smoke-trafikk1.js && node scripts/smoke-frankolsen.js && node scripts/smoke-analytics.js && node scripts/smoke-roma.js",
     "test:conversation": "node scripts/test-conversation.js",
     "test:capture": "node scripts/test-capture.js",
@@ -50,7 +50,8 @@
     "test:enquiry-journey": "node scripts/test-enquiry-journey.js",
     "test:reply-ui": "node scripts/test-reply-ui.js",
     "test:quotes": "node scripts/test-quote-flow.js && node scripts/test-quote-flow-ui.js",
-    "offers:operations": "node scripts/offer-delivery-operations.js"
+    "offers:operations": "node scripts/offer-delivery-operations.js",
+    "test:followup": "node scripts/test-followup-demo.js && node scripts/test-followup-pilot.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

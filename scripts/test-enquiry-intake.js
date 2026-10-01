@@ -278,4 +278,11 @@ async function main() {
     console.log(`Enquiry intake checks passed: ${checks}. ${db.real ? 'Real PostgreSQL concurrency' : 'PGlite persistence'}. Synthetic data only; no messages sent.`);
   } finally { if (server) await new Promise(resolve => server.close(resolve)); await runtime.close(); await db.close(); }
 }
-main().catch(error => { console.error(error); process.exitCode = 1; });
+main().then(() => {
+  if (!process.argv.includes('--postgres')) return;
+  const result = require('node:child_process').spawnSync(process.execPath,
+    [require('node:path').join(__dirname, 'test-followup-pilot.js'), '--postgres'],
+    { stdio: 'inherit', timeout: 120000 });
+  if (result.error) throw result.error;
+  if (result.status !== 0) throw new Error('Follow-up PostgreSQL acceptance rehearsal failed');
+}).catch(error => { console.error(error); process.exitCode = 1; });

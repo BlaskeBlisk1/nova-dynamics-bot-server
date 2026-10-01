@@ -70,7 +70,7 @@
       if (state.task) return [state.task.action === 'callback' ? 'Ring kunden ' + date(state.task.due) : 'Følg opp ' + date(state.task.due), state.task.note || 'Oppgaven ligger hos eieren. Ingen automatisk kundemelding sendes.'];
       if (state.quote?.response === 'declined') return ['Avklar om saken skal avsluttes', 'Kunden har takket nei. Du bestemmer om saken avsluttes eller følges opp senere.'];
       if (state.status === 'response') return ['Følg opp kundens svar', 'Avklar neste steg, juster forslaget eller planlegg personlig kontakt.'];
-      if (state.quote && !state.quote.response) return ['Avvent svar på prisforslaget', 'Du kan planlegge en oppfølging eller se kundens side.'];
+      if (state.quote && !state.quote.response && !(state.question && !state.answer)) return ['Avvent svar på prisforslaget', 'Du kan planlegge en oppfølging eller se kundens side.'];
       if (state.question && !state.answer) return ['Avvent kundens avklaring', 'Spørsmålet og svaret følger den samme saken.'];
       return ['Vurder behovet og lag et prisforslag', 'Du bestemmer pris og omfang. Jemlio holder saken samlet.'];
     }
@@ -116,7 +116,7 @@
         if (!check.checked || title.value.trim().length < 3 || description.value.trim().length < 10 || !['incl_vat', 'not_vat'].includes(basis.value) || !['3', '7', '14', '30'].includes(days.value)) throw new Error();
         const totalOre = S.parseAmount(amount.value); remember();
         state.quote = { title: title.value.trim(), description: description.value.trim(), totalOre, priceBasis: basis.value, version: (state.quote?.version || 0) + 1, expiresAt: new Date(Date.now() + Number(days.value) * 86400000).toISOString(), response: null, responseNote: '' };
-        state.status = 'waiting'; state.task = null; addEvent('Prisforslag v' + state.quote.version + ' godkjent · ' + money(totalOre) + ' · eksempel.'); go('sent');
+        state.question = ''; state.status = 'waiting'; state.task = null; addEvent('Prisforslag v' + state.quote.version + ' godkjent · ' + money(totalOre) + ' · eksempel.'); go('sent');
       });
       actions(button('Tilbake til saken', () => go('overview'), true));
     }
@@ -185,7 +185,7 @@
       submit(form, 'Lagre eksempelresultatet', () => { if (!check.checked || !choices.some(([v]) => v === choice.value)) throw new Error(); state.status = choice.value; state.task = null; addEvent('Eieren registrerte: ' + statuses[state.status] + '.'); go('overview'); });
       actions(button('Tilbake til saken', () => go('overview'), true));
     }
-    function confirmReset() { go('reset'); }
+    function confirmReset() { const current = sessions.get(host); if (current && current !== session) return current.api.confirmReset(); go('reset'); }
     function render() {
       session.revision++; host.replaceChildren();
       card = text('section', undefined, 'followup-demo'); card.setAttribute('aria-label', 'Jemlio Oppfølging · fiktiv eksempelsak'); host.append(card);
@@ -199,7 +199,7 @@
       const h = card.querySelector('h3'); h?.focus({ preventScroll: true });
       host.scrollTop = 0;
     }
-    const api = { getState: () => JSON.parse(JSON.stringify(state)), confirmReset, show: () => render() };
+    const api = { getState: () => JSON.parse(JSON.stringify(sessions.get(host).state)), confirmReset, show: () => render() };
     session.api = api; render(); return api;
   }
   window.JemlioFollowupDemo = { mount };
