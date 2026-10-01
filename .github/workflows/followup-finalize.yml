@@ -27,14 +27,16 @@ jobs:
         with:
           node-version: '>=24.15.0 <25'
           package-manager-cache: false
-      - name: Apply checked integration and regression fixes
+      - name: Apply checked integration without changing the existing CI workflow
         run: |
           python3 - <<'PY'
-          import textwrap
+          import textwrap,subprocess
           from pathlib import Path
           original=Path('.github/workflows/followup-integrate.yml').read_text()
           integration=original.split("          python3 - <<'PY'\n",1)[1].split('\n          PY',1)[0]
           exec(textwrap.dedent(integration))
+          # The existing CI definition is retained exactly; no additional workflow permission is requested.
+          Path('.github/workflows/jemlio-ci.yml').write_bytes(subprocess.check_output(['git','show','HEAD:.github/workflows/jemlio-ci.yml']))
           p='scripts/test-followup-demo.js'
           replace(p,"h.d.querySelector('[name=description]')","h.d.querySelector('.followup-demo [name=description]')")
           old="h.click('Ja, start på nytt'); assert.match(h.d.querySelector('.fu-badge').textContent, /Ny henvendelse/);"
@@ -45,7 +47,18 @@ jobs:
           replace(p,"function confirmReset() { go('reset'); }","function confirmReset() { const current = sessions.get(host); if (current && current !== session) return current.api.confirmReset(); go('reset'); }")
           replace(p,"getState: () => JSON.parse(JSON.stringify(state))","getState: () => JSON.parse(JSON.stringify(sessions.get(host).state))")
           replace('scripts/test-staging-site-task.cjs','only fifteen allowlisted','only seventeen allowlisted')
+          # Extend the existing PostgreSQL test entrypoint only after its database connections close.
+          p='scripts/test-enquiry-intake.js'
+          replace(p,"main().catch(error => { console.error(error); process.exitCode = 1; });", """main().then(() => {
+            if (!process.argv.includes('--postgres')) return;
+            const result = require('node:child_process').spawnSync(process.execPath,
+              [require('node:path').join(__dirname, 'test-followup-pilot.js'), '--postgres'],
+              { stdio: 'inherit', timeout: 120000 });
+            if (result.error) throw result.error;
+            if (result.status !== 0) throw new Error('Follow-up PostgreSQL acceptance rehearsal failed');
+          }).catch(error => { console.error(error); process.exitCode = 1; });""")
           PY
+          git diff --exit-code HEAD -- .github/workflows/jemlio-ci.yml
       - run: npm ci --ignore-scripts
       - run: npm test
       - name: Commit verified implementation on the development branch only
@@ -53,7 +66,7 @@ jobs:
           git config user.name 'Jemlio implementation'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git rm .github/workflows/followup-finalize.yml .github/workflows/followup-integrate.yml .github/workflows/followup-audit-snapshot.yml
-          git add public/marketing lib/workspace/runtime.js package.json scripts .github/workflows/jemlio-ci.yml docs
+          git add public/marketing lib/workspace/runtime.js package.json scripts docs
           git commit -m 'Integrate polished single-case follow-up and authenticated pilot rehearsal'
           git push origin HEAD:jemlio/followup-polish-20261001
       - name: Archive source for offline review
