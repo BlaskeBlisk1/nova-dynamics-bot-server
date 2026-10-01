@@ -1,0 +1,33 @@
+/* The follow-up workspace is an isolated synthetic product demonstration. */
+.followup-demo{--fu-text:#e7edf5;--fu-muted:#becbd8;--fu-line:#45586c;--fu-blue:#b7d1ef;box-sizing:border-box;width:100%;padding:24px;color:var(--fu-text);background:#202a35;font-size:14px;line-height:1.6;overflow-wrap:anywhere;text-align:left}
+.followup-demo *{box-sizing:border-box}.followup-demo h3{font-size:24px;line-height:1.3;margin:6px 0 12px;letter-spacing:-.025em;color:var(--fu-text)}
+.followup-demo p{margin:0 0 14px}.fu-copy,.fu-notice{color:var(--fu-muted)}.followup-demo .fu-notice{font-size:12px;line-height:1.7;margin:10px 0 20px}
+.fu-top{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:20px}.fu-top>span:first-child{font-size:10px;letter-spacing:.07em;color:var(--fu-muted);flex:1}
+.fu-badge{border:1px solid #647d97;border-radius:5px;background:#2b3b4c;color:#dfebf9;display:inline-flex;align-items:center;padding:4px 8px;font-size:11px;line-height:1.5;white-space:nowrap}
+.followup-demo button{font:inherit;cursor:pointer;border-radius:8px;min-height:44px;padding:10px 16px;white-space:normal;line-height:1.5;transition:background .15s ease,border-color .15s ease}
+.followup-demo .fu-primary{border:1px solid var(--fu-blue);background:var(--fu-blue);color:#172d46;font-weight:650}.followup-demo .fu-secondary{border:1px solid #68819a;background:transparent;color:var(--fu-text)}
+.followup-demo .fu-top button{min-height:36px;font-size:11px;padding:7px 10px}.followup-demo button:hover{filter:brightness(1.07)}.followup-demo :focus-visible{outline:3px solid #d8eaff;outline-offset:3px}
+.followup-demo button:disabled{opacity:.55;cursor:default}.fu-progress{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;list-style:none;margin:0 0 24px;padding:0}
+.fu-progress li{border-top:2px solid #586b7f;font-size:10px;line-height:1.5;padding-top:7px;color:var(--fu-muted)}.fu-progress [data-state=done]{border-color:#8abca9}.fu-progress [data-state=current]{border-color:var(--fu-blue);color:#edf5ff;font-weight:700}
+.followup-demo .fu-role{font-size:10px;letter-spacing:.1em;font-weight:750;color:#b4cde7;margin:0 0 5px}
+.fu-counts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:22px 0 20px}.fu-counts>div{background:#19232d;border:1px solid var(--fu-line);border-radius:9px;padding:12px}
+.fu-counts strong{display:block;font-size:25px;line-height:1.3;font-weight:650}.fu-counts span{display:block;font-size:11px;color:var(--fu-muted);margin-top:5px}
+.fu-person{border-top:1px solid var(--fu-line);padding-top:16px;display:flex;gap:12px;align-items:center;margin-bottom:10px}.fu-person strong{flex:1}.fu-person .fu-badge{white-space:normal}
+.fu-avatar{display:grid;place-items:center;width:32px;height:32px;border-radius:8px;flex-shrink:0;background:#2a3c50;border:1px solid #5e7791;color:#c6dff7}
+.fu-next{border:1px solid #91acc8;border-left:3px solid #bbd6f2;border-radius:7px;padding:15px;background:#2a3a4b;margin:16px 0 12px}.fu-next>span{display:block;font-size:10px;font-weight:750;letter-spacing:.08em;color:#bcd4eb}.fu-next>strong{display:block;font-size:16px;line-height:1.5;margin:2px 0}.fu-next p{font-size:12px;line-height:1.6;margin:0;color:#d0dce8}
+.fu-actions{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 20px}.fu-actions>button{flex:1 1 145px}.fu-details{border-top:1px solid var(--fu-line);padding:15px 0}.fu-details:last-child{padding-bottom:0}.fu-details summary{font-size:12px;color:#d7e3ef;cursor:pointer;padding:7px 0}.fu-details p{font-size:12px;color:var(--fu-muted);margin:12px 0}.fu-details button{margin-top:10px;margin-right:7px;font-size:12px}
+.fu-history{list-style:decimal;padding-left:21px;color:var(--fu-muted);font-size:12px}.fu-history li{margin:12px 0;padding-left:3px}
+.fu-summary{display:grid;grid-template-columns:minmax(90px,.35fr) minmax(0,1fr);gap:8px 12px;padding:15px 0;border-block:1px solid var(--fu-line);margin:14px 0 18px}
+.fu-summary dt{color:var(--fu-muted);font-size:12px}.fu-summary dd{color:var(--fu-text);margin:0;white-space:pre-wrap;font-size:13px}
+.fu-form{display:grid;gap:15px;margin:18px 0}.fu-field{display:grid;gap:6px;font-size:13px}.fu-field>span{font-weight:650;color:var(--fu-text)}
+.followup-demo input:not([type=checkbox]),.followup-demo select,.followup-demo textarea{background:#151f2a;color:#eff5fd;border:1px solid #6b829a;border-radius:7px;font:inherit;min-height:44px;width:100%;min-width:0;padding:10px 12px;margin:0}.followup-demo textarea{resize:vertical}
+.fu-check{display:flex;gap:10px;align-items:flex-start;font-size:12px;color:var(--fu-muted)}.fu-check input{accent-color:#b8d3ee;width:18px;height:18px;flex:0 0 18px;margin:3px 0}
+.followup-demo .fu-error{border:1px solid #d99885;border-radius:7px;background:#6d322d55;color:#ffddd2;padding:10px;font-size:13px}
+/* Let the page scroll: forms must not be trapped in a second small scroll area. */
+#demo-panel:has(.followup-demo){height:auto;max-height:none}#demo-messages:has(.followup-demo){padding:0;height:auto!important;max-height:none!important;min-height:0;overflow:visible;flex:none}
+#demo-panel:has(.followup-demo)>#demo-form,#demo-panel:has(.followup-demo)>#demo-suggestions,#demo-panel:has(.followup-demo)>.qf-entry,#demo-panel:has(.followup-demo)>#followup-chat-return{display:none!important}
+body:has(.followup-demo) #chat-launcher,body:has(.followup-demo) #support-panel{display:none!important}#demo:has(.followup-demo)>.demo-journey{display:none}
+#followup-chat-return{margin:12px 16px;padding:10px 14px;min-height:44px;border:1px solid #6b829a;border-radius:8px;background:#b7d1ef;color:#172d46;cursor:pointer;font:inherit}
+#followup-chat-return[hidden]{display:none}
+@media(max-width:600px){.followup-demo{padding:18px}.followup-demo h3{font-size:23px}.fu-top button{flex:1 1 100%;text-align:left}.fu-actions{display:grid;grid-template-columns:1fr}.fu-summary{grid-template-columns:1fr;gap:3px}.fu-summary dd{margin-bottom:9px}.fu-person{gap:9px}.fu-person .fu-badge{max-width:44%}.fu-counts>div{padding:9px}.fu-counts span{font-size:10px}.fu-progress li{font-size:9px}.followup-demo input:not([type=checkbox]),.followup-demo select,.followup-demo textarea{font-size:16px}}
+@media(prefers-reduced-motion:reduce){.followup-demo button{transition:none}}
