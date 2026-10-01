@@ -4,7 +4,7 @@
   const examples = {
     driving: { client: 'jemlio-driving-demo', title: 'Trafikkskoleassistent', industry: 'Trafikkskole', greeting: 'Hei! Jeg er assistenten til en fiktiv trafikkskole. Spør om kjøretimer eller booking. Du kan også spørre hvordan Jemlio hjelper bedriften med oppfølging etter en henvendelse.', questions: ['Hva koster en kjøretime?', 'Hvordan bestiller jeg time?', 'Hva skjer etter henvendelsen?'] },
     optician: { client: 'jemlio-optician-demo', title: 'Optikerassistent', industry: 'Optiker', greeting: 'Hei! Jeg er assistenten til en fiktiv optiker. Spør om synsundersøkelser eller booking. Du kan også spørre hvordan Jemlio hjelper bedriften med henvendelser og oppfølging.', questions: ['Hva koster en synsundersøkelse?', 'Hvordan bestiller jeg en synstest?', 'Hva skjer etter henvendelsen?'] },
-    workflow: { client: 'jemlio', title: 'Jemlios arbeidsflyt', greeting: 'Hva skjer etter kundens første spørsmål? Jeg kan forklare henvendelser, booking, prisforslag og personlig oppfølging. Du kan stille spørsmål her og prøve arbeidsoversikten med fiktive data via lenkene under.', questions: ['Hvordan fungerer oppfølgingen?', 'Hvordan fungerer prisforslag?', 'Hva viser resultatrapporten?'] }
+    workflow: { client: 'jemlio', title: 'Jemlio Oppfølging', greeting: 'Hva skjer etter kundens første spørsmål? Jeg kan forklare henvendelser, booking, prisforslag og personlig oppfølging. Du kan stille spørsmål her og prøve arbeidsoversikten med fiktive data via lenkene under.', questions: ['Hvordan fungerer oppfølgingen?', 'Hvordan fungerer prisforslag?', 'Hva viser resultatrapporten?'] }
   };
   // On the marketing host, Netlify proxies only this endpoint to the stable API.
   const api = '/chat';
@@ -122,6 +122,18 @@
   let selected = 'driving';
   const demo = chat('demo', () => examples[selected].client, () => { $('demo-next').hidden = false; });
   const tabs = [...document.querySelectorAll('[data-demo]')];
+  let followup = null;
+  function showFollowup() {
+    demo.reset('', []);
+    const host = $('demo-messages'); host.setAttribute('role', 'region'); host.setAttribute('aria-live', 'off');
+    followup = window.JemlioFollowupDemo.mount(host, { onClose: () => {
+      host.setAttribute('role', 'log'); host.setAttribute('aria-live', 'polite');
+      demo.reset(examples.workflow.greeting, examples.workflow.questions);
+      if ($('followup-chat-return')) $('followup-chat-return').hidden = false;
+      $('demo-input').focus();
+    } });
+    if ($('followup-chat-return')) $('followup-chat-return').hidden = true;
+  }
   function select(kind, focus = false) {
     if (!examples[kind]) return;
     selected = kind;
@@ -132,7 +144,10 @@
     $('demo-note').textContent = kind === 'workflow' ? 'Prøv med fiktive data. Ingen meldinger sendes.' : 'Priser og tjenester er fiktive. Ingen bestillinger blir gjort.';
     $('demo-input').placeholder = kind === 'workflow' ? 'Spør om booking, prisforslag eller oppfølging …' : 'Hva ville kundene dine spurt om?';
     $('demo-panel').setAttribute('aria-labelledby', 'tab-' + kind);
-    demo.reset(examples[kind].greeting, examples[kind].questions);
+    if ($('followup-chat-return')) $('followup-chat-return').hidden = true;
+    $('demo-messages').setAttribute('role', 'log'); $('demo-messages').setAttribute('aria-live', 'polite');
+    if (kind === 'workflow' && window.JemlioFollowupDemo) showFollowup();
+    else demo.reset(examples[kind].greeting, examples[kind].questions);
   }
   tabs.forEach((tab, index) => {
     tab.addEventListener('click', () => select(tab.dataset.demo));
@@ -143,7 +158,12 @@
       select(tabs[next].dataset.demo, true);
     });
   });
-  $('demo-reset').addEventListener('click', () => { select(selected); $('demo-input').focus(); });
+  $('demo-reset').addEventListener('click', () => {
+    if (selected === 'workflow' && followup && $('demo-messages').querySelector('.followup-demo')) followup.confirmReset();
+    else { select(selected); if (!$('demo-messages').querySelector('.followup-demo')) $('demo-input').focus(); }
+  });
+  $('followup-chat-return')?.addEventListener('click', () => { if (window.JemlioFollowupDemo) showFollowup(); });
+  document.querySelectorAll('[data-open-followup]').forEach(a => a.addEventListener('click', () => select('workflow')));
   $('demo-tailor').addEventListener('click', () => {
     // Only the explicitly chosen example category crosses into the contact form.
     // No question, answer or conversation content is copied or stored.
@@ -151,7 +171,7 @@
     $('contact-company').focus({ preventScroll: true });
     updateEmailDraft();
   });
-  document.querySelectorAll('[data-try]').forEach(button => button.addEventListener('click', () => { select(button.dataset.try); $('demo').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' }); $('demo-input').focus({ preventScroll: true }); }));
+  document.querySelectorAll('[data-try]').forEach(button => button.addEventListener('click', () => { select(button.dataset.try); $('demo').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' }); if (!$('demo-messages').querySelector('.followup-demo')) $('demo-input').focus({ preventScroll: true }); }));
   const support = chat('support', () => 'jemlio');
   $('support-reset').addEventListener('click', () => {
     support.reset('Hei! Spør meg om Jemlios chat, booking, prisforslag eller oppfølging. Jeg kan vise deg hvordan du prøver funksjonene med fiktive data eller ber om en demo for bedriften din.',

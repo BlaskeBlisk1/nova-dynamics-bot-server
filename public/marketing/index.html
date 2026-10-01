@@ -22,6 +22,8 @@
   <link rel="stylesheet" href="./quote-flow.css">
   <script src="./quote-schema.js" defer></script>
   <script src="./quote-flow.js" defer></script>
+  <link rel="stylesheet" href="./followup-demo.css">
+  <script src="./followup-demo.js" defer></script>
   <script src="./site.js" defer></script>
 </head>
 <body>
@@ -41,7 +43,7 @@
         <h1 id="hero-title">Fra spørsmål<br>til <span>neste steg</span></h1>
         <p class="hero-intro">Chatbot og oppfølging<br class="desktop-break"> tilpasset bedriften din</p>
         <p class="hero-description">Gi besøkende svar og hjelp til å ta neste steg. Samle henvendelser, prisforslag og oppfølging på ett sted. Vi hjelper deg med oppsett og testing, mens du beholder den personlige kundekontakten.</p>
-        <div class="hero-actions"><a class="button" href="#contact">Få en gratis demo for bedriften din <span aria-hidden="true">↗</span></a><a class="text-link" href="https://nova-dynamics-bot-server.onrender.com/journey-demo">Prøv hele kundereisen <span aria-hidden="true">↗</span></a></div>
+        <div class="hero-actions"><a class="button" href="#contact">Få en gratis demo for bedriften din <span aria-hidden="true">↗</span></a><a class="text-link" href="#demo" data-open-followup>Prøv oppfølgingen <span aria-hidden="true">↗</span></a></div>
         <p class="quiet-note">Prøv en gratis mini-demo med din informasjon.<br>Du trenger ikke abonnement og forplikter deg ikke til videre bruk.</p>
       </div>
 
@@ -51,6 +53,7 @@
         <section class="chat-surface" id="demo-panel" role="tabpanel" aria-labelledby="tab-driving">
           <div class="chat-head"><span class="chat-avatar"><img src="./assets/jemlio-orbit.webp" alt="" width="42" height="42"></span><div><strong id="demo-title">Trafikkskoleassistent</strong><span>Prøv med dine egne ord</span></div><span class="example-badge" id="demo-badge">Eksempel</span></div>
           <div id="demo-messages" class="messages" role="log" aria-live="polite" aria-label="Samtale med eksempelassistent" tabindex="0"><div class="message assistant"><p>Hei! Jeg er assistenten til en fiktiv trafikkskole. Spør om kjøretimer eller booking. Du kan også spørre hvordan Jemlio hjelper bedriften med oppfølging etter en henvendelse.</p></div></div>
+          <button id="followup-chat-return" type="button" hidden>Tilbake til eksempelsaken</button>
           <div id="demo-suggestions" class="suggestions" aria-label="Forslag til spørsmål"><button type="button">Hva koster en kjøretime?</button><button type="button">Hvordan bestiller jeg time?</button><button type="button">Hva skjer etter henvendelsen?</button></div>
           <form id="demo-form" class="chat-form"><label class="sr-only" for="demo-input">Spør eksempelassistenten</label><input id="demo-input" name="message" placeholder="Hva ville kundene dine spurt om?" maxlength="1200" autocomplete="off" enterkeyhint="send" required><button class="send-button" type="submit" aria-label="Send spørsmål"><span aria-hidden="true">↑</span></button></form>
           <div class="qf-entry"><button id="quote-flow-launcher" class="qf-launch" type="button">Prøv henvendelse → prisforslag → kundesvar</button><small>Du prøver kundens og bedriftens side. Ingen e-post sendes.</small></div>
