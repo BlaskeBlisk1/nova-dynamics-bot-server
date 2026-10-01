@@ -1,0 +1,98 @@
+name: Integrate and verify follow-up polish
+on:
+  push:
+    branches: ['jemlio/followup-polish-20261001']
+    paths: ['.github/workflows/followup-integrate.yml']
+permissions:
+  contents: write
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NODE_ENV: test
+      OPENAI_API_KEY: ''
+      RESEND_API_KEY: ''
+      NOVA_DATABASE_URL: ''
+      NOVA_CAPTURE_ENABLED: 'false'
+      NOVA_CAPTURE_WORKER_ENABLED: 'false'
+      JEMLIO_WORKSPACE_ENABLED: 'false'
+      JEMLIO_CONVERSATIONS_ENABLED: 'false'
+      JEMLIO_OFFER_SEND_ENABLED: 'false'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: jemlio/followup-polish-20261001
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '>=24.15.0 <25'
+          package-manager-cache: false
+      - name: Apply bounded integration edits
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          def replace(path,old,new):
+              p=Path(path);s=p.read_text();assert s.count(old)==1, (path,old)
+              p.write_text(s.replace(old,new))
+          p='public/marketing/index.html'
+          replace(p,'  <script src="./site.js" defer></script>','  <link rel="stylesheet" href="./followup-demo.css">\n  <script src="./followup-demo.js" defer></script>\n  <script src="./site.js" defer></script>')
+          replace(p,'          <div id="demo-suggestions"','          <button id="followup-chat-return" type="button" hidden>Tilbake til eksempelsaken</button>\n          <div id="demo-suggestions"')
+          replace(p,'<a class="text-link" href="https://nova-dynamics-bot-server.onrender.com/journey-demo">Prøv hele kundereisen','<a class="text-link" href="#demo" data-open-followup>Prøv oppfølgingen')
+          p='public/marketing/site.js'
+          replace(p,"title: 'Jemlios arbeidsflyt'","title: 'Jemlio Oppfølging'")
+          replace(p,"  const tabs = [...document.querySelectorAll('[data-demo]')];", """  const tabs = [...document.querySelectorAll('[data-demo]')];
+            let followup = null;
+            function showFollowup() {
+              demo.reset('', []);
+              const host = $('demo-messages'); host.setAttribute('role', 'region'); host.setAttribute('aria-live', 'off');
+              followup = window.JemlioFollowupDemo.mount(host, { onClose: () => {
+                host.setAttribute('role', 'log'); host.setAttribute('aria-live', 'polite');
+                demo.reset(examples.workflow.greeting, examples.workflow.questions);
+                if ($('followup-chat-return')) $('followup-chat-return').hidden = false;
+                $('demo-input').focus();
+              } });
+              if ($('followup-chat-return')) $('followup-chat-return').hidden = true;
+            }""")
+          replace(p,"    demo.reset(examples[kind].greeting, examples[kind].questions);", """    if ($('followup-chat-return')) $('followup-chat-return').hidden = true;
+              $('demo-messages').setAttribute('role', 'log'); $('demo-messages').setAttribute('aria-live', 'polite');
+              if (kind === 'workflow' && window.JemlioFollowupDemo) showFollowup();
+              else demo.reset(examples[kind].greeting, examples[kind].questions);""")
+          replace(p,"  $('demo-reset').addEventListener('click', () => { select(selected); $('demo-input').focus(); });", """  $('demo-reset').addEventListener('click', () => {
+              if (selected === 'workflow' && followup && $('demo-messages').querySelector('.followup-demo')) followup.confirmReset();
+              else { select(selected); if (!$('demo-messages').querySelector('.followup-demo')) $('demo-input').focus(); }
+            });
+            $('followup-chat-return')?.addEventListener('click', () => { if (window.JemlioFollowupDemo) showFollowup(); });
+            document.querySelectorAll('[data-open-followup]').forEach(a => a.addEventListener('click', () => select('workflow')));""")
+          replace(p,"$('demo-input').focus({ preventScroll: true }); }));", "if (!$('demo-messages').querySelector('.followup-demo')) $('demo-input').focus({ preventScroll: true }); }));")
+          p='lib/workspace/runtime.js'
+          replace(p,'function createWorkspaceRuntime({env=process.env,pool:injected,now=Date.now}={})','function createWorkspaceRuntime({env=process.env,pool:injected,now=Date.now,sendMessage}={})')
+          replace(p,'const conversations=createConversations({env,pool,cfg,now});','const conversations=createConversations({env,pool,cfg,now,sendMessage});')
+          p=Path('package.json');data=json.loads(p.read_text());assert 'test:followup' not in data['scripts'];data['scripts']['test:followup']='node scripts/test-followup-demo.js && node scripts/test-followup-pilot.js';data['scripts']['test']+=' && npm run test:followup';p.write_text(json.dumps(data,indent=2)+'\n')
+          p=Path('.github/workflows/jemlio-ci.yml');s=p.read_text();assert 'test-followup-pilot.js' not in s;p.write_text(s+'      - name: Rehearse the complete authenticated follow-up workflow\n        run: node scripts/test-followup-pilot.js --postgres\n')
+          p='scripts/staging-site-task.cjs'
+          replace(p,"'quote-schema.js', 'quote-flow.js', 'quote-flow.css']);","'quote-schema.js', 'quote-flow.js', 'quote-flow.css', 'followup-demo.js', 'followup-demo.css']);")
+          p='scripts/test-staging-site-task.cjs'
+          replace(p,'assert.equal(FILES.length, 15)','assert.equal(FILES.length, 17)')
+          replace(p,'assert.equal(first.files, 15)','assert.equal(first.files, 17)')
+          PY
+      - run: npm ci --ignore-scripts
+      - run: npm test
+      - name: Save verified integration on development branch
+        run: |
+          git config user.name 'Jemlio implementation'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/followup-integrate.yml .github/workflows/followup-audit-snapshot.yml
+          git add public/marketing lib/workspace/runtime.js package.json scripts .github/workflows/jemlio-ci.yml docs
+          git commit -m 'Integrate structured follow-up demo and complete pilot HTTP rehearsal'
+          git push origin HEAD:jemlio/followup-polish-20261001
+      - name: Archive source for offline review
+        if: always()
+        run: tar --exclude=.git --exclude=node_modules --exclude=followup-review.tar -cf followup-review.tar .
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: followup-review
+          path: followup-review.tar
+          retention-days: 3
+          if-no-files-found: error
