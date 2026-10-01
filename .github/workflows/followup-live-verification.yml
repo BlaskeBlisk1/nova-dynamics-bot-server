@@ -1,0 +1,73 @@
+name: Read-only follow-up release verification
+on:
+  push:
+    branches: ['jemlio/followup-polish-20261001']
+    paths: ['.github/workflows/followup-live-verification.yml']
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '>=24.15.0 <25'
+          package-manager-cache: false
+      - run: npm ci --ignore-scripts
+      - name: Read public website and compare reviewed assets
+        run: |
+          python3 - <<'PY'
+          import json,time,hashlib,urllib.request,urllib.error
+          from pathlib import Path
+          expected={'site.js':'c018e7e9c62ef4e1960516fda2e9b6761967b122c3c0f1468cc454f1f4368560','followup-demo.js':'e8458bf32eb993436bdc46402671eff3b671ab04ead3aaf52a09c58678c69800','followup-demo.css':'0e40dff9f8b54e11302282e93b147c995728cd5a3d9f4c90c72b368c77fc7e15'}
+          def get(url):
+              with urllib.request.urlopen(urllib.request.Request(url,headers={'Cache-Control':'no-cache'}),timeout=20) as r:
+                  assert r.status==200
+                  return r.read()
+          render='https://nova-dynamics-bot-server.onrender.com'
+          report={'render':{},'website':{},'prospectDemos':{},'productionReadiness':{},'errors':[]}
+          report['render']['revision']=json.loads(get(render+'/api/release'))['revision']
+          assert report['render']['revision']=='ee1d1e8fc93f2293305374ad794543963db4231f'
+          for name,digest in expected.items():report['render'][name]=hashlib.sha256(get(render+'/marketing/'+name)).hexdigest()==digest
+          for client in ['fram','fyllingsdalen','onsoy','tiller','trafikk1','frankolsen','roma']:
+              page=get(render+'/demos/'+client);config=json.loads(get(render+'/api/demo-config/'+client))
+              report['prospectDemos'][client]={'pageAvailable':bool(page),'correctClient':config['client']==client,'captureEnabled':config.get('features',{}).get('capture',{}).get('enabled',False)}
+          try:
+              get(render+'/api/workspace/session');report['productionReadiness']['workspaceHttpStatus']=200
+          except urllib.error.HTTPError as e:report['productionReadiness']['workspaceHttpStatus']=e.code
+          for attempt in range(30):
+              try:
+                  html=get('https://www.jemlio.com/');decoded=html.decode()
+                  assert 'followup-demo.js' in decoded and 'followup-chat-return' in decoded
+                  downloaded={name:get('https://www.jemlio.com/'+name) for name in expected}
+                  report['website']={name:hashlib.sha256(data).hexdigest()==expected[name] for name,data in downloaded.items()}
+                  assert all(report['website'].values())
+                  report['website']['followupControls']=True
+                  report['website']['nativeEnquiryForm']='name="jemlio-demo-request"' in decoded and 'https://www.jemlio.com/demo-requested' in decoded
+                  Path('public/marketing/index.html').write_bytes(html)
+                  for name,data in downloaded.items():Path('public/marketing',name).write_bytes(data)
+                  Path('public/marketing/quote-schema.js').write_bytes(get('https://www.jemlio.com/quote-schema.js'))
+                  break
+              except Exception as e:
+                  if attempt==29:report['errors'].append(type(e).__name__)
+                  else:time.sleep(10)
+          report['productionReadiness']['realMessagesSentByAudit']=False
+          report['productionReadiness']['productionSchemaVerified']=False
+          Path('followup-live-report.json').write_text(json.dumps(report,indent=2));print(json.dumps(report,indent=2))
+          assert not report['errors'] and all(report['website'].values())
+          assert all(v for k,v in report['render'].items() if k!='revision')
+          assert all(x['pageAvailable'] and x['correctClient'] for x in report['prospectDemos'].values())
+          PY
+      - name: Exercise actual downloaded website scripts with network intercepted
+        run: node scripts/test-followup-demo.js
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: followup-live-report
+          path: followup-live-report.json
+          retention-days: 7
+          if-no-files-found: warn
