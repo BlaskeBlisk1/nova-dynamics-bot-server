@@ -1,0 +1,68 @@
+name: Finalize verified follow-up implementation
+on:
+  push:
+    branches: ['jemlio/followup-polish-20261001']
+    paths: ['.github/workflows/followup-finalize.yml']
+permissions:
+  contents: write
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NODE_ENV: test
+      OPENAI_API_KEY: ''
+      RESEND_API_KEY: ''
+      NOVA_DATABASE_URL: ''
+      NOVA_CAPTURE_ENABLED: 'false'
+      NOVA_CAPTURE_WORKER_ENABLED: 'false'
+      JEMLIO_WORKSPACE_ENABLED: 'false'
+      JEMLIO_CONVERSATIONS_ENABLED: 'false'
+      JEMLIO_OFFER_SEND_ENABLED: 'false'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: jemlio/followup-polish-20261001
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '>=24.15.0 <25'
+          package-manager-cache: false
+      - name: Apply checked integration and regression fixes
+        run: |
+          python3 - <<'PY'
+          import textwrap
+          from pathlib import Path
+          original=Path('.github/workflows/followup-integrate.yml').read_text()
+          integration=original.split("          python3 - <<'PY'\n",1)[1].split('\n          PY',1)[0]
+          exec(textwrap.dedent(integration))
+          p='scripts/test-followup-demo.js'
+          replace(p,"h.d.querySelector('[name=description]')","h.d.querySelector('.followup-demo [name=description]')")
+          old="h.click('Ja, start på nytt'); assert.match(h.d.querySelector('.fu-badge').textContent, /Ny henvendelse/);"
+          replace(p,old,old+" h.d.getElementById('demo-reset').click(); h.click('Behold saken'); assert.match(h.d.querySelector('.fu-badge').textContent, /Ny henvendelse/);")
+          p='public/marketing/followup-demo.js'
+          replace(p,"if (state.quote && !state.quote.response) return","if (state.quote && !state.quote.response && !(state.question && !state.answer)) return")
+          replace(p,"state.status = 'waiting'; state.task = null; addEvent('Prisforslag","state.question = ''; state.status = 'waiting'; state.task = null; addEvent('Prisforslag")
+          replace(p,"function confirmReset() { go('reset'); }","function confirmReset() { const current = sessions.get(host); if (current && current !== session) return current.api.confirmReset(); go('reset'); }")
+          replace(p,"getState: () => JSON.parse(JSON.stringify(state))","getState: () => JSON.parse(JSON.stringify(sessions.get(host).state))")
+          replace('scripts/test-staging-site-task.cjs','only fifteen allowlisted','only seventeen allowlisted')
+          PY
+      - run: npm ci --ignore-scripts
+      - run: npm test
+      - name: Commit verified implementation on the development branch only
+        run: |
+          git config user.name 'Jemlio implementation'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/followup-finalize.yml .github/workflows/followup-integrate.yml .github/workflows/followup-audit-snapshot.yml
+          git add public/marketing lib/workspace/runtime.js package.json scripts .github/workflows/jemlio-ci.yml docs
+          git commit -m 'Integrate polished single-case follow-up and authenticated pilot rehearsal'
+          git push origin HEAD:jemlio/followup-polish-20261001
+      - name: Archive source for offline review
+        if: always()
+        run: tar --exclude=.git --exclude=node_modules --exclude=followup-final.tar -cf followup-final.tar .
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: followup-final
+          path: followup-final.tar
+          retention-days: 3
+          if-no-files-found: error
