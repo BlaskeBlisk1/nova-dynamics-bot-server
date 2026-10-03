@@ -1,0 +1,25 @@
+'use strict';
+const assert=require('node:assert/strict'),{readFileSync}=require('node:fs'),{join}=require('node:path'),{JSDOM,VirtualConsole}=require('jsdom');
+const VVS=require('../public/marketing/vvs-profile');const read=p=>readFileSync(join(__dirname,'..',p),'utf8');const settle=()=>new Promise(r=>setImmediate(r));
+async function until(fn){for(let i=0;i<30;i++){if(fn())return;await settle();}assert.ok(fn(),'render settled');}
+let count=0;async function test(name,fn){await fn();console.log(`ok ${++count} - ${name}`);}
+function harness({lost=false,invalid=false,stallRead=false}={}){
+ const errors=[],requests=[],vc=new VirtualConsole();vc.on('jsdomError',e=>errors.push(e));
+ const dom=new JSDOM(read('public/job-request/index.html'),{url:'https://pilot.example.invalid/job-request/#'+(invalid?'bad':'a'.repeat(64)),runScripts:'outside-only',pretendToBeVisual:true,virtualConsole:vc});
+ const w=dom.window,d=w.document;let saved=false;
+ let release;const stalled=new Promise(r=>release=r);
+ w.fetch=async(url,options)=>{if(stallRead&&url.endsWith('/read'))await stalled;const b=JSON.parse(options.body);requests.push({url,body:b});if(url.endsWith('/read'))return {ok:true,json:async()=>({business:'Example plumber',privacyUrl:'https://pilot.example.invalid/privacy',services:VVS.SERVICES,form:VVS.form(),vvs:{postcodes:['0150']},submitted:saved,receipt:saved?'example-receipt':null})};saved=true;if(lost){lost=false;throw Error('connection lost');}return {ok:true,json:async()=>({receipt:'example-receipt'})};};
+ for(const p of ['public/marketing/quote-schema.js','public/marketing/vvs-profile.js','public/job-request/app.js'])w.eval(read(p));
+ const fill=(name,value)=>{const e=d.querySelector('[name="'+name+'"]');assert.ok(e,name);e.value=value;};
+ const click=label=>{const e=[...d.querySelectorAll('button')].find(b=>b.textContent===label);assert.ok(e,label);e.click();};
+ function complete(){fill('name','Kari Example');fill('email','kari@example.invalid');fill('problem','Replace kitchen tap <img src=x onerror=alert(1)>');fill('urgency','Planlagt arbeid');fill('postcode','0150');fill('address','Eksempelveien 12');}
+ return {w,d,requests,fill,click,complete,release,close:()=>{assert.deepEqual(errors,[]);w.close();}};
+}
+(async()=>{
+ await test('private link is scrubbed, analytics absent, and reviewed details post once',async()=>{const h=harness();try{await until(()=>h.d.querySelector('[name=name]'));assert.equal(h.w.location.hash,'');assert.equal(h.w.localStorage.length,0);assert.equal(h.w.sessionStorage.length,0);h.complete();h.click('Se over forespørselen');assert.equal(h.requests.filter(r=>r.url.endsWith('/submit')).length,0);assert.match(h.d.querySelector('dl').textContent,/<img/);assert.equal(h.d.querySelector('img'),null);h.d.querySelector('[name=consent]').checked=true;h.click('Send forespørselen');await until(()=>h.d.body.textContent.includes('Forespørselen er registrert'));assert.equal(h.requests.filter(r=>r.url.endsWith('/submit')).length,1);assert.ok(h.requests.every(r=>r.url.startsWith('/api/missed-calls/')));assert.ok(h.requests.every(r=>!r.url.includes('a'.repeat(64))));}finally{h.close();}});
+ await test('an uncertain submission checks the saved status instead of automatically resending',async()=>{const h=harness({lost:true});try{await until(()=>h.d.querySelector('[name=name]'));h.complete();h.click('Se over forespørselen');h.d.querySelector('[name=consent]').checked=true;h.click('Send forespørselen');await until(()=>h.d.getElementById('status').textContent.includes('uavklart'));h.click('Kontroller lagret status');await until(()=>h.d.body.textContent.includes('Forespørselen er registrert'));assert.equal(h.requests.filter(r=>r.url.endsWith('/submit')).length,1);}finally{h.close();}});
+ await test('urgent request cannot advance and missing links make no request',async()=>{const h=harness();try{await until(()=>h.d.querySelector('[name=name]'));h.complete();h.fill('urgency','Akutt problem nå');h.click('Se over forespørselen');assert.match(h.d.getElementById('status').textContent,/akutt/);assert.equal(h.requests.filter(r=>r.url.endsWith('/submit')).length,0);}finally{h.close();}const invalid=harness({invalid:true});try{await settle();assert.equal(invalid.requests.length,0);}finally{invalid.close();}});
+ await test('page exit clears private form and bearer access from the DOM',async()=>{const h=harness();try{await until(()=>h.d.querySelector('[name=name]'));h.complete();h.w.dispatchEvent(new h.w.Event('pagehide'));assert.equal(h.d.getElementById('content').textContent,'');assert.equal(h.w.sessionStorage.length,0);}finally{h.close();}});
+ await test('late requests cannot redisplay private information after leaving the page',async()=>{const h=harness({stallRead:true});try{h.w.dispatchEvent(new h.w.Event('pagehide'));h.release();await settle();await settle();assert.equal(h.d.getElementById('content').textContent,'');assert.notEqual(h.d.getElementById('business').textContent,'Example plumber');}finally{h.close();}});
+ console.log(`Missed-call UI: ${count} groups passed. Network intercepted; no real submissions.`);
+})().catch(e=>{console.error(e);process.exitCode=1;});
