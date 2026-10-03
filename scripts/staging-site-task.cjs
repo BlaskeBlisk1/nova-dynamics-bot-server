@@ -12,7 +12,7 @@ const SERVICE = 'srv-daopc4tg1s2s7383pokg';
 const REPO = 'BlaskeBlisk1/nova-dynamics-bot-server';
 const FILES = Object.freeze(['_headers', '_redirects', 'assets/jemlio-orbit.webp',
   'assets/jemlio-wordmark.webp', 'demo-requested.html', 'form-definition.html', 'index.html', 'privacy.html',
-  'robots.txt', 'site.js', 'sitemap.xml', 'styles.css', 'quote-schema.js', 'quote-flow.js', 'quote-flow.css', 'followup-demo.js', 'followup-demo.css']);
+  'robots.txt', 'site.js', 'sitemap.xml', 'styles.css', 'quote-schema.js', 'quote-flow.js', 'quote-flow.css', 'followup-demo.js', 'followup-demo.css', 'vvs-profile.js', 'vvs-demo.js']);
 const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
 
 function configuration(env, at = Date.now()) {
