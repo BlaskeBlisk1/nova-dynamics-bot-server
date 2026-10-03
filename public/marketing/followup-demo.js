@@ -13,10 +13,20 @@
       quote: null, draft: { title: 'Flyttevask · 75 m²', description: 'Vask av leiligheten og vinduer innvendig. Endelig omfang og tidspunkt avklares med kunden.', amount: '4500', basis: 'incl_vat', days: '7' },
       question: '', answer: '', task: null, events: ['Henvendelsen er mottatt · eksempelsak J-1001.'] };
   }
-  function mount(host, { reset = false, onClose = () => {} } = {}) {
+  function mount(host, { reset = false, onClose = () => {}, scenario = null } = {}) {
     if (!host || !S) return null;
     let session = sessions.get(host);
-    if (!session || reset) { session = { state: initial(), revision: 0 }; sessions.set(host, session); }
+    if (!session || reset) {
+      const seed = scenario || session?.scenario;
+      const next = initial();
+      if (seed) {
+        for (const key of ['name','email','need']) if (typeof seed[key] === 'string') next[key] = seed[key].slice(0,1200);
+        next.draft = { ...next.draft, title: String(seed.title || 'VVS-forespørsel').slice(0,120),
+          description: 'Omfang og tidspunkt må avklares med kunden.', amount: '' };
+        next.events = ['VVS-forespørsel mottatt · fiktiv eksempelsak J-1001.'];
+      }
+      session = { state: next, revision: 0, scenario: seed }; sessions.set(host, session);
+    }
     session.onClose = onClose;
     const state = session.state;
     let card;
@@ -148,7 +158,7 @@
     function questionEditor() {
       if (closed()) return overview();
       heading('BEDRIFTEN', 'Avklar før du priser', 'Spør kun om det som mangler for å gi et godt forslag.');
-      const form = newForm(), input = field(form, 'Spørsmål til kunden', 'question', state.question || 'Hvilken dag neste uke passer best, og er leiligheten tømt?', 'textarea'); input.maxLength = 800;
+      const form = newForm(), input = field(form, 'Spørsmål til kunden', 'question', state.question || (session.scenario ? 'Når passer det at vi ringer for å avklare arbeidet?' : 'Hvilken dag neste uke passer best, og er leiligheten tømt?'), 'textarea'); input.maxLength = 800;
       form.addEventListener('input', () => { session.questionDraft = input.value; }); if (session.questionDraft) input.value = session.questionDraft;
       const check = approve(form, 'Jeg har kontrollert eksempelspørsmålet.');
       submit(form, 'Godkjenn eksempelspørsmålet', () => { if (!check.checked || !input.value.trim()) throw new Error(); state.question = input.value.trim(); state.answer = ''; state.status = 'waiting'; state.task = null; addEvent('Eieren ber om avklaring: ' + state.question); session.questionDraft = ''; go('clarification'); });
@@ -157,7 +167,7 @@
     function clarification() {
       if (closed()) return overview();
       heading('KUNDENS SIDE', 'Bedriften har et spørsmål', state.question);
-      const form = newForm(), input = field(form, 'Din avklaring', 'answer', state.answer || 'Fredag passer best. Leiligheten vil være tømt.', 'textarea'); input.maxLength = 800;
+      const form = newForm(), input = field(form, 'Din avklaring', 'answer', state.answer || (session.scenario ? 'Ring meg gjerne fredag etter klokken 14.' : 'Fredag passer best. Leiligheten vil være tømt.'), 'textarea'); input.maxLength = 800;
       submit(form, 'Send eksempelavklaring', () => { if (!input.value.trim()) throw new Error(); state.answer = input.value.trim(); state.status = 'response'; state.task = null; addEvent('Kunden avklarte: ' + state.answer); go('overview'); });
       actions(button('Tilbake til saken', () => go('overview'), true));
     }
@@ -197,6 +207,7 @@
         actions(button('Ja, start på nytt', () => mount(host, { reset: true, onClose: session.onClose })), button('Behold saken', () => go('overview'), true));
       } else ({ overview, quote: quoteEditor, sent, customer, question: questionEditor, clarification, schedule, outcome }[state.screen] || overview)();
       const h = card.querySelector('h3'); h?.focus({ preventScroll: true });
+      if (session.revision > 1 && h?.scrollIntoView) h.scrollIntoView({block:'nearest',behavior:'instant'});
       host.scrollTop = 0;
     }
     const api = { getState: () => JSON.parse(JSON.stringify(sessions.get(host).state)), confirmReset, show: () => render() };

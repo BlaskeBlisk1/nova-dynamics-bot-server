@@ -46,10 +46,10 @@ function allFiles(directory, prefix = '') {
         assert.throws(() => configuration({ ...base, JEMLIO_NETLIFY_DEPLOY_PROXY: url }, at));
       }
     });
-    await test('the publish bundle contains only seventeen allowlisted public assets and a static publish config', () => {
+    await test('the publish bundle contains only nineteen allowlisted public assets and a static publish config', () => {
       const directory = path.join(temp, 'bundle'); fs.mkdirSync(directory);
       prepareBundle(root, directory);
-      assert.equal(FILES.length, 17);
+      assert.equal(FILES.length, 19);
       assert.deepEqual(allFiles(directory), ['netlify.toml', ...FILES.map(file => path.join('public', 'marketing', file))].sort());
       assert.match(fs.readFileSync(path.join(directory, 'public/marketing/index.html'), 'utf8'), /data-netlify="true"/);
       assert.equal(fs.existsSync(path.join(directory, '.git')), false);
@@ -119,7 +119,7 @@ function allFiles(directory, prefix = '') {
       } };
       const first = await runSiteTask(options);
       assert.equal(first.state, 'command-completed'); assert.equal(first.deploymentVerified, false);
-      assert.equal(first.files, 17);
+      assert.equal(first.files, 19);
       assert.equal((await runSiteTask(options)).state, 'already-attempted'); assert.equal(calls, 1);
       assert.doesNotMatch(JSON.stringify(first), /synthetic-test-only|must-not-leave-parent/);
     });
