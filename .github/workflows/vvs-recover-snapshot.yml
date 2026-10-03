@@ -16,17 +16,6 @@ jobs:
       - run: |
           mkdir -p recovery
           git archive --format=tar HEAD > recovery/source.tar
-          python3 - <<'PY'
-          import base64,zlib
-          from pathlib import Path
-          parts=sorted(Path('.github').glob('vvs-patch.part*'))
-          data=''.join(p.read_text().strip() for p in parts)
-          if data:
-              decoder=zlib.decompressobj(31)
-              raw=decoder.decompress(base64.b64decode(data+'='*((-len(data))%4)),2000000)
-              Path('recovery/partial-source.txt').write_bytes(raw)
-              print('Recovered bytes:',len(raw),'Complete stream:',decoder.eof)
-          PY
       - uses: actions/upload-artifact@v4
         with:
           name: vvs-recovery
