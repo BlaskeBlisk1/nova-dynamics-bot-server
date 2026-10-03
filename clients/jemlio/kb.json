@@ -2,7 +2,7 @@
   {
     "id": "identity",
     "q": "Hva er Jemlio?",
-    "a": "Jemlio hjelper bedriften fra kundespørsmål til personlig oppfølging. Chatten svarer med bedriftens informasjon. I en avtalt pilot kan en privat arbeidsoversikt samle henvendelser, prisforslag, avtaler og neste handling. [Prøv arbeidsoversikten med fiktive data](https://nova-dynamics-bot-server.onrender.com/workspace-demo). Denne chatten gir informasjon og utfører ingen handlinger."
+    "a": "Jemlio er det nye navnet til Nova Dynamics. Vi fokuserer nå på rørlegger- og VVS-bedrifter: fra kundehenvendelse til vurdering, prisforslag og personlig oppfølging. Vi bygger videre på den eksisterende løsningen; tidligere demonstrasjoner er fortsatt tilgjengelige. [Prøv VVS-eksemplet](https://www.jemlio.com/#demo). Den offentlige demoen er fiktiv og sender ingen meldinger."
   },
   {
     "id": "features",
@@ -93,5 +93,20 @@
     "id": "enquiry-conversations",
     "q": "Kan henvendelser fra nettsideskjema følges opp med et godkjent svar?",
     "a": "Ja, arbeidsflyten er bygget for ett avtalt Netlify-skjema: henvendelsen kommer inn i arbeidsoversikten, bedriften redigerer og godkjenner svaret, og kunden kan svare via en privat lenke. Svaret legges tilbake på samme henvendelse for videre oppfølging. Oppsett og avsender må aktiveres for hver bedrift først. Dette er ikke generell import fra e-post, CRM eller alle nettsideskjemaer. [Prøv hele forløpet med fiktive data](https://nova-dynamics-bot-server.onrender.com/journey-demo). Denne chatten sender ingen meldinger."
+  },
+  {
+    "id": "vvs-focus",
+    "q": "Hva gjør Jemlio for rørleggere?",
+    "a": "Jemlio fokuserer nå på VVS- og rørleggerbedrifter. Målet er å samle problem, hastegrad, område og kontaktopplysninger i én henvendelse som bedriften kan vurdere og følge opp. Bedriften setter prisen og bekrefter selv kapasitet og oppdrag. [Prøv VVS-flyten](https://www.jemlio.com/#demo). Demoen er fiktiv; ekte bruk krever et konfigurert og testet pilotoppsett."
+  },
+  {
+    "id": "missed-calls",
+    "q": "Hvordan fungerer ubesvarte anrop og SMS?",
+    "a": "Den nye VVS-demoen viser ubesvart anrop → eksempel-SMS → jobbinformasjon → bedriftens oppfølging. Telefon- og SMS-koblingen er ikke aktivert i demoen. Før en pilot må vi bekrefte anropsstatus, nummer, sender, tilgang og utsendingsregler med bedriftens telefoniløsning. Vi endrer ikke nummer eller videresending uten avtale. Ingen utrykning, betaling eller automatisk bekreftet jobb. [Se VVS-eksemplet](https://www.jemlio.com/#demo)."
+  },
+  {
+    "id": "vvs-integrations",
+    "q": "Kobles Jemlio til Cordel eller SmartDok?",
+    "a": "Cordel og SmartDok er mulige senere integrasjoner, ikke ferdige koblinger vi lover. Vi starter med en avgrenset VVS-pilot på eksisterende mottak, prisforslag og oppfølging, og undersøker tilgang og behov før eventuell integrasjon."
   }
 ]

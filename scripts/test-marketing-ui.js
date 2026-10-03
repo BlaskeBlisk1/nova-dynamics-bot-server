@@ -245,7 +245,7 @@ function harness({ url = 'https://www.jemlio.com/', online = true, clipboard = '
       assert.equal(link.target, '_blank');
     }
     h.get('#tab-workflow').dispatchEvent(new h.window.KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
-    assert.equal(h.get('#tab-driving').getAttribute('aria-selected'), 'true');
+    assert.equal(h.get('#tab-vvs').getAttribute('aria-selected'), 'true');
     assert.equal(h.get('#demo-badge').textContent, 'Eksempel');
     assert.equal(h.window.localStorage.length, 0);
     h.finish();

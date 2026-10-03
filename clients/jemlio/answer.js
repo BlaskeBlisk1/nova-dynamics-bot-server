@@ -57,6 +57,12 @@ function answer(client, message) {
   if (client === "jemlio-optician-demo" && has(/symptom|smerte|vondt|rode? oye|rodt oye|rodhet|torr|svie|klor|kloring|synstap|uklar|takete|dobbeltsyn|lysblink|floater|ser.*(?:darlig|prikk|flekk)|diagnos|behandl|medisin|sykdom|migrene|hodepine|helse|akutt|blind|glaukom|staer|hva feiler|(?:kan|bor).*jeg.*(?:bruke|ha|velge).*(?:brill|linse)|(?:trenger jeg|bor jeg ta|ma jeg ta).*(?:undersok|brill|linse)|vurder.*(?:syn|oy)/)) return { ...fact("health"), unsure: true };
   if (has(/hva kan du|hvem er du|hva.*demo.*(?:gjore|kan)|er du.*(?:bot|robot)/)) return fact("limits");
 
+  if(client === "jemlio") {
+    if(has(/cordel|smartdok/)) return fact("vvs-integrations");
+    if(has(/ubesvart|tapt.*anrop|misset.*anrop|missed.*call|sms.*(?:anrop|telefon)|anrop.*sms/)) return fact("missed-calls");
+    if(has(/rorlegger|\bvvs\b/) && !asksPrice) return fact("vvs-focus");
+  }
+
   const productContext = client === "jemlio" || has(/jemlio|oppgradering|arbeidsflyt|bedriftsoversikt|arbeidsoversikt|oppfolging|prisforslag|pilot/);
   if (productContext && has(/garanti|garanter/)) return productFact("results");
   if (productContext && has(/koster|kostnad|hvor mye|how much|price|abonnement/)) return productFact("pricing");

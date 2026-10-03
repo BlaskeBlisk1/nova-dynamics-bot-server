@@ -436,6 +436,15 @@ function openCapture() {
     captureForm.elements.email.required=true;captureForm.elements.phone.required=config.features.capture.form.requirePhone===true;
     captureForm.querySelector("#capture-contact-help").textContent="E-post brukes for svar og et privat prisforslag.";
   }
+  if (config.features.capture.vvs) {
+    const help = element("p", "capture-help", "Ved et akutt problem må du ringe rørlegger eller vakttelefon direkte. Skjemaet bekrefter ikke utrykning eller kapasitet.");
+    const number = config.features.capture.vvs.emergencyPhone;
+    if (typeof number === "string" && /^(?:\+47)?[2-9]\d{7}$/.test(number)) {
+      const call = element("a", "", "Ring vakttelefon"); call.href="tel:"+number;
+      help.append(document.createTextNode(" "), call);
+    }
+    captureForm.prepend(help);
+  }
   const email = captureForm.elements.email;
   const phone = captureForm.elements.phone;
   const name = captureForm.elements.name;
@@ -458,6 +467,18 @@ function openCapture() {
     event.preventDefault();
     validateContact();
     if (!captureForm.reportValidity()) return;
+    if (config.features.capture.vvs) {
+      try {
+        if (!window.JemlioVvsProfile) throw new Error();
+        window.JemlioVvsProfile.assess(readAnswers(), config.features.capture.vvs);
+        captureForm.querySelector(".capture-vvs-error")?.remove();
+      } catch (e) {
+        let issue = captureForm.querySelector(".capture-vvs-error");
+        if (!issue) { issue=element("p","capture-vvs-error capture-status-error"); issue.setAttribute("role","alert");captureForm.append(issue); }
+        issue.textContent=e.code==="urgent_call_required" ? "Ring bedriften eller vakttelefon direkte ved et akutt problem. Ingen forespørsel er sendt." : e.code==="outside_service_area" ? "Postnummeret er utenfor bedriftens oppgitte område. Kontakt bedriften direkte for avklaring." : "Kontroller postnummer, adresse, behov og hastegrad før du går videre.";
+        return;
+      }
+    }
     const values = new FormData(captureForm);
     const payload = {
       client,
@@ -535,6 +556,7 @@ async function captureRequest(path, payload) {
     if (!response.ok) {
       const error = new Error("Capture request failed");
       error.httpStatus = response.status;
+      error.code = typeof result.error === "string" ? result.error : "capture_unavailable";
       throw error;
     }
     return result;
@@ -692,6 +714,12 @@ async function submitCapture(submit, edit, status) {
     submissionUncertain ||= requestAttempted && (!error.httpStatus || error.httpStatus >= 500);
     status.textContent = submissionUncertain
       ? "Forespørselen kan være registrert, men vi mangler bekreftelsen. Prøv igjen for å sjekke registreringen før du endrer opplysningene."
+      : error.code === "urgent_call_required"
+      ? "Ved et akutt problem må du ringe bedriften eller vakttelefon direkte. Ingen forespørsel er lagret eller hjelp bekreftet."
+      : error.code === "outside_service_area"
+      ? "Postnummeret ligger utenfor bedriftens oppgitte område. Ingen forespørsel er lagret. Kontakt bedriften direkte for avklaring."
+      : error.code === "invalid_postcode"
+      ? "Oppgi et gyldig firesifret postnummer. Ingen forespørsel er lagret."
       : error.httpStatus === 400
       ? "Kontroller opplysningene ved å velge «Endre opplysninger», og prøv igjen."
       : error.httpStatus === 429

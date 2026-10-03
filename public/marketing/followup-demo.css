@@ -31,3 +31,9 @@ body:has(.followup-demo) #chat-launcher,body:has(.followup-demo) #support-panel{
 #followup-chat-return[hidden]{display:none}
 @media(max-width:600px){.followup-demo{padding:18px}.followup-demo h3{font-size:23px}.fu-top button{flex:1 1 100%;text-align:left}.fu-actions{display:grid;grid-template-columns:1fr}.fu-summary{grid-template-columns:1fr;gap:3px}.fu-summary dd{margin-bottom:9px}.fu-person{gap:9px}.fu-person .fu-badge{max-width:44%}.fu-counts>div{padding:9px}.fu-counts span{font-size:10px}.fu-progress li{font-size:9px}.followup-demo input:not([type=checkbox]),.followup-demo select,.followup-demo textarea{font-size:16px}}
 @media(prefers-reduced-motion:reduce){.followup-demo button{transition:none}}
+/* VVS reuses the owner case; the outer frame stays compact on small screens. */
+.vvs-demo:has(.followup-demo){padding:14px}.vvs-demo>.fu-top{margin-bottom:8px}.vvs-demo .followup-demo{padding:10px 0 0}.vvs-demo>.fu-actions{margin-bottom:4px}
+.vvs-demo .followup-demo>.fu-top button{display:none}.demo-tabs{flex-wrap:wrap}.demo-tabs>button{min-width:0}
+@media(max-width:600px){.demo-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.demo-tabs>button{width:100%;font-size:12px}.vvs-demo{padding:16px}}
+
+.followup-demo h3:focus{outline:none}.followup-demo h3{scroll-margin-top:110px}.followup-demo .fu-copy{white-space:pre-line}

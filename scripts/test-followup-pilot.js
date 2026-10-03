@@ -27,6 +27,8 @@ async function database() {
   return { pool, close: () => db.close() };
 }
 async function main() {
+  const vvs = process.argv.includes("--vvs");
+  const needs = vvs ? "Replace kitchen tap. No active leak." : "Move-out cleaning, 75 square metres.";
   const { pool, close } = await database();
   const origin = 'https://pilot.example.invalid';
   let clock = Date.UTC(2026, 9, 1, 8, 0); const now = () => clock;
@@ -42,6 +44,10 @@ async function main() {
     JEMLIO_OWNER_ALERTS_CONFIG: JSON.stringify({ alpha: { enabled: true, to: 'owner@example.invalid', digestHour: 23, startAt: new Date(clock - 1000).toISOString() } })
   };
   const tenant = { mode: 'live', name: 'Synthetic Alpha', allowedOrigins: [origin], recipient: 'owner@example.invalid', privacyUrl: origin + '/privacy', services: [{ id: 'cleaning', label: 'Flyttevask' }], form: { kind: 'quote', requireEmail: true, requirePhone: false, questions: [{ id: 'need', label: 'Behov', type: 'text', required: true }] } };
+  if (vvs) {
+    const profile=require('../public/marketing/vvs-profile');
+    tenant.vvs={postcodes:['0150','0160']};tenant.form=profile.form();tenant.services=profile.SERVICES;
+  }
   const sent = [], ownerMail = [], replyMail = [];
   const fakeSend = async ({ notification, idempotencyKey }) => { sent.push({ notification, idempotencyKey }); return { providerId: 'fake-provider-' + sent.length }; };
   const capture = new PgStore({ pool });
@@ -49,7 +55,7 @@ async function main() {
   const worker = createConversations({ env, pool, cfg: config(env), now, sendMessage: fakeSend });
   const alerts = createOwnerAlerts({ env, pool, workspace: config(env), now, sendNotification: async item => { replyMail.push(item); return { providerId: 'owner-response-' + replyMail.length }; } });
   const app = express();
-  app.use('/capture', createCaptureRouter({ getTenantConfig: client => client === 'alpha' ? tenant : null, liveStore: capture, secret: 'x'.repeat(64), notificationFrom: 'sender@example.invalid', now }));
+  app.use('/capture', createCaptureRouter({ getTenantConfig: client => client === 'alpha' ? tenant : null, liveStore: capture, secret: 'x'.repeat(64), notificationFrom: 'sender@example.invalid', now, rateLimit:{session:100,request:100,windowMs:60000} }));
   app.use('/workspace', workspace.router); app.use('/offers', workspace.offerRouter); app.use('/replies', workspace.replyRouter); app.use('/events', workspace.conversationEventsRouter);
   let server, owner, other, receipt, token, proposal, replyToken;
   async function request(path, body, session, extra = {}) {
@@ -65,26 +71,39 @@ async function main() {
     // Only a disposable localhost CI database reaches this statement.
     if (process.argv.includes('--postgres')) await pool.query('TRUNCATE nova_capture_requests, nova_capture_rate_limits, jemlio_workspace_sessions, jemlio_owner_alerts, jemlio_conversation_delivery_events, jemlio_conversation_suppressions CASCADE');
     server = app.listen(0, '127.0.0.1'); await new Promise(resolve => server.once('listening', resolve));
+    if (vvs) await test('VVS rejects urgency, unserved areas, invalid config and source spoofing before a job is saved', async()=>{
+      const session=await request('/capture/session',{client:'alpha'});
+      const base={client:'alpha',token:session.data.token,submissionId:randomUUID(),name:'Kari Example',phone:'99999999',email:'kari@example.invalid',service:'reparasjon',consent:true,answers:{problem:needs,urgency:'Planlagt arbeid',postcode:'0150',address:'Eksempelveien 12'}};
+      for(const [change,code] of [[{urgency:'Akutt problem nå'},'urgent_call_required'],[{postcode:'9999'},'outside_service_area'],[{postcode:'abc'},'invalid_postcode']]){
+        const response=await request('/capture/requests',{...base,answers:{...base.answers,...change}});assert.equal(response.status,400);assert.equal(response.data.error,code);
+      }
+      assert.equal((await request('/capture/requests',{...base,source:'missed_call'})).status,400);
+      assert.equal((await request('/capture/requests',{...base,phone:''})).status,400);
+      const original=tenant.form;tenant.form=null;assert.equal((await request('/capture/session',{client:'alpha'})).status,503);tenant.form=original;
+      assert.equal((await pool.query('SELECT * FROM nova_capture_requests')).rows.length,0);
+      assert.equal((await pool.query('SELECT * FROM nova_capture_outbox')).rows.length,0);
+    });
     await test('reviewed customer request is durable and duplicate submission returns the same record', async () => {
       assert.equal((await request('/workspace/enquiries')).status, 401);
       const session = await request('/capture/session', { client: 'alpha' });
-      const input = { client: 'alpha', token: session.data.token, submissionId: randomUUID(), name: 'Kari Example', email: 'kari@example.invalid', service: 'cleaning', consent: true, answers: { need: 'Move-out cleaning, 75 square metres.' } };
+      const input = { client: 'alpha', token: session.data.token, submissionId: randomUUID(), name: 'Kari Example', email: 'kari@example.invalid', service: 'cleaning', consent: true, answers: { need: needs } };
+      if(vvs){input.phone='99999999';input.service='reparasjon';input.answers={problem:needs,urgency:'Planlagt arbeid',postcode:'0150',address:'Eksempelveien 12'};}
       const r = await request('/capture/requests', input); assert.equal(r.status, 201); receipt = r.data.receipt;
       assert.equal((await request('/capture/requests', input)).data.receipt, receipt);
       assert.equal((await pool.query('SELECT * FROM nova_capture_outbox WHERE request_id=$1', [receipt])).rows.length, 1);
       await flushNotifications({ store: capture, now, isTenantEnabled: async (client, n) => client === 'alpha' && n.to?.[0] === 'owner@example.invalid', sendNotification: async item => { ownerMail.push(item); return { providerId: 'owner-received' }; } });
-      assert.equal(ownerMail.length, 1); assert.match(ownerMail[0].notification.text, /75 square metres/);
+      assert.equal(ownerMail.length, 1); assert.ok(ownerMail[0].notification.text.includes(needs));
     });
     await test('owner login, tenant isolation and CSRF protect the actual workspace routes', async () => {
-      owner = await login(keyA); other = await login(keyB); const r = await record(); assert.equal(r.details[0].value, 'Move-out cleaning, 75 square metres.');
+      owner = await login(keyA); other = await login(keyB); const r = await record(); assert.equal(r.details[0].value, needs);if(vvs){assert.equal(r.job.industry,'vvs');assert.equal(r.job.source,'website');assert.equal(r.job.postcode,'0150');}
       assert.equal((await request('/workspace/enquiries?view=all', undefined, other)).data.items.length, 0);
       assert.equal((await request('/workspace/enquiries/' + receipt, { revision: r.revision, note: 'Not allowed' }, other)).status, 404);
       assert.equal((await request('/workspace/enquiries/' + receipt, { revision: r.revision, note: 'Not allowed' }, owner, { 'x-jemlio-csrf': 'wrong' })).status, 403);
     });
     await test('approved clarification travels through the real reply routes into the same enquiry', async () => {
       let thread = await conversation(); assert.equal(thread.canSend, true);
-      const draft = (await request('/workspace/enquiries/' + receipt + '/conversation/draft', { revision: thread.revision, template: 'question', body: 'Which day is suitable for the cleaning?' }, owner)).data;
-      const body = { revision: draft.revision, draftId: draft.draftId, recipient: 'kari@example.invalid', body: 'Which day is suitable for the cleaning?', approved: true };
+      const draft = (await request('/workspace/enquiries/' + receipt + '/conversation/draft', { revision: thread.revision, template: 'question', body: 'When is a suitable time to discuss the job?' }, owner)).data;
+      const body = { revision: draft.revision, draftId: draft.draftId, recipient: 'kari@example.invalid', body: 'When is a suitable time to discuss the job?', approved: true };
       assert.equal((await request('/workspace/enquiries/' + receipt + '/conversation/send', body, owner)).status, 200);
       await worker.tick(); assert.equal(sent.length, 1); replyToken = sent[0].notification.text.match(/\/reply\/#([A-Za-z0-9_-]{43})/)[1];
       thread = (await request('/replies/read', { token: replyToken })).data;
@@ -92,7 +111,7 @@ async function main() {
       assert.ok((await conversation()).messages.some(m => m.body === 'Friday works best.'));
     });
     await test('owner-approved quote is atomic and concurrent HTTP retries cannot send it twice', async () => {
-      const r = await record(); proposal = { operationId: randomUUID(), revision: r.revision, recipient: 'kari@example.invalid', title: 'Move-out cleaning', description: 'Includes interior windows. Timing agreed separately.', totalOre: 450000, priceBasis: 'incl_vat', days: 7, verified: true, approved: true };
+      const r = await record(); proposal = { operationId: randomUUID(), revision: r.revision, recipient: 'kari@example.invalid', title: vvs ? 'Kitchen tap replacement' : 'Move-out cleaning', description: 'Owner-approved scope. Timing agreed separately.', totalOre: 450000, priceBasis: 'incl_vat', days: 7, verified: true, approved: true };
       assert.equal((await request('/workspace/enquiries/' + receipt + '/offer/send', { ...proposal, approved: false }, owner)).status, 400);
       const results = await Promise.all([request('/workspace/enquiries/' + receipt + '/offer/send', proposal, owner), request('/workspace/enquiries/' + receipt + '/offer/send', proposal, owner)]);
       assert.ok(results.every(r => r.status === 200)); assert.equal(results[0].data.offer.id, results[1].data.offer.id);

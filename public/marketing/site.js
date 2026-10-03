@@ -2,6 +2,7 @@
   'use strict';
   const $ = id => document.getElementById(id);
   const examples = {
+    vvs: { client: 'jemlio', title: 'Jemlio for rørleggere', industry: 'Annen tjenestebedrift', greeting: 'Spør om VVS-henvendelser, prisforslag og oppfølging. Ekte SMS og telefonruting må kobles til separat; pilotvisningen sender ingenting.', questions: ['Hva gjør Jemlio for rørleggere?', 'Hvordan fungerer ubesvarte anrop?', 'Kobles Jemlio til Cordel eller SmartDok?'] },
     driving: { client: 'jemlio-driving-demo', title: 'Trafikkskoleassistent', industry: 'Trafikkskole', greeting: 'Hei! Jeg er assistenten til en fiktiv trafikkskole. Spør om kjøretimer eller booking. Du kan også spørre hvordan Jemlio hjelper bedriften med oppfølging etter en henvendelse.', questions: ['Hva koster en kjøretime?', 'Hvordan bestiller jeg time?', 'Hva skjer etter henvendelsen?'] },
     optician: { client: 'jemlio-optician-demo', title: 'Optikerassistent', industry: 'Optiker', greeting: 'Hei! Jeg er assistenten til en fiktiv optiker. Spør om synsundersøkelser eller booking. Du kan også spørre hvordan Jemlio hjelper bedriften med henvendelser og oppfølging.', questions: ['Hva koster en synsundersøkelse?', 'Hvordan bestiller jeg en synstest?', 'Hva skjer etter henvendelsen?'] },
     workflow: { client: 'jemlio', title: 'Jemlio Oppfølging', greeting: 'Hva skjer etter kundens første spørsmål? Jeg kan forklare henvendelser, booking, prisforslag og personlig oppfølging. Du kan stille spørsmål her og prøve arbeidsoversikten med fiktive data via lenkene under.', questions: ['Hvordan fungerer oppfølgingen?', 'Hvordan fungerer prisforslag?', 'Hva viser resultatrapporten?'] }
@@ -122,7 +123,17 @@
   let selected = 'driving';
   const demo = chat('demo', () => examples[selected].client, () => { $('demo-next').hidden = false; });
   const tabs = [...document.querySelectorAll('[data-demo]')];
-  let followup = null;
+  let followup = null, vvsDemo = null;
+  function showVvs() {
+    demo.reset('', []);
+    const host = $('demo-messages'); host.setAttribute('role','region'); host.setAttribute('aria-live','off');
+    vvsDemo = window.JemlioVvsDemo.mount(host, { onClose: () => {
+      host.setAttribute('role','log');host.setAttribute('aria-live','polite');
+      demo.reset(examples.vvs.greeting, examples.vvs.questions);
+      $('followup-chat-return').hidden=false;$('demo-input').focus();
+    }});
+    $('followup-chat-return').hidden=true;
+  }
   function showFollowup() {
     demo.reset('', []);
     const host = $('demo-messages'); host.setAttribute('role', 'region'); host.setAttribute('aria-live', 'off');
@@ -146,7 +157,8 @@
     $('demo-panel').setAttribute('aria-labelledby', 'tab-' + kind);
     if ($('followup-chat-return')) $('followup-chat-return').hidden = true;
     $('demo-messages').setAttribute('role', 'log'); $('demo-messages').setAttribute('aria-live', 'polite');
-    if (kind === 'workflow' && window.JemlioFollowupDemo) showFollowup();
+    if (kind === 'vvs' && window.JemlioVvsDemo) showVvs();
+    else if (kind === 'workflow' && window.JemlioFollowupDemo) showFollowup();
     else demo.reset(examples[kind].greeting, examples[kind].questions);
   }
   tabs.forEach((tab, index) => {
@@ -159,10 +171,12 @@
     });
   });
   $('demo-reset').addEventListener('click', () => {
+    if (selected === 'vvs' && vvsDemo) { vvsDemo.reset(); return; }
     if (selected === 'workflow' && followup && $('demo-messages').querySelector('.followup-demo')) followup.confirmReset();
     else { select(selected); if (!$('demo-messages').querySelector('.followup-demo')) $('demo-input').focus(); }
   });
-  $('followup-chat-return')?.addEventListener('click', () => { if (window.JemlioFollowupDemo) showFollowup(); });
+  $('followup-chat-return')?.addEventListener('click', () => { if (selected==='vvs' && window.JemlioVvsDemo) showVvs(); else if (window.JemlioFollowupDemo) showFollowup(); });
+  document.querySelectorAll('[data-open-vvs]').forEach(a=>a.addEventListener('click',()=>select('vvs')));
   document.querySelectorAll('[data-open-followup]').forEach(a => a.addEventListener('click', () => select('workflow')));
   $('demo-tailor').addEventListener('click', () => {
     // Only the explicitly chosen example category crosses into the contact form.
@@ -267,4 +281,5 @@
   });
   updateEmailDraft();
   $('year').textContent = String(new Date().getFullYear());
+  if (window.JemlioVvsDemo) select('vvs');
 })();
