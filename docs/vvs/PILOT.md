@@ -1,5 +1,17 @@
 # Jemlio VVS pilot — implementation and onboarding
 
+## Implementation update — 3 October 2026
+
+The first Twilio missed-call/SMS runtime and private job-request page are now
+implemented. They remain separate from the public simulation and require approved
+provider, tenant and database configuration before activation. See
+[MISSED-CALLS.md](MISSED-CALLS.md) for the supported routing topology, owner queue,
+operator migration, opt-out handling and actual-delivery acceptance gate. No number
+has been purchased or connected by publishing this code. Photos, payments and direct
+Cordel/SmartDok connections remain unimplemented. The sections below document the
+preceding VVS presentation release; references to SMS as unimplemented describe that
+earlier release, not the new runtime.
+
 ## Product decision
 The first target is Norwegian plumbers/VVS service businesses. Preserve the existing
 chatbot, enquiries, owner pricing and follow-up rather than rebuilding a business

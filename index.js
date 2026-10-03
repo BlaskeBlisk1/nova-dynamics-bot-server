@@ -62,6 +62,12 @@ app.use(['/workspace', '/workspace-demo'], (req, res, next) => {
 app.get(['/workspace', '/workspace/', '/workspace-demo', '/workspace-demo/'], (_req, res) =>
   res.sendFile(path.join(publicDir, 'workspace', 'index.html')));
 
+app.use('/job-request',(_req,res,next)=>{
+  res.set({'Cache-Control':'no-store','X-Robots-Tag':'noindex, nofollow','Referrer-Policy':'no-referrer','X-Content-Type-Options':'nosniff',
+    'Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; form-action 'none'; frame-ancestors 'none'; base-uri 'none'"});next();
+});
+app.get(['/job-request','/job-request/'],(_req,res)=>res.sendFile(path.join(publicDir,'job-request','index.html')));
+
 if (fs.existsSync(publicDir)) {
   // A separate marketing entry point preserves the existing root and demo URLs.
   app.get(/^\/jemlio$/, (_req, res) => res.redirect(302, "/jemlio/"));
@@ -102,6 +108,11 @@ fs.watchFile(REGISTRY_FILE, { interval: 1500, persistent: false }, loadRegistry)
 const upgrades = require("./lib/upgrade-runtime").createUpgradeRuntime({
   getRegistry: () => REGISTRY
 });
+const missedCalls = require('./lib/missed-calls/runtime').createMissedCalls({
+  getTenant: async client => await workspace.tenantReady(client) ? upgrades.tenantConfig(client) : null
+});
+workspace.attachRecovery(missedCalls);
+app.use('/api/missed-calls', missedCalls.router);
 const websiteEnquiries = require("./lib/website-enquiry-runtime").createWebsiteEnquiryRuntime();
 // Netlify signatures cover the exact bytes. Mount before JSON parsing and the
 // public chat CORS policy; this endpoint is a signed server-to-server receiver.
@@ -4533,10 +4544,13 @@ if (require.main === module) {
     websiteEnquiries.startWorker();
     calendarSync.startWorker();
     workspace.startWorker();
+    missedCalls.startWorker();
+    // One private, non-sensitive operator summary. Never expose settings or credentials publicly.
+    void workspace.readiness().then(status=>console.log('Jemlio workspace readiness: '+JSON.stringify(status)));
   });
   for (const signal of ["SIGTERM", "SIGINT"]) {
     process.once(signal, () => {
-      server.close(() => { void Promise.all([upgrades.close(), websiteEnquiries.close(), workspace.close(), calendarSync.close()]).then(() => process.exit(0)); });
+      server.close(() => { void Promise.all([upgrades.close(), websiteEnquiries.close(), workspace.close(), calendarSync.close(), missedCalls.close()]).then(() => process.exit(0)); });
     });
   }
 }

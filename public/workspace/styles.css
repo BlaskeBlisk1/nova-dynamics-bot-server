@@ -197,3 +197,5 @@ footer{display:flex;align-items:center;justify-content:space-between;gap:24px;pa
 #conversation-draft .primary{margin-top:12px}
 .conversation-detail .notice{background:#242d37;border-color:#47576a}
 @media(max-width:600px){.conversation-heading{align-items:stretch;flex-direction:column}.conversation-heading button{text-align:left}.conversation-detail h2{font-size:22px}.conversation-message{padding:14px}.conversation-detail textarea,.conversation-detail select{font-size:16px}#conversation-approval .primary,#conversation-approval .secondary{width:100%;margin-right:0}}
+
+.recovery-row{padding:18px 0;border-top:1px solid var(--line,#586575)}.recovery-row p{margin:6px 0}.recovery-row .toolbar{margin-top:12px;flex-wrap:wrap}.recovery-row a{overflow-wrap:anywhere}
