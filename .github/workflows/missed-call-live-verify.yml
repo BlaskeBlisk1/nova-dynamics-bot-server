@@ -1,0 +1,87 @@
+name: Read-only missed-call release verification
+on:
+  push:
+    branches: ['jemlio/missed-call-runtime-20261003']
+    paths: ['.github/workflows/missed-call-live-verify.yml']
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '>=24.15.0 <25'
+          package-manager-cache: false
+      - run: npm ci --ignore-scripts
+      - name: Fetch published code and verify inactive messaging boundaries
+        run: |
+          python3 - <<'PY'
+          import json,hashlib,time,urllib.request,urllib.error
+          from pathlib import Path
+          origin='https://nova-dynamics-bot-server.onrender.com'
+          expected={
+            '/job-request/':'5cea45be5bd92904950db56b29d148f65473cfa95e669cd39c9a17894b6788d3',
+            '/job-request/app.js':'8cfbe323c9c270cfb1de005c0dc86fc4fbc83f36a060dcb41319a2dedc3a64bf',
+            '/job-request/styles.css':'fffdb8c525ad7ad57dbb9f24471b76b6f6f30bbf958aa5c4a77abe3f519df798',
+            '/workspace/app.js':'3a72be6ad9a184d9acef1efceaf90cc3bf7d2c560f5ffa662bff8b49d0de17ee',
+            '/workspace/styles.css':'924ee416874b7b55758ecb95cced2fdcafe2eb9b61bcba354d04d0fb8caf20b9'
+          }
+          def request(url,data=None):
+              headers={'Cache-Control':'no-cache'}
+              if data is not None:headers.update({'Content-Type':'application/json','Origin':origin})
+              req=urllib.request.Request(url,headers=headers,data=None if data is None else json.dumps(data).encode())
+              try:
+                  with urllib.request.urlopen(req,timeout=20) as r:return r.status,r.read(),dict(r.headers)
+              except urllib.error.HTTPError as e:return e.code,e.read(),dict(e.headers)
+          report={'assets':{},'privateHeaders':{},'prospectDemos':{},'productionReadiness':{},'errors':[]}
+          for attempt in range(24):
+              status,raw,_=request(origin+'/api/release')
+              if status==200 and json.loads(raw).get('revision')=='aaed52d8a660a57e5334b39e2e216cfe9b1118d7':break
+              if attempt==23:raise RuntimeError('expected_release_not_live')
+              time.sleep(10)
+          report['revision']=json.loads(raw)['revision']
+          for path,sha in expected.items():
+              status,raw,headers=request(origin+path)
+              report['assets'][path]=status==200 and hashlib.sha256(raw).hexdigest()==sha
+              if path.startswith('/job-request'):
+                  h={k.lower():v for k,v in headers.items()}
+                  report['privateHeaders'][path]=all([
+                    'no-store' in h.get('cache-control',''),h.get('referrer-policy')=='no-referrer',
+                    'noindex' in h.get('x-robots-tag',''),"frame-ancestors 'none'" in h.get('content-security-policy','')])
+                  local='public/job-request/index.html' if path=='/job-request/' else 'public'+path
+                  Path(local).write_bytes(raw)
+          status,raw,_=request(origin+'/workspace')
+          report['workspacePanelPublished']=status==200 and b'id="missed-call-panel"' in raw
+          report['productionReadiness']['workspaceHttpStatus']=request(origin+'/api/workspace/session')[0]
+          # Read endpoint only. An invalid token cannot create a job or contact a provider.
+          report['productionReadiness']['inactiveRecoveryReadHttpStatus']=request(origin+'/api/missed-calls/read',{'token':'invalid-release-verification'})[0]
+          for client in ['fram','fyllingsdalen','onsoy','tiller','trafikk1','frankolsen','roma']:
+              page=request(origin+'/demos/'+client)[0]
+              code,data,_=request(origin+'/api/demo-config/'+client)
+              cfg=json.loads(data) if code==200 else {}
+              report['prospectDemos'][client]={'available':page==200,'correctClient':cfg.get('client')==client,'captureEnabled':cfg.get('features',{}).get('capture',{}).get('enabled',False)}
+          code,html,_=request('https://www.jemlio.com/')
+          report['marketingPreserved']=code==200 and b'id="tab-vvs"' in html and b'name="jemlio-demo-request"' in html
+          for name in ['quote-schema.js','vvs-profile.js']:
+              code,data,_=request(origin+'/marketing/'+name);assert code==200;Path('public/marketing',name).write_bytes(data)
+          report['productionReadiness'].update(realCallsOrMessagesSent=False,productionMigrationApplied=False,tenantActivated=False)
+          Path('missed-call-live-report.json').write_text(json.dumps(report,indent=2));print(json.dumps(report,indent=2))
+          assert all(report['assets'].values()) and all(report['privateHeaders'].values())
+          assert report['workspacePanelPublished'] and report['marketingPreserved']
+          assert report['productionReadiness']['inactiveRecoveryReadHttpStatus']==503
+          assert all(x['available'] and x['correctClient'] and not x['captureEnabled'] for x in report['prospectDemos'].values())
+          PY
+      - name: Test downloaded private page scripts with requests intercepted
+        run: node scripts/test-missed-call-ui.js
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: missed-call-live-report
+          path: missed-call-live-report.json
+          retention-days: 7
+          if-no-files-found: warn
