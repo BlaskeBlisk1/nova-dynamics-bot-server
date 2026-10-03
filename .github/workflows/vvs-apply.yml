@@ -1,0 +1,72 @@
+name: Verify and apply the reviewed VVS release
+on:
+  push:
+    branches: ['jemlio/vvs-pilot-20261003']
+    paths: ['.github/workflows/vvs-apply.yml']
+permissions:
+  contents: write
+concurrency:
+  group: jemlio-vvs-apply
+  cancel-in-progress: false
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NODE_ENV: test
+      OPENAI_API_KEY: ''
+      RESEND_API_KEY: ''
+      NOVA_DATABASE_URL: ''
+      NOVA_CAPTURE_ENABLED: 'false'
+      NOVA_CAPTURE_WORKER_ENABLED: 'false'
+      JEMLIO_WORKSPACE_ENABLED: 'false'
+      JEMLIO_CONVERSATIONS_ENABLED: 'false'
+      JEMLIO_OFFER_SEND_ENABLED: 'false'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: jemlio/vvs-pilot-20261003
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '>=24.15.0 <25'
+          package-manager-cache: false
+      - name: Validate all source hashes before applying any edit
+        run: |
+          python3 - <<'PY'
+          import json,hashlib,os
+          from pathlib import Path
+          assert os.environ['GITHUB_REF']=='refs/heads/jemlio/vvs-pilot-20261003'
+          expected=json.loads(Path('.github/vvs-expected.json').read_text())
+          changes=[]
+          for i in (1,2,3): changes.extend(json.loads(Path(f'.github/vvs-edits-{i}.json').read_text()))
+          prepared={}
+          for change in changes:
+              name=change['path'];p=Path(name)
+              assert name in expected and name not in prepared and not p.is_absolute() and '..' not in p.parts
+              assert not name.startswith('.github/')
+              raw=p.read_bytes()
+              assert hashlib.sha256(raw).hexdigest()==change['before'], 'Base changed: '+name
+              lines=raw.decode('utf-8').splitlines(keepends=True);end=len(lines)
+              for start,stop,replacement in reversed(change['edits']):
+                  assert 0<=start<=stop<=end
+                  lines[start:stop]=replacement.splitlines(keepends=True);end=start
+              result=''.join(lines).encode('utf-8')
+              assert hashlib.sha256(result).hexdigest()==change['after']==expected[name], 'Edited content mismatch: '+name
+              prepared[name]=result
+          for name,digest in expected.items():
+              p=Path(name);assert not p.is_absolute() and '..' not in p.parts
+              value=prepared[name] if name in prepared else p.read_bytes()
+              assert hashlib.sha256(value).hexdigest()==digest, 'Uploaded source mismatch: '+name
+          for name,value in prepared.items():Path(name).write_bytes(value)
+          print('All 20 VVS source files match the locally tested implementation.')
+          PY
+      - run: npm ci --ignore-scripts
+      - run: npm test
+      - name: Save tested code on the development branch only
+        run: |
+          git config user.name 'Jemlio implementation'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/vvs-patch.part1 .github/vvs-edits-1.json .github/vvs-edits-2.json .github/vvs-edits-3.json .github/vvs-expected.json .github/workflows/vvs-recover-snapshot.yml .github/workflows/vvs-apply.yml
+          git add clients/jemlio lib/capture/index.js lib/upgrade-config.js lib/workspace/store.js package.json public scripts docs/vvs
+          git commit -m 'Implement VVS-first job intake, qualified demo and pilot regression checks'
+          git push origin HEAD:jemlio/vvs-pilot-20261003
