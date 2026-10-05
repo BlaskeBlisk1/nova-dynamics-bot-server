@@ -7,7 +7,7 @@
   {
     "id": "features",
     "q": "Hva kan chatten hjelpe med?",
-    "a": "Chatten kan svare på spørsmål om tjenester, publiserte priser og åpningstider. Du kan også prøve hvordan Jemlio hjelper bedriften videre: [bookingreisen](https://nova-dynamics-bot-server.onrender.com/booking-demo), [henvendelser og oppfølging](https://nova-dynamics-bot-server.onrender.com/workspace-demo) og [kundens svar på prisforslag](https://nova-dynamics-bot-server.onrender.com/offer-demo). Eksemplene bruker fiktive data. For ekte bruk avtaler vi en avgrenset pilot og setter opp tilgang og eventuell støttet kalender først."
+    "a": "Jemlio samler spørsmål, jobbdetaljer, eierens prisforslag, kundesvar og neste oppfølging. For VVS er også en Twilio-integrasjon for ubesvarte anrop og SMS utviklet. Bedriften kontrollerer pris, kapasitet og neste steg. [Prøv VVS-flyten med fiktive data](https://www.jemlio.com/#demo), eller se [arbeidsoversikten](https://nova-dynamics-bot-server.onrender.com/workspace-demo). Virkelig bruk krever et avtalt, konfigurert og testet pilotoppsett. Denne chatten og de offentlige demoene sender ingen meldinger."
   },
   {
     "id": "tailoring",
@@ -22,7 +22,7 @@
   {
     "id": "pricing",
     "q": "Hva koster Jemlio?",
-    "a": "En tilpasset mini-demo er gratis. Jeg har ingen bekreftet offentlig pris for en videre leveranse å oppgi her. Skriv til hei@jemlio.com for å avklare behov og få et konkret tilbud."
+    "a": "En tilpasset mini-demo er gratis og uforpliktende. Vi søker 2–3 VVS-bedrifter til en avgrenset pilot. Oppsett, funksjoner, oppfølging og pris avtales før betalt bruk. Telefon, SMS og oppslag hos leverandører kan ha egne kostnader. Jeg har ingen bekreftet offentlig pris for en standardleveranse å oppgi. [Be om en gratis demo](https://www.jemlio.com/#contact) eller skriv til hei@jemlio.com. Det opprettes ikke et abonnement når du ber om en demo."
   },
   {
     "id": "contact",
@@ -32,7 +32,7 @@
   {
     "id": "examples",
     "q": "Er eksemplene ekte kunder?",
-    "a": "Nei. «Eksempel: trafikkskole» og «Eksempel: optiker» er fiktive demonstrasjoner. Navn, priser, tider og tilbud i disse eksemplene dokumenterer ingen kunder, resultater eller samarbeid. En mini-demo for din bedrift tilpasses opplysninger du selv ønsker å bruke."
+    "a": "Nei. VVS-, oppfølgings-, trafikkskole- og optikereksemplene bruker fiktive opplysninger. Navn, priser, tider og tilbud dokumenterer ingen kunder, resultater eller samarbeid. VVS- og oppfølgingsdemoen lar deg prøve kundens og eierens side i samme sak; den sender ingen meldinger og tar ingen betaling. En mini-demo for din bedrift kan tilpasses informasjonen du ønsker å bruke."
   },
   {
     "id": "results",
@@ -102,11 +102,11 @@
   {
     "id": "missed-calls",
     "q": "Hvordan fungerer ubesvarte anrop og SMS?",
-    "a": "Den nye VVS-demoen viser ubesvart anrop → eksempel-SMS → jobbinformasjon → bedriftens oppfølging. Telefon- og SMS-koblingen er ikke aktivert i demoen. Før en pilot må vi bekrefte anropsstatus, nummer, sender, tilgang og utsendingsregler med bedriftens telefoniløsning. Vi endrer ikke nummer eller videresending uten avtale. Ingen utrykning, betaling eller automatisk bekreftet jobb. [Se VVS-eksemplet](https://www.jemlio.com/#demo)."
+    "a": "Twilio-integrasjonen for ubesvarte anrop og SMS er bygget. I et aktivert oppsett kontrolleres anropet før én SMS med en privat jobbforespørselslenke kan sendes. Kunden sender inn jobbdetaljene, og eieren følger opp samme sak. Mottatt, sendt og levert er ulike statuser; usikre utsendinger sendes ikke automatisk på nytt. Nummer, telefonrute, avsender og faktisk levering må avtales og testes for hver bedrift. Ingen telefoninnstillinger endres uten avtale. [Prøv SMS-flyten med eksempeldata](https://www.jemlio.com/#demo). Den offentlige demoen sender ingen SMS eller e-post."
   },
   {
     "id": "vvs-integrations",
     "q": "Kobles Jemlio til Cordel eller SmartDok?",
-    "a": "Cordel og SmartDok er mulige senere integrasjoner, ikke ferdige koblinger vi lover. Vi starter med en avgrenset VVS-pilot på eksisterende mottak, prisforslag og oppfølging, og undersøker tilgang og behov før eventuell integrasjon."
+    "a": "Direkte koblinger til Cordel og SmartDok er ikke bygget. Du kan kopiere eksempeljobbens grunnlag manuelt i VVS-demoen, men det er ikke automatisk overføring til et fagsystem. Bildeopplasting og betaling er heller ikke del av denne versjonen. Twilio-integrasjonen for ubesvarte anrop er utviklet, men bedriftens telefonrute og levering testes før aktivering."
   }
 ]

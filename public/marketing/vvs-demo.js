@@ -11,7 +11,7 @@
     invalid_postcode: 'Oppgi et firesifret postnummer. Bruk 0150, 0160 eller 0250 i eksemplet.',
     invalid_fields: 'Kontroller opplysningene. Beskriv arbeidet og oppgi adresse, hastegrad og postnummer.'
   };
-  function mount(host, { onClose = () => {} } = {}) {
+  function mount(host, { onClose = () => {}, focus = true } = {}) {
     if (!host || !window.JemlioFollowupDemo) return null;
     let s = sessions.get(host);
     if (!s) {
@@ -57,11 +57,18 @@
       title('PRØV PILOTEN', 'Fra kontakt til en jobb du kan vurdere', 'Kunden forklarer behovet. Du får adresse, hastegrad og kontaktinformasjon samlet – og bestemmer pris og neste steg.');
       card.append(n('p','Fiktiv produktvisning. Ingen SMS, e-post, booking eller betaling.','fu-notice'));
       actions(button('Prøv en nettsidehenvendelse',()=>{s.source='website';route('job');}),button('Se et ubesvart anrop',()=>{s.source='missed_call_demo';route('sms');},true));
-      const d=n('details',undefined,'fu-details');d.append(n('summary','Hva er klart, og hva kobles til i piloten?'),n('p','Jobbdetaljer, eierens prisforslag og oppfølging bygger på Jemlios eksisterende arbeidsflyt. Ekte SMS, telefonruting, bilder og direkte kobling til Cordel eller SmartDok er ikke aktivert. De avtales og testes separat.'));card.append(d);
+      const d=n('details',undefined,'fu-details');d.append(n('summary','Hva er klart, og hva kobles til i piloten?'),n('p','Jobbforespørsler, prisforslag, kundesvar og oppfølging er bygget. Twilio-integrasjonen for ubesvarte anrop og SMS er også utviklet. Nummer, ruting, mottakere og faktisk levering testes før en pilot aktiveres. Bilder, betaling og direkte koblinger til Cordel eller SmartDok er ikke del av denne versjonen.'));card.append(d);
     }
     function sms() {
-      title('SIMULERT TELEFONFLYT', 'Når kunden ikke får svar på telefonen', 'Dette viser den planlagte inngangen. Det er ikke sendt en SMS, og ingen telefon er koblet til.');
+      title('SIMULERT TELEFONFLYT', 'Når kunden ikke får svar på telefonen', 'Dette er en simulering av den utviklede SMS-flyten. Det er ikke sendt en SMS fra demoen. Bedriftens telefonrute og levering må testes før aktivering.');
       const example=n('div',undefined,'fu-next');example.append(n('span','EKSEMPEL PÅ SMS'),n('p','Hei! Vi fikk ikke svart akkurat nå. Beskriv oppdraget via den private lenken, så kan vi vurdere behovet og kontakte deg. Ved et akutt problem: ring vakttelefon direkte.'));card.append(example);
+      const delivery=n('div',undefined,'vvs-delivery');delivery.append(n('strong','Prøv eierens SMS-statuser · eksempel'));
+      const buttons=n('div',undefined,'fu-actions'),explanation=n('p');explanation.setAttribute('role','status');
+      const statuses=[['SMS sendt','Meldingen er sendt, men levering er ikke bekreftet. Ingen jobbforespørsel er registrert bare fordi en SMS er sendt.'],
+        ['SMS levert','Levering er bekreftet i dette eksemplet. Kunden må fortsatt åpne lenken og sende inn opplysningene.'],
+        ['Uavklart','Utsendingen kunne ikke bekreftes. Eieren kan kontrollere status. Systemet sender ikke automatisk en ny SMS.']];
+      for(const [label,copy] of statuses){const b=button(label,()=>{for(const c of buttons.children)c.setAttribute('aria-pressed','false');b.setAttribute('aria-pressed','true');explanation.textContent=copy;},true);b.setAttribute('aria-pressed',String(label==='SMS sendt'));buttons.append(b);}
+      explanation.textContent=statuses[0][1];delivery.append(buttons,explanation);card.append(delivery);
       actions(button('Åpne eksempelhenvendelsen',()=>route('job')),button('Tilbake',()=>route('entry'),true));
     }
     function job() {
@@ -104,7 +111,7 @@
     function render() {
       ++s.generation;host.replaceChildren();card=n('section',undefined,'followup-demo vvs-demo');card.setAttribute('aria-label','Jemlio VVS · fiktiv pilot');host.append(card);
       const top=n('div',undefined,'fu-top');top.append(n('span','RØRLEGGER / VVS · PILOTVISNING'),button('Spør om løsningen',s.onClose,true));card.append(top);
-      ({entry,sms,job,contact,review,owner,reset}[s.screen]||entry)();const heading=card.querySelector('h3');heading?.focus({preventScroll:true});if(s.generation>1 && heading?.scrollIntoView)heading.scrollIntoView({block:'nearest',behavior:'instant'});host.scrollTop=0;
+      ({entry,sms,job,contact,review,owner,reset}[s.screen]||entry)();const heading=card.querySelector('h3');if(focus || s.generation>1)heading?.focus({preventScroll:true});if(s.generation>1 && heading?.scrollIntoView)heading.scrollIntoView({block:'nearest',behavior:'instant'});host.scrollTop=0;
     }
     const api={show:render,reset:()=>{const current=sessions.get(host);if(current!==s)return current.api.reset();route('reset');},getState:()=>JSON.parse(JSON.stringify({screen:s.screen,draft:s.draft,request:s.request,source:s.source}))};s.api=api;render();return api;
   }
