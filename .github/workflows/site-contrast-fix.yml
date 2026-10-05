@@ -26,7 +26,7 @@ jobs:
           assert hashlib.sha256(raw).hexdigest()=='8e970ae8f3a890a7e25bc24d1d9cc323b29442f9cd054491ff83b2229cae7b32'
           old='.vvs-delivery .fu-actions button[aria-pressed=true]';text=raw.decode('utf-8');assert text.count(old)==1
           new=text.replace(old,'#demo-panel '+old).encode('utf-8')
-          assert hashlib.sha256(new).hexdigest()=='7ae6a63bdcad154ac7071b3e5104d1dcaea0d44ad7b54013db06e051278dd713d'
+          assert hashlib.sha256(new).hexdigest()=='7ae6a63bdcad154ac7071b3e5104d1caea0d44ad7b54013db06e051278dd713d'
           p.write_bytes(new)
           PY
       - run: npm ci --ignore-scripts
