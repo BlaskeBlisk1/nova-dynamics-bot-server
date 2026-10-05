@@ -53,7 +53,7 @@
     "offers:operations": "node scripts/offer-delivery-operations.js",
     "test:followup": "node scripts/test-followup-demo.js && node scripts/test-followup-pilot.js",
     "test:vvs": "node scripts/test-vvs-demo.js && node scripts/test-followup-pilot.js --vvs",
-    "test:missed-calls": "node scripts/test-missed-calls.js && node scripts/test-missed-call-ui.js",
+    "test:missed-calls": "node scripts/test-missed-call-credentials.js && node scripts/test-missed-calls.js && node scripts/test-missed-call-ui.js",
     "missed-calls:operations": "node scripts/missed-call-operations.js"
   },
   "dependencies": {
