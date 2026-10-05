@@ -1,0 +1,58 @@
+name: Prepare refined marketing website
+on:
+  push:
+    branches: ['codex/enquiry-readiness']
+    paths: ['.github/workflows/marketing-refinement-publish-prep.yml']
+permissions:
+  contents: write
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: codex/enquiry-readiness
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '>=24.15.0 <25'
+          package-manager-cache: false
+      - name: Copy only hash-verified public presentation files
+        run: |
+          git fetch origin 00297559616a3df12c7c72de7e12300883fea677
+          python3 - <<'PY'
+          import hashlib,subprocess
+          from pathlib import Path
+          source='00297559616a3df12c7c72de7e12300883fea677'
+          targets={
+            'public/marketing/index.html':('efb9c6ffee2b3ea317a828322da106cf84e67898b99d6932af38b7600e26a8d6','7e4fcc623d4307de5c86112ee1f5a111bc2c05b08026d3b6f3aec6b49c87d349'),
+            'public/marketing/styles.css':('0896caa783610b4bb53ce157e64a81c694eab7a5e5c409603d4f2526bd5c6a45','8e970ae8f3a890a7e25bc24d1d9cc323b29442f9cd054491ff83b2229cae7b32'),
+            'public/marketing/site.js':('cd963e9ca9bf50c4722cb188994e404184836a6fc0db5bab341e2c5d6923b0f9','4d7851fa4302b4152adaf8927f6a810f9af0acefd0e2d6087701a5a424d7d875'),
+            'public/marketing/followup-demo.css':('9e77fdb9104393fbb27cb1ae3e3e0e4721f5e50133c91cd90680f3f26874dfbd','f87de4ecde61bb77bcc11f4eb558667120013858d14b9f8556f42f622287ced9'),
+            'public/marketing/vvs-demo.js':('03e6b72e5bd8d6b4b79192fdb6a9ea37e32cde0e24c99d78b2c7cb3656ca2016','4ebd5ab122128141734b37366e2cabad49a75c0dc4077ac626d73d596ecd282e'),
+            'public/marketing/privacy.html':('407b7da22f2abb01942f6dfc42b0b4d089a3896504134a2ec1cc0cb99751aa05','306cb23896de3c4af25248973b135ffce46caaa40070958c057bde0f5a2c1130'),
+            'public/marketing/demo-requested.html':('d1a19e33220cdcb1ed7fac659bace300b3e4cad1f57e79012c86572dccab50ac','0b62fc4303853c1568bf78590a740094e588e757f2561bb77082cdfec035acc3'),
+            'public/marketing/form-definition.html':('488f6e63b27b56ef977c4840ac3e9fe327c4a3ebd6e1735f8a1966e4873d176c','edb69d3e20c3122f14694da7754f9bbcf0d1978c2652654713fc79f99e5e91b3'),
+            'scripts/test-marketing-refresh.js':(None,'168e48a6ea1f5720750024ca6cc6684eff87313cca57ea4a4cdf60eb28bb79a5')
+          }
+          prepared={}
+          for name,(before,after) in targets.items():
+              p=Path(name)
+              if before: assert hashlib.sha256(p.read_bytes()).hexdigest()==before,'Publisher source changed: '+name
+              else: assert not p.exists()
+              raw=subprocess.check_output(['git','show',source+':'+name])
+              assert hashlib.sha256(raw).hexdigest()==after,'Unreviewed source: '+name
+              prepared[name]=raw
+          for name,raw in prepared.items():Path(name).write_bytes(raw)
+          print('Only reviewed public presentation files and one offline regression script copied.')
+          PY
+      - run: npm ci --ignore-scripts
+      - run: node scripts/test-marketing-refresh.js --frontend-only && node scripts/test-followup-demo.js && npm run test:marketing-ui && npm run test:marketing-enquiries && npm run test:staging-site
+      - name: Save tested public bundle
+        run: |
+          git config user.name 'Jemlio implementation'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/marketing-refinement-publish-prep.yml
+          git add public/marketing scripts/test-marketing-refresh.js
+          git commit -m 'Prepare tested Jemlio marketing redesign for publication'
+          git push origin HEAD:codex/enquiry-readiness
