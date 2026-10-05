@@ -44,13 +44,45 @@ Global: `NOVA_DATABASE_URL`, `JEMLIO_MISSED_CALL_ORIGIN` (exact HTTPS backend or
 no trailing slash), `JEMLIO_MISSED_CALL_KEY` (base64 random 32-byte encryption/HMAC
 key), and `JEMLIO_MISSED_CALL_CONFIG` (JSON keyed by registered client ID).
 
-Every client entry requires `enabled`, `routingApproved`, `smsApproved`, `accountSid`,
-`authToken`, `voiceNumber`, `forwardTo`, `smsFrom`, `activatedAt`, `dailyLimit`,
+Every client entry requires `enabled`, `routingApproved`, `smsApproved`,
+`voiceNumber`, `forwardTo`, `smsFrom`, `activatedAt`, `dailyLimit`,
 `smsText`, `testRecipients` and `liveRecipientsApproved`. Approval booleans are true;
 `liveRecipientsApproved` must initially be false. `testRecipients` lists only explicitly
 authorized internal Norwegian mobiles (maximum ten). `dailyLimit` is 1–100 attempted
 messages per rolling 24 hours, not a currency cap. Lookups, calls and multipart SMS
 can have separate charges. Configure provider spending alerts and a low initial cap.
+
+### Twilio credentials
+
+For the account configured on this server, set these Render environment variables:
+
+| Variable | Purpose |
+| --- | --- |
+| `TWILIO_ACCOUNT_SID` | Account owning the numbers and API key (`AC…`) |
+| `TWILIO_API_KEY_SID` | API key SID (`SK…`) for outbound REST requests |
+| `TWILIO_API_KEY_SECRET` | Matching API key secret for outbound REST requests |
+| `TWILIO_AUTH_TOKEN` | Account Auth Token for incoming webhook signature validation |
+
+Client JSON may omit `accountSid` and `authToken` to use these defaults. Environment
+credentials apply only when the resolved client account matches `TWILIO_ACCOUNT_SID`.
+For a different account, provide that client's own `accountSid`, `authToken` and,
+optionally, both `apiKeySid` and `apiKeySecret` in its protected JSON entry.
+An explicit tenant API key pair takes precedence as a complete pair. Incomplete,
+empty or malformed pairs fail configuration; the application never silently falls
+back to the broader Auth Token when a configured API key is invalid or rejected.
+Existing tenants with no applicable API key pair retain Auth Token REST authentication.
+
+The API key secret is not the Account Auth Token. Signature checks continue using
+`authToken`; an API-key-only setup is not webhook-ready. `JEMLIO_MISSED_CALL_CONFIG`
+is still required for client routing, approved recipients and message limits.
+Credentials alone never create a client or enable either activation switch.
+
+A restricted key with only Phone-numbers / active-numbers / List can pass a read-only
+credential check, but is not yet sufficient for recovery. Before an approved pilot,
+review the key permissions for fetching Calls, Lookup line-type intelligence,
+creating Messages and fetching Message status. Do not grant these permissions or
+run paid Lookup requests merely to test authentication. Publishing this fix does
+not change key permissions, routing, database schema or activation switches.
 
 The numeric `smsFrom` must be supported/approved in the account and receive STOP.
 `forwardTo` is an approved +47 business number different from the ingress. A reviewed
