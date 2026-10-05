@@ -26,7 +26,7 @@
 /* Let the page scroll: forms must not be trapped in a second small scroll area. */
 #demo-panel:has(.followup-demo){height:auto;max-height:none}#demo-messages:has(.followup-demo){padding:0;height:auto!important;max-height:none!important;min-height:0;overflow:visible;flex:none}
 #demo-panel:has(.followup-demo)>#demo-form,#demo-panel:has(.followup-demo)>#demo-suggestions,#demo-panel:has(.followup-demo)>.qf-entry,#demo-panel:has(.followup-demo)>#followup-chat-return{display:none!important}
-body:has(.followup-demo) #chat-launcher,body:has(.followup-demo) #support-panel{display:none!important}#demo:has(.followup-demo)>.demo-journey{display:none}
+#demo:has(.followup-demo)>.demo-journey{display:none}
 #followup-chat-return{margin:12px 16px;padding:10px 14px;min-height:44px;border:1px solid #6b829a;border-radius:8px;background:#b7d1ef;color:#172d46;cursor:pointer;font:inherit}
 #followup-chat-return[hidden]{display:none}
 @media(max-width:600px){.followup-demo{padding:18px}.followup-demo h3{font-size:23px}.fu-top button{flex:1 1 100%;text-align:left}.fu-actions{display:grid;grid-template-columns:1fr}.fu-summary{grid-template-columns:1fr;gap:3px}.fu-summary dd{margin-bottom:9px}.fu-person{gap:9px}.fu-person .fu-badge{max-width:44%}.fu-counts>div{padding:9px}.fu-counts span{font-size:10px}.fu-progress li{font-size:9px}.followup-demo input:not([type=checkbox]),.followup-demo select,.followup-demo textarea{font-size:16px}}
