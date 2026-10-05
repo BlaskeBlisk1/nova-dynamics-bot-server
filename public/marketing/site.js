@@ -2,7 +2,7 @@
   'use strict';
   const $ = id => document.getElementById(id);
   const examples = {
-    vvs: { client: 'jemlio', title: 'Jemlio for rørleggere', industry: 'Annen tjenestebedrift', greeting: 'Spør om VVS-henvendelser, prisforslag og oppfølging. Ekte SMS og telefonruting må kobles til separat; pilotvisningen sender ingenting.', questions: ['Hva gjør Jemlio for rørleggere?', 'Hvordan fungerer ubesvarte anrop?', 'Kobles Jemlio til Cordel eller SmartDok?'] },
+    vvs: { client: 'jemlio', title: 'Jemlio for rørleggere', industry: 'Rørlegger / VVS', greeting: 'Spør om VVS-henvendelser, prisforslag og oppfølging. SMS-integrasjonen er bygget, men telefonrute og levering testes før aktivering. Pilotvisningen sender ingenting.', questions: ['Hva gjør Jemlio for rørleggere?', 'Hvordan fungerer ubesvarte anrop?', 'Kobles Jemlio til Cordel eller SmartDok?'] },
     driving: { client: 'jemlio-driving-demo', title: 'Trafikkskoleassistent', industry: 'Trafikkskole', greeting: 'Hei! Jeg er assistenten til en fiktiv trafikkskole. Spør om kjøretimer eller booking. Du kan også spørre hvordan Jemlio hjelper bedriften med oppfølging etter en henvendelse.', questions: ['Hva koster en kjøretime?', 'Hvordan bestiller jeg time?', 'Hva skjer etter henvendelsen?'] },
     optician: { client: 'jemlio-optician-demo', title: 'Optikerassistent', industry: 'Optiker', greeting: 'Hei! Jeg er assistenten til en fiktiv optiker. Spør om synsundersøkelser eller booking. Du kan også spørre hvordan Jemlio hjelper bedriften med henvendelser og oppfølging.', questions: ['Hva koster en synsundersøkelse?', 'Hvordan bestiller jeg en synstest?', 'Hva skjer etter henvendelsen?'] },
     workflow: { client: 'jemlio', title: 'Jemlio Oppfølging', greeting: 'Hva skjer etter kundens første spørsmål? Jeg kan forklare henvendelser, booking, prisforslag og personlig oppfølging. Du kan stille spørsmål her og prøve arbeidsoversikten med fiktive data via lenkene under.', questions: ['Hvordan fungerer oppfølgingen?', 'Hvordan fungerer prisforslag?', 'Hva viser resultatrapporten?'] }
@@ -123,11 +123,11 @@
   let selected = 'driving';
   const demo = chat('demo', () => examples[selected].client, () => { $('demo-next').hidden = false; });
   const tabs = [...document.querySelectorAll('[data-demo]')];
-  let followup = null, vvsDemo = null;
+  let followup = null, vvsDemo = null, initializing = true;
   function showVvs() {
     demo.reset('', []);
     const host = $('demo-messages'); host.setAttribute('role','region'); host.setAttribute('aria-live','off');
-    vvsDemo = window.JemlioVvsDemo.mount(host, { onClose: () => {
+    vvsDemo = window.JemlioVvsDemo.mount(host, { focus: !initializing, onClose: () => {
       host.setAttribute('role','log');host.setAttribute('aria-live','polite');
       demo.reset(examples.vvs.greeting, examples.vvs.questions);
       $('followup-chat-return').hidden=false;$('demo-input').focus();
@@ -188,7 +188,7 @@
   document.querySelectorAll('[data-try]').forEach(button => button.addEventListener('click', () => { select(button.dataset.try); $('demo').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' }); if (!$('demo-messages').querySelector('.followup-demo')) $('demo-input').focus({ preventScroll: true }); }));
   const support = chat('support', () => 'jemlio');
   $('support-reset').addEventListener('click', () => {
-    support.reset('Hei! Spør meg om Jemlios chat, booking, prisforslag eller oppfølging. Jeg kan vise deg hvordan du prøver funksjonene med fiktive data eller ber om en demo for bedriften din.',
+    support.reset('Hei! Spør meg om Jemlio for rørleggere, ubesvarte anrop eller oppfølging. Jeg forklarer hva som er bygget, hva som må settes opp og hvordan du kan prøve en gratis demo.',
       ['Hvordan fungerer oppfølgingen?', 'Hvordan fungerer prisforslag?', 'Hvordan får jeg en gratis demo?']);
     $('support-input').focus();
   });
@@ -282,4 +282,23 @@
   updateEmailDraft();
   $('year').textContent = String(new Date().getFullYear());
   if (window.JemlioVvsDemo) select('vvs');
+  initializing = false;
+  // Navigation remains usable without JS through native anchors/details.
+  document.querySelectorAll('.mobile-nav a').forEach(link => link.addEventListener('click', () => {
+    link.closest('details').open = false;
+  }));
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') {
+      const menu = document.querySelector('.mobile-nav[open]');
+      if (menu) { menu.open = false; menu.querySelector('summary').focus(); }
+    }
+  });
+  // Avoid covering the interactive case, without hiding support across the whole site.
+  if (typeof IntersectionObserver === 'function') {
+    const observer = new IntersectionObserver(entries => {
+      document.body.classList.toggle('demo-in-view', entries.some(entry => entry.isIntersecting));
+    }, { rootMargin: '-90px 0px -50px 0px', threshold: 0 });
+    observer.observe($('demo-panel'));
+  }
+
 })();
