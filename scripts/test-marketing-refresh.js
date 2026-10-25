@@ -15,7 +15,7 @@ function harness(){
   w.matchMedia=()=>({matches:true});w.HTMLElement.prototype.scrollIntoView=()=>{};
   w.IntersectionObserver=class{constructor(callback){observers.push(callback);}observe(){}disconnect(){}};
   w.fetch=async(url,options)=>{requests.push({url,options});throw Error('External requests are disabled in this rehearsal');};
-  for(const file of ['quote-schema.js','quote-flow.js','followup-demo.js','vvs-profile.js','vvs-demo.js','site.js'])w.eval(read('public/marketing/'+file));
+  for(const file of ['quote-schema.js','quote-flow.js','followup-demo.js','vvs-profile.js','vvs-demo.js','business-support.js','site.js'])w.eval(read('public/marketing/'+file));
   const click=label=>{const b=[...d.querySelectorAll('.vvs-demo button')].find(el=>el.textContent===label);assert.ok(b,label);b.click();};
   const close=()=>{assert.deepEqual(errors,[]);w.close();};
   return{w,d,requests,observers,click,close};
@@ -24,7 +24,7 @@ function harness(){
   await check('homepage has a single heading, working section anchors and no duplicate IDs',()=>{
     const {window:w}=new JSDOM(html),d=w.document;
     assert.equal(d.documentElement.lang,'nb');assert.equal(d.querySelectorAll('h1').length,1);
-    assert.match(d.querySelector('h1').textContent,/Konkrete forretningsmuligheter/);
+    assert.match(d.querySelector('h1').textContent,/Riktige kunder.*Riktige leverandører/);
     assert.match(d.querySelector('#hero-title').textContent,/Jemlio holder/);
     assert.ok(d.querySelector('#b2b-sales')&&d.querySelector('#industrial-sourcing')&&d.querySelector('#business-contact'));
     assert.ok(d.querySelector('#business-contact a[href^="mailto:hei@jemlio.com"]'));
