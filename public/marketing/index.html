@@ -31,6 +31,8 @@
     .b2b-intro { padding-top: clamp(70px, 8vw, 112px); padding-bottom: clamp(56px, 7vw, 90px); }
     .b2b-intro h1 { font-size: clamp(2.6rem, 6vw, 5.6rem); line-height: 1.08; letter-spacing: -.05em; max-width: 1000px; margin: 22px 0; color: #f2f6ff; }
     .b2b-intro h1 span { color: #78b7ff; }
+    .hero #hero-title { font-size:clamp(50px,5.6vw,80px); font-weight:500; line-height:1.035; letter-spacing:-.065em; margin:26px 0; }
+    .hero #hero-title span { color:var(--blue); }
     .b2b-lead { max-width: 760px; font-size: clamp(1.08rem, 1.8vw, 1.3rem); line-height: 1.7; color: #c9d5e9; margin-bottom: 35px; }
     .b2b-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
     .b2b-card { min-width: 0; border: 1px solid rgba(157,186,235,.23); border-radius: 22px; background: linear-gradient(155deg, rgba(32,54,89,.55), rgba(10,20,37,.45)); padding: clamp(20px, 3.5vw, 32px); display: flex; flex-direction: column; gap: 14px; scroll-margin-top: 110px; }
@@ -39,6 +41,9 @@
     .b2b-card p { margin: 0; color: #d0d8e7; line-height: 1.65; }
     .b2b-card .b2b-note { font-size: .88rem; color: #adbacd; }
     .b2b-card .button { margin-top: auto; align-self: flex-start; text-decoration: none; }
+    .b2b-general-contact { border:1px solid rgba(157,186,235,.23); border-radius:14px; margin-top:22px; padding:20px 22px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; scroll-margin-top:105px; }
+    .b2b-general-contact strong { font-weight:650; color:#f2f6ff; }
+    .b2b-general-contact a { color:#bdd5fc; font-weight:650; text-decoration:underline; text-underline-offset:4px; }
     .b2b-disclosure { font-size: .84rem; color: #aebbd0; margin: 22px 0 0; line-height: 1.6; }
     .b2b-legacy-note { border-top: 1px solid rgba(157,186,235,.25); padding-top: 25px; }
     .b2b-legacy-note span { text-transform: uppercase; letter-spacing: .09em; font-size: .77rem; color: #9ec4ff; font-weight: 750; }
@@ -50,9 +55,9 @@
   <a class="skip-link" href="#main">Hopp til innhold</a>
   <header class="header"><div class="nav-wrap">
     <a class="brand" href="#" aria-label="Jemlio, til toppen"><img src="./assets/jemlio-wordmark.webp" alt="Jemlio" width="224" height="60"></a>
-    <nav class="desktop-nav" aria-label="Hovedmeny"><a href="#b2b-sales">B2B-salg</a><a href="#industrial-sourcing">Sourcing</a><a href="#losningen">Produktdemo</a><a href="#contact">Kontakt</a></nav>
-    <a class="button button-small nav-cta" href="#contact">Kontakt oss <span aria-hidden="true">↗</span></a>
-    <details class="mobile-nav"><summary aria-label="Åpne meny"><span></span><span></span></summary><nav aria-label="Mobilmeny"><a href="#b2b-sales">B2B-salg</a><a href="#industrial-sourcing">Sourcing</a><a href="#losningen">Produktdemo</a><a href="#contact">Kontakt oss ↗</a></nav></details>
+    <nav class="desktop-nav" aria-label="Hovedmeny"><a href="#b2b-sales">B2B-salg</a><a href="#industrial-sourcing">Sourcing</a><a href="#losningen">Produktdemo</a><a href="#business-contact">Kontakt</a></nav>
+    <a class="button button-small nav-cta" href="#business-contact">Kontakt oss <span aria-hidden="true">↗</span></a>
+    <details class="mobile-nav"><summary aria-label="Åpne meny"><span></span><span></span></summary><nav aria-label="Mobilmeny"><a href="#b2b-sales">B2B-salg</a><a href="#industrial-sourcing">Sourcing</a><a href="#losningen">Produktdemo</a><a href="#business-contact">Kontakt oss ↗</a></nav></details>
   </div></header>
   <main id="main">
     <section class="b2b-intro section-shell" id="business" aria-labelledby="business-title">
@@ -75,13 +80,14 @@
           <a class="button button-ghost" href="mailto:hei@jemlio.com?subject=Mulig%20samarbeid%20om%20industriell%20sourcing">Diskuter sourcing ↗</a>
         </article>
       </div>
+      <div class="b2b-general-contact" id="business-contact"><strong>Har dere et konkret behov eller forslag til samarbeid?</strong><a href="mailto:hei@jemlio.com?subject=Mulig%20B2B-samarbeid%20med%20Jemlio">Kontakt oss på hei@jemlio.com ↗</a></div>
       <p class="b2b-disclosure">Dette er nye satsingsområder som testes kommersielt. Vi inngår ingen avtaler eller representerer ingen leverandører uten særskilt avtale og fullmakt.</p>
     </section>
     <div class="b2b-legacy-note section-shell"><span>Eksisterende produkt</span><p>Vi beholder våre interaktive eksempler på kundehenvendelser og oppfølging tilgjengelige nedenfor. Demoene er separate fra de nye B2B-satsingene.</p></div>
     <section class="hero section-shell" aria-labelledby="hero-title">
       <div class="hero-copy">
         <p class="eyebrow"><span class="short-rule"></span> Produktdemo · rørlegger- og VVS-bedrifter</p>
-        <h1 id="hero-title">Du gjør jobben.<br>Jemlio holder<br><span>tråden.</span></h1>
+        <h2 id="hero-title">Du gjør jobben.<br>Jemlio holder<br><span>tråden.</span></h2>
         <p class="hero-description">Fra første spørsmål til neste oppfølging. Samle kundens behov, lag et prisforslag og hold oversikt over det som gjenstår — i én arbeidsflyt.</p>
         <div class="hero-actions"><a class="button" href="#demo" data-open-vvs>Prøv VVS-demoen <span aria-hidden="true">↗</span></a><a class="button button-ghost" href="#contact">Se det med din bedrift</a></div>
         <div class="hero-assurance"><span>Gratis, uforpliktende demo</span><span>Du bestemmer pris og kapasitet</span></div>
