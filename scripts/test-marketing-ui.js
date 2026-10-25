@@ -39,6 +39,7 @@ function harness({ url = 'https://www.jemlio.com/', online = true, clipboard = '
     if (!answer) throw new Error('Chat offline');
     return { ok: true, json: async () => ({ reply: 'Du finner riktig informasjon her.', suggestions: ['Hva koster det?'] }) };
   };
+  window.eval(fs.readFileSync(path.join(__dirname, '../public/marketing/business-support.js'), 'utf8'));
   window.eval(script);
   const get = selector => document.querySelector(selector);
   const fill = () => {
@@ -327,7 +328,7 @@ function harness({ url = 'https://www.jemlio.com/', online = true, clipboard = '
     let complete;
     const h = harness({ onChat: () => new Promise(resolve => { complete = resolve; }) });
     h.get('#chat-launcher').click();
-    h.get('#support-input').value = 'Hei'; h.get('#support-form').requestSubmit(); await settle();
+    h.get('#support-input').value = 'Hva gjør Jemlio for rørleggere?'; h.get('#support-form').requestSubmit(); await settle();
     h.get('#support-input').value = 'En usendt kladd'; h.get('#support-reset').click();
     assert.equal(h.get('#support-input').value, '');
     assert.equal(h.document.activeElement.id, 'support-input');

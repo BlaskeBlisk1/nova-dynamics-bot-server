@@ -55,7 +55,7 @@
     "test:vvs": "node scripts/test-vvs-demo.js && node scripts/test-followup-pilot.js --vvs",
     "test:missed-calls": "node scripts/test-missed-call-credentials.js && node scripts/test-missed-calls.js && node scripts/test-missed-call-ui.js",
     "missed-calls:operations": "node scripts/missed-call-operations.js",
-    "test:marketing-refresh": "node scripts/test-marketing-refresh.js"
+    "test:marketing-refresh": "node scripts/test-marketing-refresh.js && node scripts/test-business-home.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

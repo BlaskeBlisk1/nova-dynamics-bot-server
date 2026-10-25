@@ -80,7 +80,8 @@
       const question = String(raw).trim().slice(0, 1200);
       if (!question || controller) return;
       clearRetries();
-      if (navigator.onLine === false) { failure(question, source); return; }
+      const localAnswer = prefix === 'support' && window.JemlioBusinessSupport ? window.JemlioBusinessSupport.answer(question) : null;
+      if (!localAnswer && navigator.onLine === false) { failure(question, source); return; }
       const current = ++generation;
       const activeController = new AbortController(); controller = activeController;
       const client = getClient();
@@ -91,9 +92,9 @@
       const timer = setTimeout(() => activeController.abort(), 25000);
       requestTimer = timer;
       try {
-        const response = await fetch(api, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ client, message: question }), signal: activeController.signal });
-        if (!response.ok) { const error = new Error('Chat unavailable'); error.httpStatus = response.status; throw error; }
-        const data = await response.json();
+        const response = localAnswer ? null : await fetch(api, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ client, message: question }), signal: activeController.signal });
+        if (response && !response.ok) { const error = new Error('Chat unavailable'); error.httpStatus = response.status; throw error; }
+        const data = localAnswer || await response.json();
         if (typeof data.reply !== 'string' || !data.reply.trim()) throw new Error('Missing reply');
         if (current !== generation) return;
         waiting.remove(); message(data.reply, 'assistant');
@@ -188,8 +189,7 @@
   document.querySelectorAll('[data-try]').forEach(button => button.addEventListener('click', () => { select(button.dataset.try); $('demo').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' }); if (!$('demo-messages').querySelector('.followup-demo')) $('demo-input').focus({ preventScroll: true }); }));
   const support = chat('support', () => 'jemlio');
   $('support-reset').addEventListener('click', () => {
-    support.reset('Hei! Spør meg om Jemlio for rørleggere, ubesvarte anrop eller oppfølging. Jeg forklarer hva som er bygget, hva som må settes opp og hvordan du kan prøve en gratis demo.',
-      ['Hvordan fungerer oppfølgingen?', 'Hvordan fungerer prisforslag?', 'Hvordan får jeg en gratis demo?']);
+    support.reset(window.JemlioBusinessSupport.greeting, window.JemlioBusinessSupport.questions);
     $('support-input').focus();
   });
   const launcher = $('chat-launcher');
@@ -283,6 +283,26 @@
   $('year').textContent = String(new Date().getFullYear());
   if (window.JemlioVvsDemo) select('vvs');
   initializing = false;
+  const productExamples = $('product-examples');
+  function revealProduct(hash) {
+    if (!productExamples || !hash || hash === '#') return;
+    let target;
+    try { target = document.getElementById(decodeURIComponent(hash.slice(1))); } catch { return; }
+    if (target && (target === productExamples || productExamples.contains(target))) {
+      productExamples.open = true;
+      return target;
+    }
+  }
+  const incomingProduct = revealProduct(location.hash);
+  if (incomingProduct) incomingProduct.scrollIntoView({ behavior: 'instant' });
+  window.addEventListener('hashchange', () => {
+    const target = revealProduct(location.hash);
+    if (target) target.scrollIntoView({ behavior: 'instant' });
+  });
+  document.addEventListener('click', event => {
+    const anchor = event.target.closest('a[href^="#"]');
+    if (anchor) revealProduct(anchor.getAttribute('href'));
+  }, true);
   // Navigation remains usable without JS through native anchors/details.
   document.querySelectorAll('.mobile-nav a').forEach(link => link.addEventListener('click', () => {
     link.closest('details').open = false;
