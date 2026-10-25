@@ -4,13 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0c1423">
-  <meta name="description" content="Jemlio samler kundehenvendelser, jobbdetaljer, prisforslag og oppfølging for rørlegger- og VVS-bedrifter. Prøv demoen og utforsk en avgrenset pilot.">
-  <title>Jemlio — Fra første kontakt til neste oppdrag</title>
+  <meta name="description" content="Jemlio utforsker B2B-salg og industriell sourcing i Norge. Ta kontakt om mulig samarbeid innen salg, kundeutvikling eller leverandørnettverk.">
+  <title>Jemlio — B2B-salg og industriell sourcing</title>
   <link rel="canonical" href="https://www.jemlio.com/">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://www.jemlio.com/">
-  <meta property="og:title" content="Jemlio — Fra første kontakt til neste oppdrag">
-  <meta property="og:description" content="Kundehenvendelser, prisforslag og oppfølging. Samlet for rørleggerhverdagen. Prøv begge sider av arbeidsflyten med eksempeldata.">
+  <meta property="og:title" content="Jemlio — B2B-salg og industriell sourcing">
+  <meta property="og:description" content="Vi utforsker samarbeid innen B2B-salg for norske leverandører og sourcing av industrikomponenter fra europeiske produsenter.">
   <meta property="og:locale" content="nb_NO">
   <meta property="og:site_name" content="Jemlio">
   <meta property="og:image" content="https://www.jemlio.com/assets/jemlio-orbit.webp">
@@ -27,19 +27,60 @@
   <script src="./vvs-demo.js" defer></script>
   <link rel="stylesheet" href="./styles.css">
   <script src="./site.js" defer></script>
+  <style>
+    .b2b-intro { padding-top: clamp(70px, 8vw, 112px); padding-bottom: clamp(56px, 7vw, 90px); }
+    .b2b-intro h1 { font-size: clamp(2.6rem, 6vw, 5.6rem); line-height: 1.08; letter-spacing: -.05em; max-width: 1000px; margin: 22px 0; color: #f2f6ff; }
+    .b2b-intro h1 span { color: #78b7ff; }
+    .b2b-lead { max-width: 760px; font-size: clamp(1.08rem, 1.8vw, 1.3rem); line-height: 1.7; color: #c9d5e9; margin-bottom: 35px; }
+    .b2b-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+    .b2b-card { min-width: 0; border: 1px solid rgba(157,186,235,.23); border-radius: 22px; background: linear-gradient(155deg, rgba(32,54,89,.55), rgba(10,20,37,.45)); padding: clamp(20px, 3.5vw, 32px); display: flex; flex-direction: column; gap: 14px; scroll-margin-top: 110px; }
+    .b2b-card-kicker { color: #a6c7f7; font-size: .75rem; letter-spacing: .09em; text-transform: uppercase; font-weight: 750; }
+    .b2b-card h2 { font-size: clamp(1.65rem, 2.5vw, 2.3rem); color: #f2f6ff; margin: 0; }
+    .b2b-card p { margin: 0; color: #d0d8e7; line-height: 1.65; }
+    .b2b-card .b2b-note { font-size: .88rem; color: #adbacd; }
+    .b2b-card .button { margin-top: auto; align-self: flex-start; text-decoration: none; }
+    .b2b-disclosure { font-size: .84rem; color: #aebbd0; margin: 22px 0 0; line-height: 1.6; }
+    .b2b-legacy-note { border-top: 1px solid rgba(157,186,235,.25); padding-top: 25px; }
+    .b2b-legacy-note span { text-transform: uppercase; letter-spacing: .09em; font-size: .77rem; color: #9ec4ff; font-weight: 750; }
+    .b2b-legacy-note p { color: #b5c1d4; max-width: 750px; line-height: 1.6; }
+    @media(max-width: 740px){ .b2b-cards{grid-template-columns:1fr;} .b2b-intro{padding-top:56px;} }
+  </style>
 </head>
 <body>
   <a class="skip-link" href="#main">Hopp til innhold</a>
   <header class="header"><div class="nav-wrap">
     <a class="brand" href="#" aria-label="Jemlio, til toppen"><img src="./assets/jemlio-wordmark.webp" alt="Jemlio" width="224" height="60"></a>
-    <nav class="desktop-nav" aria-label="Hovedmeny"><a href="#losningen">Løsningen</a><a href="#arbeidsflyt">Slik fungerer det</a><a href="#demo" data-open-vvs>Prøv demoen</a><a href="#slik">Pilot</a></nav>
-    <a class="button button-small nav-cta" href="#contact">Få en gratis demo <span aria-hidden="true">↗</span></a>
-    <details class="mobile-nav"><summary aria-label="Åpne meny"><span></span><span></span></summary><nav aria-label="Mobilmeny"><a href="#losningen">Løsningen</a><a href="#arbeidsflyt">Slik fungerer det</a><a href="#demo" data-open-vvs>Prøv demoen</a><a href="#slik">Pilot</a><a href="#contact">Kontakt oss ↗</a></nav></details>
+    <nav class="desktop-nav" aria-label="Hovedmeny"><a href="#b2b-sales">B2B-salg</a><a href="#industrial-sourcing">Sourcing</a><a href="#losningen">Produktdemo</a><a href="#contact">Kontakt</a></nav>
+    <a class="button button-small nav-cta" href="#contact">Kontakt oss <span aria-hidden="true">↗</span></a>
+    <details class="mobile-nav"><summary aria-label="Åpne meny"><span></span><span></span></summary><nav aria-label="Mobilmeny"><a href="#b2b-sales">B2B-salg</a><a href="#industrial-sourcing">Sourcing</a><a href="#losningen">Produktdemo</a><a href="#contact">Kontakt oss ↗</a></nav></details>
   </div></header>
   <main id="main">
+    <section class="b2b-intro section-shell" id="business" aria-labelledby="business-title">
+      <p class="eyebrow"><span class="short-rule"></span> Ny satsing · samarbeid under utvikling</p>
+      <h1 id="business-title">Nye forbindelser.<br><span>Konkrete forretningsmuligheter.</span></h1>
+      <p class="b2b-lead">Jemlio utvikler en målrettet B2B-virksomhet innen salg og industriell sourcing. Vi utforsker samarbeid med norske tjenesteleverandører og europeiske produsenter — med fokus på reelle behov, tydelige avtaler og personlig oppfølging.</p>
+      <div class="b2b-cards">
+        <article class="b2b-card" id="b2b-sales">
+          <span class="b2b-card-kicker">01 / Bedriftsutvikling</span>
+          <h2>B2B-salg</h2>
+          <p>Vi undersøker samarbeid med norske leverandører som ønsker bistand med prospektering, behovsavklaring og hele salgsprosessen frem til avtale. Opplegg, ansvar og honorar avtales per samarbeid.</p>
+          <p class="b2b-note">Vi er i etableringsfasen og har ikke en etablert portefølje med salgsresultater å vise til ennå.</p>
+          <a class="button button-ghost" href="mailto:hei@jemlio.com?subject=Mulig%20samarbeid%20om%20B2B-salg">Diskuter et salgssamarbeid ↗</a>
+        </article>
+        <article class="b2b-card" id="industrial-sourcing">
+          <span class="b2b-card-kicker">02 / Industri</span>
+          <h2>Industriell sourcing</h2>
+          <p>Vi kartlegger produsenter av maskinerte og spesialtilpassede komponenter i Europa, med særlig interesse for forbindelser mellom Polen og Norge. Målet er å finne mulige leverandør- og kundeavtaler der kvalitet og kapasitet kan dokumenteres.</p>
+          <p class="b2b-note">Leverandørnettverket er under kvalifisering. Ingen produksjonskapasitet, leveringstid eller pris loves før dette er verifisert.</p>
+          <a class="button button-ghost" href="mailto:hei@jemlio.com?subject=Mulig%20samarbeid%20om%20industriell%20sourcing">Diskuter sourcing ↗</a>
+        </article>
+      </div>
+      <p class="b2b-disclosure">Dette er nye satsingsområder som testes kommersielt. Vi inngår ingen avtaler eller representerer ingen leverandører uten særskilt avtale og fullmakt.</p>
+    </section>
+    <div class="b2b-legacy-note section-shell"><span>Eksisterende produkt</span><p>Vi beholder våre interaktive eksempler på kundehenvendelser og oppfølging tilgjengelige nedenfor. Demoene er separate fra de nye B2B-satsingene.</p></div>
     <section class="hero section-shell" aria-labelledby="hero-title">
       <div class="hero-copy">
-        <p class="eyebrow"><span class="short-rule"></span> For rørlegger- og VVS-bedrifter</p>
+        <p class="eyebrow"><span class="short-rule"></span> Produktdemo · rørlegger- og VVS-bedrifter</p>
         <h1 id="hero-title">Du gjør jobben.<br>Jemlio holder<br><span>tråden.</span></h1>
         <p class="hero-description">Fra første spørsmål til neste oppfølging. Samle kundens behov, lag et prisforslag og hold oversikt over det som gjenstår — i én arbeidsflyt.</p>
         <div class="hero-actions"><a class="button" href="#demo" data-open-vvs>Prøv VVS-demoen <span aria-hidden="true">↗</span></a><a class="button button-ghost" href="#contact">Se det med din bedrift</a></div>
