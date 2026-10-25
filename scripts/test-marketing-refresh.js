@@ -24,7 +24,11 @@ function harness(){
   await check('homepage has a single heading, working section anchors and no duplicate IDs',()=>{
     const {window:w}=new JSDOM(html),d=w.document;
     assert.equal(d.documentElement.lang,'nb');assert.equal(d.querySelectorAll('h1').length,1);
-    assert.match(d.querySelector('h1').textContent,/Jemlio holder/);
+    assert.match(d.querySelector('h1').textContent,/Konkrete forretningsmuligheter/);
+    assert.match(d.querySelector('#hero-title').textContent,/Jemlio holder/);
+    assert.ok(d.querySelector('#b2b-sales')&&d.querySelector('#industrial-sourcing')&&d.querySelector('#business-contact'));
+    assert.ok(d.querySelector('#business-contact a[href^="mailto:hei@jemlio.com"]'));
+    assert.equal(d.querySelector('#contact-form').getAttribute('action'),'https://www.jemlio.com/demo-requested');
     const ids=[...d.querySelectorAll('[id]')].map(el=>el.id);assert.equal(new Set(ids).size,ids.length);
     for(const a of d.querySelectorAll('a[href^="#"]'))if(a.getAttribute('href')!=='#')assert.ok(d.getElementById(a.getAttribute('href').slice(1)),a.outerHTML);
     assert.ok(!d.querySelector('.hero #demo'),'the complete demo is separate from the hero');
